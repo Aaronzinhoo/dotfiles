@@ -4,16 +4,15 @@
 
 PROMPT='[ Bootstrap ]'
 
-source ./exports
+PATH_TO_DEVELOPMENT="$HOME/development"
+PATH_TO_ORG="$HOME/org"
 
 # Initialize a few things
 init () {
     echo_with_prompt "Making a Projects folder in $PATH_TO_PROJECTS if it doesn't already exist"
-	mkdir -p "$PATH_TO_PROJECTS"
-	echo_with_prompt "Making a Playground folder in $PATH_TO_PLAYGROUND if it doesn't already exist"
-	mkdir -p "$PATH_TO_PLAYGROUND"
-	echo_with_prompt "Making a Playground folder in $PATH_TO_JOURNAL if it doesn't already exist"
-	mkdir -p "$PATH_TO_JOURNAL"
+	mkdir -p "$PATH_TO_DEVELOPMENT"
+	echo_with_prompt "Making a Playground folder in $PATH_TO_ORG if it doesn't already exist"
+	mkdir -p "$PATH_TO_ORG"
 }
 
 # TODO : Delete symlinks to deleted files
@@ -53,7 +52,7 @@ install_tools () {
 		# TODO - regex here?
 		if [ "$resp" = 'y' -o "$resp" = 'Y' ] ; then
 			echo_with_prompt "Installing useful stuff using apt. This may take a while..."
-			sh apt.exclude.sh
+			sh apt.sh
 		else
 			echo_with_prompt "Apt installation cancelled by user"
 		fi
@@ -62,9 +61,15 @@ install_tools () {
 	fi
 }
 
+
 init
 execute_func_with_prompt link "symlink everything"
 install_tools
+for BOOTSTRAP in ./bootstrap_extensions/*
+do
+    echo_with_prompt "applying ${BOOTSTRAP} to installation"
+    apply_bootstrap_extension  $BOOTSTRAP
+done
 
 
 # Hack to make sure this script always exits successfully

@@ -33,7 +33,7 @@ apt install build-essential -y
 # shell configuration
 #--------------------
 echo_with_prompt "installing zsh\n"
-apt install zsh
+apt install zsh -y
 #--------------------
 
 #--------------------

@@ -6,6 +6,14 @@ import_package(){
     fi
 }
 
+apply_bootstrap_extension(){
+    if [ -f "$1" ]; then
+        "$1"
+    else
+        echo_with_prompt "failed to execute file ${1}."
+    fi
+}
+
 echo_with_prompt () {
     # The narcissistic default prompt
     PROMPT="${PROMPT:-'[ Aaronzinho:Dotfiles ]'}"
