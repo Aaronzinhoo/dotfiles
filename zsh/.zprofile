@@ -1,8 +1,6 @@
-# PYTHON POETRY
-export PATH="$HOME/.poetry/bin:$PATH"
-
-# GOLANG PATH
-export PATH=$PATH:/usr/local/go/bin:$HOME/development/go/bin
+# # KEYCHAIN FOR SSH CONFIG
+/usr/bin/keychain --quiet $HOME/.ssh/github/id_rsa > /dev/null
+source $HOME/.keychain/$HOSTNAME-sh > /dev/null
 
 # DBUS connection
 eval $(dbus-launch)

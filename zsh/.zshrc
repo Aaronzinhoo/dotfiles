@@ -1,17 +1,3 @@
-if [ $TERM = dumb ]; then
-    unset RPROMPT
-    unset RPS1
-    PS1="$ "
-    unset zle_bracketed_paste
-    unsetopt zle
-    unsetopt prompt_cr
-    unsetopt prompt_subst
-    unfunction precmd
-    unfunction preexec
-    unsetopt rcs  # Inhibit loading of further config files
-fi
-
-
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -23,7 +9,7 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/home/aaronzinho/.oh-my-zsh"
+export ZSH="${HOME}/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -97,34 +83,27 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate nvm zsh_reload git z zsh-autosuggestions colored-man-pages zsh-pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng )
+plugins=( autoupdate nvm zsh_reload git z zsh-autosuggestions colored-man-pages zsh-pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng npm )
 
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
-
 # export MANPATH="/usr/local/man:$MANPATH"
-export HOSTNAME="DESKTOP-E067H1Q"
+export HOSTNAME="aaronzinho"
 
 # You may need to manually set your language environment
-# export LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
-
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+if [[ -n $SSH_CONNECTION ]]; then
+    export EDITOR='emacs-nox'
+else
+    export EDITOR='emacs'
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
-fi
+# Load Path and environment variables
+source ../system/.path
+source ../system/.env
 
 
 # Compilation flags
@@ -138,43 +117,7 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias mkvirtualenv='mkvirtualenv --python=/usr/local/bin/python3.8'
-
-# PYTHON PATH ADJUSTMENT
-export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.8/site-packages:/usr/lib/python3/dist-packages
-
-# # KEYCHAIN FOR SSH CONFIG
-/usr/bin/keychain --quiet $HOME/.ssh/github/id_rsa > /dev/null
-source $HOME/.keychain/$HOSTNAME-sh > /dev/null
-
-# ENV VARS FOR VIRTUALENV
-export WORKON_HOME=$HOME/.virtualenvs
-export PROJECT_HOME=$HOME/development
-export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3.8
-source $HOME/.local/bin/virtualenvwrapper.sh
-
-# ENV VARS PYENV
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-# ENV VARS FOR X SERVER
-export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
-export LIBGL_ALWAYS_INDIRECT=1
-
-# ENV VARS NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-
-
-#ENV VARS GO
-export GOPATH="$HOME/development/go"
-
-# EAF PATH
-export PATH=/home/aaronzinho/.emacs.d/eaf/bin:$PATH
-
-# z.sh file location
-. ~/.z.sh
+# alias mkvirtualenv='mkvirtualenv --python=/usr/local/bin/python3.8'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

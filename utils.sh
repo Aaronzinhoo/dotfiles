@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 
+import_package(){
+    if [ -f $1 ]; then
+        . "$( pwd )/${1}"
+    fi
+}
+
 echo_with_prompt () {
     # The narcissistic default prompt
     PROMPT="${PROMPT:-'[ Aaronzinho:Dotfiles ]'}"
     echo "${PROMPT} $*"
+}
+
+check_system_package_installed() {
+    # enter package name to verify it is installed
+    command -v "$1" | grep -o "$1" > /dev/null &&  return 0 || return 1
 }
 
 execute_func_with_prompt() {
