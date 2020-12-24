@@ -101,10 +101,11 @@ else
     export EDITOR='emacs'
 fi
 
-# Load Path and environment variables
-source ../system/.path
-source ../system/.env
-
+# Load Path and environment variablles, functions, aliases
+for file in $(find $( pwd )/system -type f)
+do 
+    source $file
+done
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"

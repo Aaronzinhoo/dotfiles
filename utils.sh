@@ -6,6 +6,10 @@ import_package(){
     fi
 }
 
+get_symlink_files(){
+    echo "$(find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|system')"
+}
+
 apply_bootstrap_extension(){
     if [ -f "$1" ]; then
         "$1"

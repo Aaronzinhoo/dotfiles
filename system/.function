@@ -1,0 +1,14 @@
+# update symlinks for necessary files
+update_symlinks () {
+    symlink_files=($(get_symlink_file))
+    for file in "${symlink_files[@]}";
+    do
+        file=${file#./}
+        # Silently ignore errors here because the files may already exist
+        if [ -d "$file" ]  && [ "$file" = "./emacs"  ]; then
+            ln -sfn "$file" "$EMACS_INSTALL_DIR"
+        elif [ -f "$file" ]; then
+            ln -sfn "$file" "$HOME"
+        fi
+    done
+}

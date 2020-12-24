@@ -6,6 +6,7 @@ PROMPT='[ Bootstrap ]'
 
 PATH_TO_DEVELOPMENT="$HOME/development"
 PATH_TO_ORG="$HOME/org"
+EMACS_INSTALL_DIR="${HOME}/.emacs.d"
 
 # Initialize a few things
 init () {
@@ -19,9 +20,16 @@ init () {
 # Is this where rsync shines?
 # TODO - add support for -f and --force
 link () {
-    for file in $( ls -A | grep -vE '\.exclude*|\.git$|\.gitignore|\.gitmodules|.*.md' ) ; do
+    symlink_files=($(get_symlink_file))
+    for file in "${symlink_files[@]}";
+    do
         # Silently ignore errors here because the files may already exist
-        ln -sv "$PWD/$file" "$HOME" || true
+        file=${file#./}
+        if [ -d "$file" ]  && [ "$file" = "./emacs"  ]; then
+            ln -s "$( pwd )/$file" "$EMACS_INSTALL_DIR"
+        elif [ -f "$( pwd )/$file" ]; then
+            ln -s "$( pwd )/$file" "$HOME"
+        fi
     done
 }
 

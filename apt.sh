@@ -28,7 +28,8 @@ apt install net-tools -y
 apt install curl -y
 apt install wget -y
 apt install build-essential -y
-
+apt-get install fd-find -y
+apt-get install fzf -y
 #--------------------
 # shell configuration
 #--------------------
