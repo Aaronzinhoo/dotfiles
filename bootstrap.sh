@@ -82,5 +82,4 @@ done
 
 # Hack to make sure this script always exits successfully
 # Since the user may choose to cancel a step here and that is cool
-# TODO rethink this system :p
 true
