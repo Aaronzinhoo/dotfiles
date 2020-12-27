@@ -54,9 +54,7 @@
             {
 		"acrylicOpacity" : 0.75,
     		"backgroundImageOpacity": 0.2,
-		"backgroundImage": "C:/Users/Aaron/OneDrive/Pictures/Saved Pictures/1476493-evangelion-hd-wallpapers-1920x1080-for-1080p.jpg",
 		"closeOnExit" : true,
-		"fontFace": "Hack Nerd Font",
 		"fontSize" : 13,
 		"guid": "{07b52e3e-de2c-5db4-bd2d-ba144ed6c273}",
 		"hidden": false,
