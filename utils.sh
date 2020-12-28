@@ -7,7 +7,7 @@ import_package(){
 }
 
 get_symlink_files(){
-    echo "$(find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|system')"
+    echo "$(find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|windows')"
 }
 
 apply_bootstrap_extension(){
