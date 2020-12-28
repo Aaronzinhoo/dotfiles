@@ -7,6 +7,11 @@ PROMPT='[ Bootstrap ]: '
 PATH_TO_DEVELOPMENT="$HOME/development"
 PATH_TO_ORG="$HOME/org"
 EMACS_INSTALL_DIR="${HOME}/.emacs.d"
+if [ -z "$1" ]; then
+	INSTALL_ENVIRONMENT="personal"
+else
+	INSTALL_ENVIRONMENT="work"
+fi
 
 # Initialize a few things
 init () {
