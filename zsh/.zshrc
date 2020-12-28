@@ -89,7 +89,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 # export MANPATH="/usr/local/man:$MANPATH"
-export HOSTNAME="aaronzinho"
+export HOSTNAME="aaronzinho-pc"
 
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
@@ -102,9 +102,9 @@ else
 fi
 
 # Load Path and environment variablles, functions, aliases
-for file in $(find $( pwd )/system -type f)
+for file in ".alias" ".function" ".path"
 do 
-    source $file
+    	. "$( pwd )/$file"
 done
 
 # Compilation flags
