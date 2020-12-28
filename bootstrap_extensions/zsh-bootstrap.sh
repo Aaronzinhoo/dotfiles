@@ -35,7 +35,7 @@ git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins "${CUSTOM_PLUG
 
 echo_with_prompt "adding poetry completion to zsh"
 
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
 if [ ! -d "${CUSTOM_PLUGINS}/poetry" ];then
 	mkdir -p "${CUSTOM_PLUGINS}/poetry"
 fi
