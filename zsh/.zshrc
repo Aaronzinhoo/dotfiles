@@ -102,7 +102,7 @@ else
 fi
 
 # Load Path and environment variablles, functions, aliases
-for file in ".alias" ".function" ".path"
+for file in ".alias" ".function" ".path" ".env"
 do 
     	. "$( pwd )/$file"
 done
