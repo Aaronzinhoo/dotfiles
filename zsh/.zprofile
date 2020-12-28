@@ -1,5 +1,5 @@
 # # KEYCHAIN FOR SSH CONFIG
-/usr/bin/keychain --quiet $HOME/.ssh/github/id_ed25519 > /dev/null
+/usr/bin/keychain --quiet $HOME/.ssh/github/$(ls -I "*.*" "$HOME/.ssh/github") > /dev/null
 source "$HOME/.keychain/$(hostname)-sh" > /dev/null
 
 # DBUS connection
