@@ -6,7 +6,6 @@ wsl exit
 REM Find IP for WSL network interface
 SET WSL_IF_IP=
 CALL :GetIp "vEthernet (WSL)" WSL_IF_IP
-ECHO WSL_IF_IP=%WSL_IF_IP%
 setx "WSL_IF_IP" "%WSL_IF_IP%"
 setx "WSLENV" "WSL_IF_IP/u"
 

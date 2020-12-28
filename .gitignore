@@ -1,0 +1,10 @@
+emacs/backups/
+emacs/dired-history
+emacs/emojis/
+emacs/eshell/
+emacs/places
+emacs/projectile-bookmarks.eld
+emacs/recentf
+emacs/smex-items
+emacs/straight/
+emacs/transient/
