@@ -30,6 +30,7 @@ apt install dbus-x11
 apt install curl -y
 apt install wget -y
 apt install build-essential -y
+apt-get install autoconf automake -y
 apt-get install fd-find -y
 apt-get install fzf -y
 apt install bat -y
@@ -37,6 +38,7 @@ apt-get download ripgrep
 dpkg --force-overwrite -i ripgrep*.deb
 rm ripgrep*.deb
 apt install xclip -y
+
 #--------------------
 # shell configuration
 #--------------------
@@ -55,7 +57,7 @@ apt install emacs27 -y
 
 
 #--------------------
-# org
+# org & pdf-tools
 #--------------------
 echo_with_prompt "installing org packages\n"
 apt install phantomjs -y
@@ -63,6 +65,9 @@ apt install texlive-latex-base -y
 apt install texlive-latex-recommended -y
 apt install texlive-fonts-extra -y
 apt install texlive-latex-extra -y
+apt install libpng-dev zlib1g-dev -y
+apt install libpoppler-glib-dev -y
+apt install libpoppler-private-dev -y
 #--------------------
 
 #---------------------

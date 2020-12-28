@@ -458,13 +458,6 @@ Version 2016-04-04"
 (use-package emojify
   :if (display-graphic-p)
   :hook (after-init . global-emojify-mode))
-(use-package lsp-mssql
-  :custom
-  (lsp-mssql-connections
-   [(:server "localhost"
-             :database ""
-             :user "aaronzinho"
-             :password "password")]))
 (use-package lsp-mode
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
