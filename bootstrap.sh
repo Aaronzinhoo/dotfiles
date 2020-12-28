@@ -1,8 +1,8 @@
 #!/bin/bash
 
-. "$( pwd )/utils.exclude.sh"
+. "$( pwd )/utils.sh"
 
-PROMPT='[ Bootstrap ]'
+PROMPT='[ Bootstrap ]: '
 
 PATH_TO_DEVELOPMENT="$HOME/development"
 PATH_TO_ORG="$HOME/org"
@@ -10,9 +10,9 @@ EMACS_INSTALL_DIR="${HOME}/.emacs.d"
 
 # Initialize a few things
 init () {
-    echo_with_prompt "Making a Projects folder in $PATH_TO_PROJECTS if it doesn't already exist"
+    echo_with_prompt "Making a development folder in $PATH_TO_DEVELOPMENT if it doesn't already exist"
 	mkdir -p "$PATH_TO_DEVELOPMENT"
-	echo_with_prompt "Making a Playground folder in $PATH_TO_ORG if it doesn't already exist"
+	echo_with_prompt "Making an org folder in $PATH_TO_ORG if it doesn't already exist"
 	mkdir -p "$PATH_TO_ORG"
 }
 
@@ -20,12 +20,12 @@ init () {
 # Is this where rsync shines?
 # TODO - add support for -f and --force
 link () {
-    symlink_files=($(get_symlink_file))
+    symlink_files=($(get_symlink_files))
     for file in "${symlink_files[@]}";
     do
         # Silently ignore errors here because the files may already exist
         file=${file#./}
-        if [ -d "$file" ]  && [ "$file" = "./emacs"  ]; then
+        if [ -d "$file" ]  && [ "$file" = "emacs"  ]; then
             ln -s "$( pwd )/$file" "$EMACS_INSTALL_DIR"
         elif [ -f "$( pwd )/$file" ]; then
             ln -s "$( pwd )/$file" "$HOME"
@@ -60,7 +60,7 @@ install_tools () {
 		# TODO - regex here?
 		if [ "$resp" = 'y' -o "$resp" = 'Y' ] ; then
 			echo_with_prompt "Installing useful stuff using apt. This may take a while..."
-			sh apt.sh
+			sudo sh apt.sh
 		else
 			echo_with_prompt "Apt installation cancelled by user"
 		fi
@@ -76,9 +76,8 @@ install_tools
 for BOOTSTRAP in ./bootstrap_extensions/*
 do
     echo_with_prompt "applying ${BOOTSTRAP} to installation"
-    apply_bootstrap_extension  $BOOTSTRAP
+    apply_bootstrap_extension $BOOTSTRAP
 done
-
 
 # Hack to make sure this script always exits successfully
 # Since the user may choose to cancel a step here and that is cool
