@@ -1,5 +1,5 @@
 . "$( pwd )/utils.sh"
-PROMPT="[ PyenvBootstrap ]: "
+PROMPT="[ PyenvExtensionLoader ]: "
 PACKAGE_TO_CHECK="git"
 
 check_system_package_installed $PACKAGE_TO_CHECK
