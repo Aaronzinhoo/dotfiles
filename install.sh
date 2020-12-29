@@ -19,7 +19,7 @@ else
 	INSTALL_ENVIRONMENT="work"
 fi
 
-echo_with_prompt "Making an necessary folders"
+echo_with_prompt "Making needed folders"
 
 check_and_mkdir "$GOPATH"
 check_and_mkdir "$PATH_TO_ORG"
