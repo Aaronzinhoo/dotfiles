@@ -83,13 +83,12 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate nvm zsh_reload git z zsh-autosuggestions colored-man-pages zsh-pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng npm )
+plugins=( autoupdate zsh-pyenv zsh-nvm zsh_reload git z zsh-autosuggestions colored-man-pages pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion )
 
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
 # export MANPATH="/usr/local/man:$MANPATH"
-export HOSTNAME="aaronzinho-pc"
 
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
@@ -101,11 +100,9 @@ else
     export EDITOR='emacs'
 fi
 
-# Load Path and environment variablles, functions, aliases
-for file in ".alias" ".function" ".path" ".env"
-do 
-    	. "$( pwd )/$file"
-done
+# Load environment aliases
+. "$( pwd )/.alias"
+
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -115,10 +112,6 @@ done
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-# alias mkvirtualenv='mkvirtualenv --python=/usr/local/bin/python3.8'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
