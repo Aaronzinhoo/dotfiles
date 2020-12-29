@@ -1,0 +1,2 @@
+. "( pwd )/.path"
+. "( pwd )/.env"
