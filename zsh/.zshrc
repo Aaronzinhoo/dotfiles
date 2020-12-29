@@ -100,6 +100,9 @@ else
     export EDITOR='emacs'
 fi
 
+# custom key binding
+bindkey '^ ' autosuggest-accept
+
 # Load environment aliases
 . "$( pwd )/.alias"
 

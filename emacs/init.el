@@ -26,13 +26,13 @@
       inhibit-startup-screen t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
-(setq user-full-name "Aaronzinho")
+(setq user-full-name "Aaron Gonzales")
 (setq blink-matching-paren 'show)
 (setq byte-compile-warnings '(cl-functions))
 ;; create backup in emacs folder "backup"
-(defvar home-directory (expand-file-name "~/.emacs.d/"))
-(defvar backup-dir (concat home-directory "backups/"))
-(defvar autosave-dir (concat home-directory "autosave/"))
+(defvar home-directory (expand-file-name "~/.config/emacs"))
+(defvar backup-dir (concat home-directory "/backups"))
+(defvar autosave-dir (concat home-directory "/autosave"))
 ;; make dirs for saving and backing up
 (if (not (file-exists-p backup-dir))
     (make-directory backup-dir))
@@ -45,8 +45,8 @@
       kept-old-versions 0
       kept-new-versions 10
       auto-save-default t
-      backup-directory-alist `((".*" . ,(concat user-emacs-directory "backups")))
-      auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "autosave") t)))
+      backup-directory-alist `((".*" . ,(concat user-emacs-directory "/backups")))
+      auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "/autosave") t)))
 ;; we will call `blink-matching-open` ourselves...
 (remove-hook 'post-self-insert-hook
              #'blink-paren-post-self-insert-function)
@@ -397,7 +397,7 @@ Version 2016-04-04"
   ;; 'logo which displays an alternative emacs logo
   ;; 1, 2 or 3 which displays one of the text banners
   ;; "path/to/your/image.png" or "path/to/your/text.txt" which displays whatever image/text you would prefer
-  (dashboard-startup-banner "/home/aaronzinho/Pictures/resized-evangelion-rei.png")
+  (dashboard-startup-banner (concat home-directory "dashboard-images/rei_ayanami_render.png"))
   ;; Content is not centered by default. To center, set
   (dashboard-center-content t)
   :config
@@ -963,43 +963,42 @@ Version 2016-04-04"
   :hook (pdf-view-mode . pdf-continuous-scroll-mode))
 
 ;;; Application Framework
-(use-package eaf
-  :straight (:type git
-                   :host github
-                   :repo "manateelazycat/emacs-application-framework"
-                   :files ("*.el" "*.py" "core" "app"))
-  :load-path "/home/aaronzinho/.emacs.d/eaf/git/emacs-application-framework"
-  :custom
-  (eaf-find-alternate-file-in-dired t)
-  (browse-url-browser-function 'eaf-open-browser) ;; Make EAF Browser my default browser
-  (eaf-browser-continue-where-left-off t)
-  :config
-  (require 'eaf-org)
-  (defalias 'browse-web #'eaf-open-browser)
-  (eaf-setq eaf-browser-default-zoom "1.25")
-  (eaf-setq eaf-browser-dark-mode "false")
-  (eaf-setq eaf-browser-enable-adblocker "true")
-  (eaf-setq eaf-pdf-dark-mode "false")
-  (eaf-setq eaf-browser-enable-autofill "true")
-  ;; I already bind "RET", "<mouse-2>", "^" to `dired-find-alternate-file' in `init-dired.el'.
-  ;; Comment this line out of you don't want to use EAF to open available files in dired.
-  ;; (global-set-key [remap dired-find-alternate-file] #'eaf-file-open-in-dired)
-  (eaf-bind-key nil "M-q" eaf-browser-keybinding)
-  (eaf-bind-key open_link "C-M-s" eaf-browser-keybinding)
-  (eaf-bind-key clear_cookies "C-M-q" eaf-browser-keybinding)
-  (eaf-bind-key insert_or_recover_prev_close_page "X" eaf-browser-keybinding)
-  (eaf-bind-key scroll_up "RET" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_down_page "DEL" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_down_page "u" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_up_page "d" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key quit-window "q" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key zoom_in "C-=" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key zoom_out "C--" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key take_photo "p" eaf-camera-keybinding)
-  (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
-  )
+;; (use-package eaf
+;;   :straight (:type git
+;;                    :host github
+;;                    :repo "manateelazycat/emacs-application-framework"
+;;                    :files ("*.el" "*.py" "core" "app"))
+;;   :load-path "/home/aaronzinho/.emacs.d/eaf/git/emacs-application-framework"
+;;   :custom
+;;   (browse-url-browser-function 'eaf-open-browser) ;; Make EAF Browser my default browser
+;;   (eaf-browser-continue-where-left-off t)
+;;   :config
+;;   (require 'eaf-org)
+;;   (defalias 'browse-web #'eaf-open-browser)
+;;   (eaf-setq eaf-browser-default-zoom "1.25")
+;;   (eaf-setq eaf-browser-dark-mode "false")
+;;   (eaf-setq eaf-browser-enable-adblocker "true")
+;;   (eaf-setq eaf-pdf-dark-mode "false")
+;;   (eaf-setq eaf-browser-enable-autofill "true")
+;;   ;; I already bind "RET", "<mouse-2>", "^" to `dired-find-alternate-file' in `init-dired.el'.
+;;   ;; Comment this line out of you don't want to use EAF to open available files in dired.
+;;   ;; (global-set-key [remap dired-find-alternate-file] #'eaf-file-open-in-dired)
+;;   (eaf-bind-key nil "M-q" eaf-browser-keybinding)
+;;   (eaf-bind-key open_link "C-M-s" eaf-browser-keybinding)
+;;   (eaf-bind-key clear_cookies "C-M-q" eaf-browser-keybinding)
+;;   (eaf-bind-key insert_or_recover_prev_close_page "X" eaf-browser-keybinding)
+;;   (eaf-bind-key scroll_up "RET" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_down_page "DEL" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_down_page "u" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_up_page "d" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key quit-window "q" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key zoom_in "C-=" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key zoom_out "C--" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
+;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
+;;   )
 ;;; Programming/Project Management
 ;; SQL
 ;; sudo apt install sqlite3
@@ -1103,12 +1102,6 @@ Version 2016-04-04"
 ;;     npm install --save typescript
 ;;     npm install --save @types/browserify
 ;;     tsc --init
-;; (defun setup-tide-mode ()
-;;   "Basic setup for tide mode."
-;;   (interactive)
-;;   (tide-setup)
-;;   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
-;;       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver"))
 
 ;;   (local-set-key (kbd "C-c d") 'tide-documentation-at-point))
 (use-package tide
@@ -1168,10 +1161,10 @@ Version 2016-04-04"
 (use-package exec-path-from-shell
   :if (string-equal system-type "gnu/linux")
   :custom
+  ;;(exec-path-from-shell-arguments nil)
   (exec-path-from-shell-check-startup-files nil)
   :config
-  (exec-path-from-shell-initialize)
-  (push "HISTFILE" exec-path-from-shell-variables))
+  (exec-path-from-shell-initialize))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; PYTHON CONFIG
