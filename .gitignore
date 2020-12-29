@@ -8,3 +8,5 @@ emacs/recentf
 emacs/smex-items
 emacs/straight/
 emacs/transient/
+emacs/image-dired
+emacs/auto-save-list

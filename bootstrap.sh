@@ -4,23 +4,6 @@
 
 PROMPT='[ Bootstrap ]: '
 
-PATH_TO_DEVELOPMENT="$HOME/development"
-PATH_TO_ORG="$HOME/org"
-EMACS_INSTALL_DIR="${HOME}/.emacs.d"
-if [ -z "$1" ]; then
-	INSTALL_ENVIRONMENT="personal"
-else
-	INSTALL_ENVIRONMENT="work"
-fi
-
-# Initialize a few things
-init () {
-    echo_with_prompt "Making a development folder in $PATH_TO_DEVELOPMENT if it doesn't already exist"
-	mkdir -p "$PATH_TO_DEVELOPMENT"
-	echo_with_prompt "Making an org folder in $PATH_TO_ORG if it doesn't already exist"
-	mkdir -p "$PATH_TO_ORG"
-}
-
 # TODO : Delete symlinks to deleted files
 # Is this where rsync shines?
 # TODO - add support for -f and --force
@@ -74,8 +57,6 @@ install_tools () {
 	fi
 }
 
-
-init
 execute_func_with_prompt link "symlink everything"
 install_tools
 for BOOTSTRAP in ./bootstrap_extensions/*
