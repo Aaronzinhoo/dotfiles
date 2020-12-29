@@ -21,5 +21,6 @@ fi
 
 echo_with_prompt "adding vcxsrv script to windows home"
 cp "$( pwd )/windows/MyXsrv.bat" "${WINDOWS_HOME}"
+
 echo_with_prompt "adding script to registry"
 reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v RunXsrv /d $(wslpath -w $(echo "${WINDOWS_HOME}/MyXsrv.bat"))

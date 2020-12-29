@@ -6,6 +6,12 @@ import_package(){
     fi
 }
 
+check_and_mkdir(){
+    if [ ! -d "$1" ]; then
+        mkdir -p "$1"
+    fi
+}
+
 get_symlink_files(){
     echo "$(find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|windows')"
 }
