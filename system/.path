@@ -13,4 +13,4 @@ PATH="${HOME}/.poetry/bin:$PATH"
 PATH="${HOME}/.pyenv/bin:$PATH"
 
 # GOLANG ROOT and PATH
-export PATH=$PATH:/usr/local/go/bin:$HOME/development/go/bin
+export PATH=$PATH:/usr/local/go/bin:$HOME/.config/go/bin

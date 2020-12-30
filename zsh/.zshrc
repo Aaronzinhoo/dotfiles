@@ -100,11 +100,11 @@ else
     export EDITOR='emacs'
 fi
 
-# custom key binding
+# custom key binding CTRL+SPC for accepting
 bindkey '^ ' autosuggest-accept
 
 # Load environment aliases
-. "$( pwd )/.alias"
+. "${HOME}/.alias"
 
 
 # Compilation flags
@@ -114,7 +114,12 @@ bindkey '^ ' autosuggest-accept
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
-#
+
+# custom exports for zsh-z
+export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
+export ZSHZ_CASE=smart
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export PATH="$HOME/.poetry/bin:$PATH"

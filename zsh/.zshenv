@@ -1,0 +1,2 @@
+. "$HOME/.path"
+. "$HOME/.env"

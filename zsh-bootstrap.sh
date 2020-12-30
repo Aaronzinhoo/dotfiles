@@ -9,6 +9,8 @@ if [ $? -eq 1 ];then
     return 1
 fi
 
+CUSTOM_PLUGINS="$HOME/.oh-my-zsh/custom/plugins"
+
 echo_with_prompt "installing OMZ..."
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
 
@@ -33,7 +35,7 @@ git clone https://github.com/lukechilds/zsh-nvm "${CUSTOM_PLUGINS}"/zsh-nvm
 git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUGINS}"/zsh-better-npm-completion
 
 echo_with_prompt "adding poetry completion to zsh"
-
+check_and_mkdir "${CUSTOM_PLUGINS}/poetry"
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
 poetry completions zsh > "${CUSTOM_PLUGINS}/poetry/_poetry"
 
