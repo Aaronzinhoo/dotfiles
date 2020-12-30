@@ -30,6 +30,8 @@
 (setq blink-matching-paren 'show)
 (setq byte-compile-warnings '(cl-functions))
 ;; create backup in emacs folder "backup"
+(setq user-init-file "~/.emacs.d/init.el")
+(setq user-emacs-directory "~/.config/emacs")
 (defvar home-directory (expand-file-name "~/.config/emacs"))
 (defvar backup-dir (concat home-directory "/backups"))
 (defvar autosave-dir (concat home-directory "/autosave"))
@@ -45,8 +47,7 @@
       kept-old-versions 0
       kept-new-versions 10
       auto-save-default t
-      backup-directory-alist `((".*" . ,(concat user-emacs-directory "/backups")))
-      auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "/autosave") t)))
+      backup-directory-alist `((".*" . ,(concat user-emacs-directory "/backups"))))
 ;; we will call `blink-matching-open` ourselves...
 (remove-hook 'post-self-insert-hook
              #'blink-paren-post-self-insert-function)
@@ -73,9 +74,9 @@
   (recenter))
 (defun pop-local-mark-ring ()
   "Move cursor to last mark position of current buffer.
-Call this repeatedly will cycle all positions in `mark-ring'.
-URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
-Version 2016-04-04"
+  Call this repeatedly will cycle all positions in `mark-ring'.
+  URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
+  Version 2016-04-04"
   (interactive)
   (set-mark-command t))
 (defun split-and-follow-horizontally ()
@@ -212,6 +213,10 @@ Version 2016-04-04"
   :straight nil
   :init
   (server-start))
+(use-package no-littering
+  :config
+  (setq auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 (use-package url)
 (use-package xref
   :straight t)
@@ -372,6 +377,10 @@ Version 2016-04-04"
         (aaronzinho-delete-line))))
   :config
   (global-set-key (kbd "C-k") 'crux-smart-delete-line))
+(use-package winner
+  :straight nil
+  :config
+  (winner-mode 1))
 (use-package ace-window
   :commands ace-window
   :bind ("M-o" . ace-window)
@@ -397,7 +406,7 @@ Version 2016-04-04"
   ;; 'logo which displays an alternative emacs logo
   ;; 1, 2 or 3 which displays one of the text banners
   ;; "path/to/your/image.png" or "path/to/your/text.txt" which displays whatever image/text you would prefer
-  (dashboard-startup-banner (concat home-directory "dashboard-images/rei_ayanami_render.png"))
+  (dashboard-startup-banner "~/.emacs.d/dashboard-images/rei_ayanami_render.png")
   ;; Content is not centered by default. To center, set
   (dashboard-center-content t)
   :config
