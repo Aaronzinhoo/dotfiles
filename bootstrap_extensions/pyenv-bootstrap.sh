@@ -4,5 +4,5 @@ PROMPT="[ PyenvExtensionLoader ]: "
 
 echo_with_prompt "installing python for use in pyenv"
 
-pyenv install $PYTHON_VERSION
-pyenv global $PYTHON_VERSION
+pyenv install 3.8.6
+pyenv global 3.8.6

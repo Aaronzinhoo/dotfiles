@@ -26,7 +26,7 @@ apply_bootstrap_extension(){
 
 echo_with_prompt () {
     # The narcissistic default prompt
-    PROMPT="${PROMPT:-'[ Aaronzinho:Dotfiles ]'}"
+    PROMPT="${PROMPT:-[ Aaronzinho:Dotfiles ]: }"
     echo "${PROMPT} $*"
 }
 
