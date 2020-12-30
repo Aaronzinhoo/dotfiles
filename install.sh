@@ -4,10 +4,9 @@
 
 echo_with_prompt "Initializing..."
 
-GOPATH="${HOME}/development/go"
 PYENV_ROOT="${HOME}/.pyenv"
-
 PATH_TO_ORG="${HOME}/org"
+PATH_TO_DEVELOPMENT="${HOME}/development"
 
 # zsh custom plugin folder
 CUSTOM_PLUGINS=$HOME/.oh-my-zsh/custom/plugins
@@ -19,29 +18,29 @@ else
 fi
 
 XDG_CONFIG_HOME="${HOME}/.config"
-XDG_CACHE_HOME="${XDG_CONFIG_HOME}/.config/cache"
-XDG_DATA_HOME="$XDG_CONFIG_HOME/local/share"
-EMACS_INSTALL_DIR="${XDG_CONFIG_HOME}/emacs
-"
+XDG_CACHE_HOME="${XDG_CONFIG_HOME}/cache"
+XDG_DATA_HOME="${XDG_CONFIG_HOME}/local/share"
+EMACS_INSTALL_DIR="${HOME}/.emacs.d"
 EDITOR="emacs"
 
-ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-HISTFILE="$ZDOTDIR/.zhistory"    # History filepath
+NVM_DIR="${XDG_CONFIG_HOME}/nvm"
+GOPATH="${XDG_CONFIG_HOME}/go"
+ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
 
 PYTHON_VERSION="3.8.6"
 
 echo_with_prompt "Making needed folders"
 
 check_and_mkdir "$GOPATH"
+check_and_mkdir "$PATH_TO_DEVELOPMENT"
 check_and_mkdir "$PATH_TO_ORG"
-check_and_mkdir "${CUSTOM_PLUGINS}"
-check_and_mkdir "${CUSTOM_PLUGINS}/poetry"
 check_and_mkdir "$HOME/.local/bin"
 check_and_mkdir "$XDG_CONFIG_HOME"
 check_and_mkdir "$XDG_CACHE_HOME"
-check_and_mkdir "$XDG_DATA_DIR"
-check_and_mkdir "$ZDOTDIR"
+check_and_mkdir "$XDG_DATA_HOME"
 
 echo_with_prompt "Installing..."
 
-source "( pwd )/bootstrap.sh"
+source "$( pwd )/bootstrap.sh"
+
+echo_with_prompt "Finished! Enjoy your new setup"

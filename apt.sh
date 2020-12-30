@@ -99,12 +99,8 @@ apt install htop -y
 # languages
 #--------------------
 
-## nodejs
-echo_with_prompt "installing nvm\n";
-curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-
 ## python
-echo_with_prompt "installing pyenv";
+echo_with_prompt "installing pyenv dependencies";
 apt-get install --no-install-recommends make \
         libssl-dev \
         zlib1g-dev \

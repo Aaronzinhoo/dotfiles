@@ -13,7 +13,7 @@ link () {
     do
         # Silently ignore errors here because the files may already exist
         file=${file#./}
-        if [ -d "$file" ]  && [ "$file" = "emacs"  ]; then
+        if [ -d "$file" ]  && [ "$file" = "emacs" ]; then
             ln -s "$( pwd )/$file" "$EMACS_INSTALL_DIR"
         elif [ -f "$( pwd )/$file" ]; then
             ln -s "$( pwd )/$file" "$HOME"
@@ -59,6 +59,11 @@ install_tools () {
 
 execute_func_with_prompt link "symlink everything"
 install_tools
+
+echo_with_prompt "applying zsh bootstrap to installation"
+apply_bootstrap_extension "$( pwd )/zsh-bootstrap.sh"
+zsh -c 'source $( pwd)/zsh/.zshenv; source $( pwd )/zsh/.zshrc'
+
 for BOOTSTRAP in ./bootstrap_extensions/*
 do
     echo_with_prompt "applying ${BOOTSTRAP} to installation"
