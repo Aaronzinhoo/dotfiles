@@ -4,12 +4,14 @@
 ;;;init.el --- Emacs configuration
 
 ;;; Code:
-;; TODO:
-;;     - setup semantic scholar bibtex fetch when its more mature
-;;     use-package-ensure-system-package
-;;     - https://github.com/waymondo/use-package-ensure-system-package
 
 ;; startup defaults
+(setq user-full-name "Aaron Gonzales")
+(setq user-init-file "~/.emacs.d/init.el")
+(setq user-emacs-directory "~/.config/emacs")
+(defvar home-directory (expand-file-name "~/.config/emacs"))
+(defvar backup-dir (concat home-directory "/backups"))
+(defvar autosave-dir (concat home-directory "/autosave"))
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (setq package-enable-at-startup nil
@@ -26,15 +28,15 @@
       inhibit-startup-screen t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
-(setq user-full-name "Aaron Gonzales")
+;; Disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+                shell-mode-hook
+                treemacs-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 (setq blink-matching-paren 'show)
 (setq byte-compile-warnings '(cl-functions))
-;; create backup in emacs folder "backup"
-(setq user-init-file "~/.emacs.d/init.el")
-(setq user-emacs-directory "~/.config/emacs")
-(defvar home-directory (expand-file-name "~/.config/emacs"))
-(defvar backup-dir (concat home-directory "/backups"))
-(defvar autosave-dir (concat home-directory "/autosave"))
 ;; make dirs for saving and backing up
 (if (not (file-exists-p backup-dir))
     (make-directory backup-dir))
@@ -104,12 +106,6 @@
                  (or face '(:inherit default :inherit highlight)))
     ol))
 
-(global-set-key (kbd "C-x k") 'kill-this-buffer)
-(global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
-(global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
-(global-set-key (kbd "M-[") 'backward-up-list)
-(global-set-key (kbd "M-]") 'up-list)
-
 (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 (toggle-frame-maximized)
 
@@ -175,7 +171,7 @@
 (global-display-line-numbers-mode t)
 (column-number-mode t) ;; enable column numbers globally
 (global-visual-line-mode t) ;; cause lines to wrap
-(setq scroll-bar-mode nil) ;;remove the scroll bar
+(scroll-bar-mode -1) ;;remove the scroll bar
 (put 'erase-buffer 'disabled nil)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -196,19 +192,21 @@
   (dash-enable-font-lock))
 ;; org-noter/pdf-tools dependency
 (use-package tablist)
-(require 'tramp-sh nil t)
 (use-package tramp
   :straight nil
   :custom
   (tramp-verbose 10)
   (tramp-debug-buffer t)
-  (tramp-default-method "ssh")
-  (tramp-shell-prompt-pattern "\\(?:^\\|\\)[^]#$%>\n]*#?[]#$%>] *\\(\\[[0-9;]*[a-zA-Z] *\\)*")
-  :config
-  (add-to-list 'tramp-connection-properties
-               (list ".*" "locale" "LC_ALL=C"))
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  )
+  (tramp-default-method "ssh"))
+(use-package helpful
+  :custom
+  (counsel-describe-function-function #'helpful-callable)
+  (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . counsel-describe-function)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-variable] . counsel-describe-variable)
+  ([remap describe-key] . helpful-key))
 (use-package server
   :straight nil
   :init
@@ -282,7 +280,7 @@
 ;; TODO: once add projectile, have this hook to projectile
 (use-package diff-hl
   :init
-  (defun aaronzinhoo--hook-diff-hl-to-project ()
+  (defun aaronzinhoo/hook-diff-hl-to-project ()
     (if (projectile-project-p)
         (diff-hl-mode)))
   :config
@@ -290,7 +288,7 @@
   (diff-hl-flydiff-mode t)
   (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-  (add-hook 'prog-mode 'aaronzinho--hook-diff-hl-to-project))
+  (add-hook 'prog-mode 'aaronzinho/hook-diff-hl-to-project))
 (use-package hl-todo
   :hook (after-init . hl-todo-mode))
 (use-package magit-todos
@@ -327,6 +325,8 @@
   (powerline-vc 'center))
 (use-package dired
   :straight nil
+  :bind (:map dired-mode-map
+              ("f" . dired-find-file))
   :custom
   (dired-auto-revert-buffer t))
 (use-package dired-narrow
@@ -340,6 +340,7 @@
               ("<backtab>" . dired-subtree-cycle)))
 (setq dired-listing-switches "-lXGh --group-directories-first"
       dired-dwim-target t)
+;; font-locking colors for dired
 (use-package diredfl
   :after dired
   :config
@@ -467,6 +468,7 @@
 (use-package emojify
   :if (display-graphic-p)
   :hook (after-init . global-emojify-mode))
+(use-package lsp-ivy)
 (use-package lsp-mode
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
@@ -1265,7 +1267,7 @@
               ("M-*" . pop-tag-mark))
   :config
   (setq compilation-scroll-output t)
-  (add-hook 'compilation-mode-hook 'my-compilation-hook)
+  ;; (add-hook 'compilation-mode-hook 'my-compilation-hook)
   (add-hook 'go-mode-hook 'yas-minor-mode)
   (add-hook 'go-mode-hook 'my-go-mode-hook))
 ;; C++ / C
@@ -1307,6 +1309,11 @@
 (global-set-key (kbd "M-l") 'forward-char)
 (global-set-key (kbd "M-q") 'yank)
 (global-set-key (kbd "M-4") 'pop-local-mark-ring)
+(global-set-key (kbd "C-x k") 'kill-this-buffer)
+(global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
+(global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
+(global-set-key (kbd "M-[") 'backward-up-list)
+(global-set-key (kbd "M-]") 'up-list)
 ;; delete pair of items
 (global-set-key (kbd "C-c C-p") 'delete-pair)
 ;; This is your old M-x.
