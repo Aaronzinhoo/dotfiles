@@ -1,2 +1,3 @@
 alias fd='fdfind'
 alias cat='bat'
+alias fixtime='sudo hwclock -s'
