@@ -12,12 +12,16 @@
 (defvar home-directory (expand-file-name "~/.config/emacs"))
 (defvar backup-dir (concat home-directory "/backups"))
 (defvar autosave-dir (concat home-directory "/autosave"))
-(defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 (defvar file-name-handler-alist-old file-name-handler-alist)
+(defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
+;; font
+(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1"))
+;; more defaults
 (setq package-enable-at-startup nil
       message-log-max 16384
       gc-cons-threshold 402653184
       gc-cons-percentage 0.6
+      split-width-threshold 1 ;; horizontally split
       auto-window-vscroll nil
       global-auto-revert-mode t
       ad-redefinition-action 'accept
@@ -28,14 +32,19 @@
       inhibit-startup-screen t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
+;; enable line numbers for some modes
+(dolist (mode '(text-mode-hook
+                prog-mode-hook
+                conf-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 1))))
 ;; Disable line numbers for some modes
 (dolist (mode '(org-mode-hook
                 term-mode-hook
+                dashboard-mode-hook
                 shell-mode-hook
                 treemacs-mode-hook
                 eshell-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
-(setq blink-matching-paren 'show)
 (setq byte-compile-warnings '(cl-functions))
 ;; make dirs for saving and backing up
 (if (not (file-exists-p backup-dir))
@@ -76,8 +85,8 @@
   (recenter))
 (defun pop-local-mark-ring ()
   "Move cursor to last mark position of current buffer.
-  Call this repeatedly will cycle all positions in `mark-ring'.
-  URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
+Call this repeatedly will cycle all positions in `mark-ring'.
+URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   Version 2016-04-04"
   (interactive)
   (set-mark-command t))
@@ -166,9 +175,7 @@
  tab-stop-list (number-sequence 4 120 4)
  scroll-preserve-screen-position t
  scroll-conservatively 10000)
-(setq ring-bell-function nil)
-(global-hl-line-mode t)
-(global-display-line-numbers-mode t)
+(setq ring-bell-function 'never)
 (column-number-mode t) ;; enable column numbers globally
 (global-visual-line-mode t) ;; cause lines to wrap
 (scroll-bar-mode -1) ;;remove the scroll bar
@@ -190,6 +197,9 @@
 (use-package dash
   :config
   (dash-enable-font-lock))
+(use-package hl-line
+  :straight nil
+  :hook (prog-mode . hl-line-mode))
 ;; org-noter/pdf-tools dependency
 (use-package tablist)
 (use-package tramp
@@ -200,6 +210,7 @@
   (tramp-default-method "ssh"))
 (use-package helpful
   :custom
+  (help-window-select t)
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-variable)
   :bind
@@ -233,6 +244,7 @@
 ;; show matching parens by highlighting parens
 (use-package paren
   :straight nil
+  :hook (prog-mode . show-paren-mode)
   :custom
   (show-paren-style 'paren)
   (show-paren-delay 0.03)
@@ -240,7 +252,7 @@
   (show-paren-when-point-inside-paren nil)
   (show-paren-when-point-in-periphery t)
   :config
-  (setq show-paren-mode t))
+  (setq blink-matching-paren 'show))
 ;; only use agency when windows detected
 (use-package ssh-agency
   :if (string-equal system-type "windows-nt"))
@@ -279,20 +291,58 @@
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
 (use-package diff-hl
-  :init
-  (defun aaronzinhoo/hook-diff-hl-to-project ()
-    (if (projectile-project-p)
-        (diff-hl-mode)))
+  :hook ((prog-mode . diff-hl-mode))
   :config
   (diff-hl-margin-mode t)
   (diff-hl-flydiff-mode t)
   (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-  (add-hook 'prog-mode 'aaronzinho/hook-diff-hl-to-project))
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
 (use-package hl-todo
-  :hook (after-init . hl-todo-mode))
+  :config
+  (hl-todo-mode))
+;; easily fix conflicts
+(use-package hydra)
+(use-package smerge-mode
+  :straight nil
+  :config
+  (defhydra smerge-hydra
+    (:color pink :hint nil :post (smerge-auto-leave))
+    "
+^Move^       ^Keep^               ^Diff^                 ^Other^
+^^-----------^^-------------------^^---------------------^^-------
+_n_ext       _b_ase               _<_: upper/base        _C_ombine
+_p_rev       _u_pper              _=_: upper/lower       _r_esolve
+^^           _l_ower              _>_: base/lower        _k_ill current
+^^           _a_ll                _R_efine
+^^           _RET_: current       _E_diff
+"
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("ZZ" (lambda ()
+            (interactive)
+            (save-buffer)
+            (bury-buffer))
+     "Save and bury buffer" :color blue)
+    ("q" nil "cancel" :color blue))
+  :hook (magit-diff-visit-file . (lambda ()
+                                   (when smerge-mode
+                                     (smerge-hydra/body)))))
 (use-package magit-todos
-  :after magit)
+  :hook (magit-status-mode . magit-todos-mode))
 (use-package magit
   :commands (magit-status)
   :diminish
@@ -302,11 +352,10 @@
   :config
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
 (use-package better-defaults
-  :defer 1)
+  :defer t)
 (use-package grep
   :defer t)
 (use-package wgrep
-  :straight t
   :custom
   (wgrep-auto-save-buffer t))
 ;; Ripgrep
@@ -325,21 +374,25 @@
   (powerline-vc 'center))
 (use-package dired
   :straight nil
-  :bind (:map dired-mode-map
-              ("f" . dired-find-file))
+  :hook ((dired-mode . dired-collapse-mode)
+         (dired-mode . hl-line-mode)
+         (dired-mode . all-the-icons-dired-mode))
   :custom
-  (dired-auto-revert-buffer t))
+  (dired-listing-switches "-lXGh --group-directories-first"
+                          dired-dwim-target t)
+  (dired-auto-revert-buffer t)
+  :config
+  (use-package dired-single)
+  (use-package dired-collapse))
 (use-package dired-narrow
   :bind (("C-c C-n" . dired-narrow)))
 (use-package dired-subtree
   :after dired
   :bind (:map dired-mode-map
               ("i" . dired-subtree-insert)
-              (";" . dired-subtree-remove)
+              ("k" . dired-subtree-remove)
               ("<tab>" . dired-subtree-toggle)
               ("<backtab>" . dired-subtree-cycle)))
-(setq dired-listing-switches "-lXGh --group-directories-first"
-      dired-dwim-target t)
 ;; font-locking colors for dired
 (use-package diredfl
   :after dired
@@ -366,7 +419,8 @@
   (defun aaronzinho-delete-whole-line ()
     "Delete whole line without pushing to kill-ring."
     (interactive)
-    (delete-region (line-beginning-position) (line-end-position)))
+    (delete-region (line-beginning-position) (line-end-position))
+    (delete-blank-lines))
   (defun crux-smart-delete-line ()
     "Kill to the end of the line and kill whole line on the next call."
     (interactive)
@@ -427,9 +481,8 @@
   (which-key-mode t))
 (use-package default-text-scale
   :defer 2
-  :config
-  (global-set-key (kbd "C-M-=") 'default-text-scale-increase)
-  (global-set-key (kbd "C-M--") 'default-text-scale-decrease))
+  :bind (("C--" . text-scale-decrease)
+         ("C-=" . text-scale-increase)))
 (use-package eldoc
   :diminish eldoc-mode)
 (use-package flycheck
@@ -451,7 +504,8 @@
   (append aggressive-indent-excluded-modes '( web-mode html-mode python-mode)))
 ;; use to highlight more characters with each use
 (use-package expand-region
-  :bind ("M-2" . 'er/expand-region)
+  :bind (("M-2" . er/expand-region)
+         ("C-(" . er/mark-outside-pairs))
   :init
   (defun er/add-rjsx-mode-expansions ()
     (make-variable-buffer-local 'er/try-expand-list)
@@ -465,6 +519,9 @@
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions))
 (use-package all-the-icons
   :straight t)
+(use-package all-the-icons-dired
+  :defer t
+  :diminish)
 (use-package emojify
   :if (display-graphic-p)
   :hook (after-init . global-emojify-mode))
@@ -580,16 +637,20 @@
   :straight t)
 ;; IF NEW MACHINE USE M-x all-the-icons-install-fonts
 ;; should load ivy and swiper automatically
+(use-package flx  ;; Improves sorting for fuzzy-matched results
+  :defer t
+  :init
+  (setq ivy-flx-limit 10000))
 (use-package counsel
   :diminish (ivy-mode counsel-mode)
   :bind* (("M-x" . counsel-M-x)
-          ("C-x b" . ivy-switch-buffer)
-          ("C-s" . swiper-isearch)
-          ("C-r" . swiper-isearch)
+          ("C-x b" . counsel-switch-buffer)
+          ("C-s" . counsel-grep-or-swiper)
           ("C-x C-f" . counsel-find-file)
           ("C-x C-r" . counsel-recentf)
           ("C-c r" . ivy-resume)
-          ("C-c C-r" . counsel-rg)
+          ("C-c m" . counsel-imenu)
+          ("C-r" . counsel-rg)
           ("M-t" .  swiper-thing-at-point)
           :map ivy-minibuffer-map
           ("C-c o" . ivy-occur)
@@ -598,6 +659,7 @@
   :hook ((after-init . ivy-mode)
          (ivy-mode . counsel-mode))
   :custom
+  (ivy-wrap t)
   (ivy-initial-inputs-alist nil)
   (swiper-action-recenter t)
   (enable-recursive-minibuffers t)
@@ -698,8 +760,9 @@
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading))
   :custom
-  (org-directory "~/org")
+  (org-directory (concat (getenv "HOME") "/org"))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
+  (org-agenda-files (list org-directory))
   ;; TODO: look to make refile easier to use (refile and delete)
   ;; NOTE: refile adds heading section to another heading section of your choice
   (org-refile-use-outline-path 'file)
@@ -714,7 +777,7 @@
   ;; single key press for certain movements when at first * in a heading
   (org-use-speed-commands t)
   ;;hide the leading stars in org mode
-  (org-hide-leading-stars t)
+  ;; (org-hide-leading-stars t)
   (org-confirm-babel-evaluate nil)
   ;; allow native font editing (highlighting)
   (org-src-fontify-natively t)
@@ -723,6 +786,8 @@
   (org-export-use-babel t)
   ;; use python-3 in org mode
   (org-babel-python-command "python3")
+  ;; change ... to down arrow
+  (org-ellipsis " ▾")
   :init
   ;; setup electric-pairs mode for org-mode
   (defvar org-electric-pairs '((?/ . ?/) (?= . ?=)) "Electric pairs for org-mode.")
@@ -950,7 +1015,9 @@
 (use-package org-sidebar
   :straight (org-sidebar :type git :host github :repo "alphapapa/org-sidebar"))
 (use-package org-superstar
-  :hook (org-mode . org-superstar-mode))
+  :hook (org-mode . org-superstar-mode)
+  :custom
+  (org-superstar-remove-leading-stars t))
 ;; autoload html files org
 (use-package org-preview-html
   :straight t)
@@ -1011,8 +1078,9 @@
 ;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
 ;;   )
 ;;; Programming/Project Management
-;; SQL
-;; sudo apt install sqlite3
+;; commenting
+(use-package evil-nerd-commenter
+  :bind ("M-;" . evilnc-comment-or-uncomment-lines))
 ;; Window Manager
 (use-package burly
   :straight (burly :type git :host github :repo "alphapapa/burly.el"))
@@ -1303,6 +1371,7 @@
 ;; C-c C-c run org code block
 
 ;;CUSTOM EMACS BUILT-IN KEYS
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "M-i") 'previous-line)
 (global-set-key (kbd "M-j") 'backward-char)
 (global-set-key (kbd "M-k") 'next-line)
