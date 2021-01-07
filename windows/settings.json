@@ -66,7 +66,7 @@
 		    "source": "Windows.Terminal.Wsl",
 		    "startingDirectory": "//wsl$/Ubuntu-20.04/home/aaronzinho",
     		"useAcrylic" : false,
-          }
+          },
           {
 		    "acrylicOpacity" : 0.75,
     		"backgroundImageOpacity": 0.2,
