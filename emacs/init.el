@@ -21,7 +21,6 @@
       message-log-max 16384
       gc-cons-threshold 402653184
       gc-cons-percentage 0.6
-      split-width-threshold 1 ;; horizontally split
       auto-window-vscroll nil
       global-auto-revert-mode t
       ad-redefinition-action 'accept
@@ -290,6 +289,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   ;; To disable collection of benchmark data after init is done.
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
+
+;;; CONTROL VERSION UTILS
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode))
   :config
@@ -297,9 +298,12 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (diff-hl-flydiff-mode t)
   (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+(use-package git-timemachine
+  :defer t
+  :commands (git-timemachine))
 (use-package hl-todo
   :config
-  (hl-todo-mode))
+  (global-hl-todo-mode))
 ;; easily fix conflicts
 (use-package hydra)
 (use-package smerge-mode
@@ -351,6 +355,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (magit-completing-read-function 'ivy-completing-read)
   :config
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package better-defaults
   :defer t)
 (use-package grep
@@ -432,6 +438,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (aaronzinho-delete-line))))
   :config
   (global-set-key (kbd "C-k") 'crux-smart-delete-line))
+
+;;; WINDOW CONTROL
+(global-set-key (kbd "C-M-<left>") 'shrink-window-horizontally)
+(global-set-key (kbd "C-M-<right>") 'enlarge-window-horizontally)
+(global-set-key (kbd "C-M-<down>") 'shrink-window)
+(global-set-key (kbd "C-M-<up>") 'enlarge-window)
 (use-package winner
   :straight nil
   :config
@@ -443,6 +455,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (aw-ignore-current t)
   (aw-dispatch-always t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (use-package page-break-lines
   :defer t)
 (use-package dashboard
@@ -525,6 +540,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package emojify
   :if (display-graphic-p)
   :hook (after-init . global-emojify-mode))
+(use-package yasnippet
+  :defer t
+  :diminish yas-minor-mode
+  :commands yas-minor-mode
+  :config
+  (yas-reload-all))
+(use-package yasnippet-snippets
+  :defer t)
 (use-package lsp-ivy)
 (use-package lsp-mode
   :hook (((c-mode        ; clangd
@@ -743,6 +766,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; texlive-fonts-extra texlive-latex-extra
 
 ;; for exporting html documents
+(use-package verb
+  :defer t
+  ;; C-C C-r C-k to kill buffers
+  ;; C-c C-r C-r to view header
+  )
 (use-package htmlize
   :straight t)
 (use-package ob-typescript)
@@ -866,6 +894,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            :empty-lines 1    ; properties
            :created t        ; properties
            )))
+  ;; TODO add to bind-keymap
+  (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
   ;; (org-reload)
   )
 (use-package ivy-bibtex
