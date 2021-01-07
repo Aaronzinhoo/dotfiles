@@ -37,6 +37,9 @@ git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUG
 echo_with_prompt "adding poetry completion to zsh"
 check_and_mkdir "${CUSTOM_PLUGINS}/poetry"
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
+
+echo_with_prompt "setting up poetry for current shell"
+. "${HOME}/.poetry/env"
 poetry completions zsh > "${CUSTOM_PLUGINS}/poetry/_poetry"
 
 echo_with_prompt "adding necessary symlinks"
