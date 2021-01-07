@@ -118,6 +118,10 @@ apt-get install --no-install-recommends make \
 
 ## golang
 echo_with_prompt "installing golang"
+if [ "${DISTRO_VERSION}" != "20.04" ]; then
+    echo_with_prompt "adding more UTD version of GoLang"
+    add-apt-repository ppa:longsleep/golang-backports
+fi
 apt install golang -y
 
 ## c++

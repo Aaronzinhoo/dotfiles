@@ -4,6 +4,7 @@
 
 echo_with_prompt "Initializing..."
 
+export DISTRO_VERSION=$( echo $WSL_DISTRO_NAME | sed -s 's/Ubuntu-//')
 export PYENV_ROOT="${HOME}/.pyenv"
 PATH_TO_ORG="${HOME}/org"
 PATH_TO_DEVELOPMENT="${HOME}/development"
