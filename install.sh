@@ -4,6 +4,7 @@
 
 echo_with_prompt "Initializing..."
 
+export DISTRO_VERSION=$( echo $WSL_DISTRO_NAME | sed -s 's/Ubuntu-//')
 export PYENV_ROOT="${HOME}/.pyenv"
 PATH_TO_ORG="${HOME}/org"
 PATH_TO_DEVELOPMENT="${HOME}/development"
@@ -41,6 +42,7 @@ check_and_mkdir "$HOME/.local/bin"
 check_and_mkdir "$XDG_CONFIG_HOME"
 check_and_mkdir "$XDG_CACHE_HOME"
 check_and_mkdir "$XDG_DATA_HOME"
+check_and_mkdir "$HOME/.ssh/github"
 
 echo_with_prompt "Installing..."
 
