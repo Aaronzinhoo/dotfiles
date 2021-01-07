@@ -4,7 +4,7 @@
 
 echo_with_prompt "Initializing..."
 
-PYENV_ROOT="${HOME}/.pyenv"
+export PYENV_ROOT="${HOME}/.pyenv"
 PATH_TO_ORG="${HOME}/org"
 PATH_TO_DEVELOPMENT="${HOME}/development"
 
@@ -12,20 +12,20 @@ PATH_TO_DEVELOPMENT="${HOME}/development"
 CUSTOM_PLUGINS=$HOME/.oh-my-zsh/custom/plugins
 
 if [ -z "$1" ]; then
-	INSTALL_ENVIRONMENT="personal"
+	export INSTALL_ENVIRONMENT="personal"
 else
-	INSTALL_ENVIRONMENT="work"
+	export INSTALL_ENVIRONMENT="work"
 fi
 
-XDG_CONFIG_HOME="${HOME}/.config"
-XDG_CACHE_HOME="${XDG_CONFIG_HOME}/cache"
-XDG_DATA_HOME="${XDG_CONFIG_HOME}/local/share"
+export XDG_CONFIG_HOME="${HOME}/.config"
+export XDG_CACHE_HOME="${XDG_CONFIG_HOME}/cache"
+export XDG_DATA_HOME="${XDG_CONFIG_HOME}/local/share"
 EMACS_INSTALL_DIR="${HOME}/.emacs.d"
 EDITOR="emacs"
 
-NVM_DIR="${XDG_CONFIG_HOME}/nvm"
-GOPATH="${XDG_CONFIG_HOME}/go"
-ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
+export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
+export GOPATH="${XDG_CONFIG_HOME}/go"
+export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
 
 PYTHON_VERSION="3.8.6"
 
