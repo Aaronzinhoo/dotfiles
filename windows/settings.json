@@ -31,42 +31,58 @@
         },
         "list":
         [
-            {
-                // Make changes here to the powershell.exe profile.
-                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
-                "name": "Windows PowerShell",
-                "commandline": "powershell.exe",
-                "hidden": false
+          {
+            // Make changes here to the powershell.exe profile.
+            "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+            "name": "Windows PowerShell",
+            "commandline": "powershell.exe",
+            "hidden": false
             },
-            {
-                // Make changes here to the cmd.exe profile.
-                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
-                "name": "Command Prompt",
-                "commandline": "cmd.exe",
-                "hidden": false
+          {
+            // Make changes here to the cmd.exe profile.
+            "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+            "name": "Command Prompt",
+            "commandline": "cmd.exe",
+            "hidden": false
             },
-            {
-                "guid": "{b453ae62-4e3d-5e58-b989-0a998ec441b8}",
-                "hidden": false,
-                "name": "Azure Cloud Shell",
-                "source": "Windows.Terminal.Azure"
+          {
+            "guid": "{b453ae62-4e3d-5e58-b989-0a998ec441b8}",
+            "hidden": false,
+            "name": "Azure Cloud Shell",
+            "source": "Windows.Terminal.Azure"
             },
-            {
-		"acrylicOpacity" : 0.75,
+          {
+		    "acrylicOpacity" : 0.75,
     		"backgroundImageOpacity": 0.2,
-		"backgroundImage": "C:/Users/Aaron/OneDrive/Pictures/Saved Pictures/1476493-evangelion-hd-wallpapers-1920x1080-for-1080p.jpg",
-		"closeOnExit" : true,
-		"fontFace": "Hack Nerd Font",
-		"fontSize" : 13,
-		"guid": "{07b52e3e-de2c-5db4-bd2d-ba144ed6c273}",
-		"hidden": false,
-                "name": "Ubuntu-20.04",
-		"padding" : "0, 0, 0, 0",
-		"snapOnInput" : true,
-		"source": "Windows.Terminal.Wsl",
-		"startingDirectory": "//wsl$/Ubuntu-20.04/home/aaronzinho",
+		    "backgroundImage": "C:/Users/Aaron/OneDrive/Pictures/Saved Pictures/1476493-evangelion-hd-wallpapers-1920x1080-for-1080p.jpg",
+		    "closeOnExit" : true,
+		    "fontFace": "Hack Nerd Font",
+		    "fontSize" : 13,
+		    "guid": "{07b52e3e-de2c-5db4-bd2d-ba144ed6c273}",
+		    "hidden": false,
+            "name": "Ubuntu-20.04",
+		    "padding" : "0, 0, 0, 0",
+		    "snapOnInput" : true,
+		    "source": "Windows.Terminal.Wsl",
+		    "startingDirectory": "//wsl$/Ubuntu-20.04/home/aaronzinho",
     		"useAcrylic" : false,
-            }
+          },
+          {
+		    "acrylicOpacity" : 0.75,
+    		"backgroundImageOpacity": 0.2,
+		    "backgroundImage": "C:/Users/Aaron/OneDrive/Pictures/Saved Pictures/1476493-evangelion-hd-wallpapers-1920x1080-for-1080p.jpg",
+		    "closeOnExit" : true,
+		    "fontFace": "Hack Nerd Font",
+		    "fontSize" : 13,
+		    "guid": "{c6eaf9f4-32a7-5fdc-b5cf-066e8a4b1e40}",
+		    "hidden": false,
+            "name": "Ubuntu-18.04",
+		    "padding" : "0, 0, 0, 0",
+		    "snapOnInput" : true,
+		    "source": "Windows.Terminal.Wsl",
+		    "startingDirectory": "//wsl$/Ubuntu-18.04/home/aaronzinho",
+    		"useAcrylic" : false,
+          }
         ]
     },
 
