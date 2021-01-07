@@ -62,7 +62,7 @@ install_tools
 
 echo_with_prompt "applying zsh bootstrap to installation"
 apply_bootstrap_extension "$( pwd )/zsh-bootstrap.sh"
-zsh -c 'source $( pwd)/zsh/.zshenv; source $( pwd )/zsh/.zshrc'
+#zsh -c 'source $( pwd)/zsh/.zshenv; source $( pwd )/zsh/.zshrc'
 
 for BOOTSTRAP in ./bootstrap_extensions/*
 do
