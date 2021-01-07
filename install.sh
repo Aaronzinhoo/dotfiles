@@ -42,6 +42,7 @@ check_and_mkdir "$HOME/.local/bin"
 check_and_mkdir "$XDG_CONFIG_HOME"
 check_and_mkdir "$XDG_CACHE_HOME"
 check_and_mkdir "$XDG_DATA_HOME"
+check_and_mkdir "$HOME/.ssh/github"
 
 echo_with_prompt "Installing..."
 
