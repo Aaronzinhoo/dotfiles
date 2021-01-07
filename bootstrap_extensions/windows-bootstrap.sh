@@ -11,6 +11,9 @@ fi
 WINDOWS_USERNAME=$(cmd.exe /c echo %username% | tr -d '\r')
 WINDOWS_HOME="/mnt/c/Users/${WINDOWS_USERNAME}"
 
+# create symlink to windows home folder
+ln -s "/mnt/c/Users/${WINDOWS_HOME}" "${HOME}/winhome"
+
 if [ "$INSTALL_ENVIRONMENT" = "work" ]; then
 	echo_with_prompt "using work windows terminal settings"
 	cp "$( pwd )/windows/settings_work.json" "${WINDOWS_HOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"

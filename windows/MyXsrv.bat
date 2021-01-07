@@ -10,7 +10,7 @@ setx "WSL_IF_IP" "%WSL_IF_IP%"
 setx "WSLENV" "WSL_IF_IP/u"
 
 REM Change E:\VcXsrv to your VcXsrv installation folder
-START /D "C:\Program Files\VcXsrv" /B vcxsrv.exe -clipboard -multiwindow -nowgl -clipboard -ac
+START /D "C:\Program Files\VcXsrv" /B vcxsrv.exe -clipboard -multiwindow -nowgl -ac
 GOTO :EOF
 
 
