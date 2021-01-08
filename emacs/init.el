@@ -15,7 +15,7 @@
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 ;; font
-(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1"))
+(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-16-*-*-*-m-0-iso10646-1"))
 ;; more defaults
 (setq package-enable-at-startup nil
       message-log-max 16384
@@ -1145,6 +1145,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode ("\\.env\\'" . dotenv-mode))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; DEVOPS CONFIG
+(use-package docker-compose-mode
+  :mode ("docker-compose\\'" . docker-compose-mode))
+(use-package dockerfile-mode
+  :mode ("Dockerfile\\'" . dockerfile-mode))
 ;; WEB-DEV CONFIG
 (use-package simple-httpd
   :defer t)
