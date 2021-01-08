@@ -2,7 +2,8 @@
 
 ## Wsl2
 At this point only 5 steps needed. 
-* Download/Install Ubuntu, VcXsrv, and your favorite font type (I use Hack)
+* Download/Install Ubuntu, VcXsrv, and your favorite font type
+* If using Hack then install from Nerd Fonts!
 * Fix VcXsrv firewall settings to be allowed over public networks
 * Make changes to settings*.json if needed (fonts, image background. etc...)
 * Create/Add your github rsa key to ~/.ssh/github and link it to github
