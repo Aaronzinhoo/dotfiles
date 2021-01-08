@@ -21,4 +21,8 @@ Python uses a hard coded 3.8.6 version which can be adjusted by hand if needed. 
 - find ways to make eshell faster and easier to use
 ### org-agenda & time-tracking
 - setup time tracking and task organization with org
-
+### TODO: fix Batcat for 18.04 >=
+for Ubuntu 18.04 >=
+export VER="0.17.1"
+wget "https://github.com/sharkdp/bat/releases/download/v${VER}/bat_${VER}_amd64.deb"
+sudo dpkg -i bat_${VER}_amd64.deb
