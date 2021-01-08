@@ -45,11 +45,6 @@
                 eshell-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 (setq byte-compile-warnings '(cl-functions))
-;; make dirs for saving and backing up
-(if (not (file-exists-p backup-dir))
-    (make-directory backup-dir))
-(if (not (file-exists-p autosave-dir))
-    (make-directory autosave-dir))
 (setq make-backup-files t
       backup-by-copying t ;; safest method to backup
       delete-old-versions t ;; delete excess backups
@@ -689,11 +684,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (ivy-extra-directories nil)
   (ivy-use-virtual-buffers t)
   (ivy-count-format "%d/%d ")
-  (ivy-display-style 'fancy)
-  :config
-  (ivy-set-occur 'counsel-rg 'counsel-grep-occur)
-  (ivy-set-occur 'counsel-projectile-rg 'counsel-git-grep-occur))
+  (ivy-display-style 'fancy))
 (use-package counsel-projectile
+  :straight (:type git :host github :repo "ericdanan/counsel-projectile")
   :config
   (counsel-projectile-mode t))
 ;; load before ivy-rich for better performance
@@ -729,7 +722,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq ivy-rich-path-style 'abbrev)
   (ivy-rich-mode 1))
 (use-package prescient
-  :straight t)
+  :after (counsel))
 (use-package ivy-prescient
   :after (prescient)
   :config
@@ -1270,7 +1263,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package exec-path-from-shell
   :if (string-equal system-type "gnu/linux")
   :custom
-  ;;(exec-path-from-shell-arguments nil)
+  (exec-path-from-shell-arguments nil)
   (exec-path-from-shell-check-startup-files nil)
   :config
   (exec-path-from-shell-initialize))
