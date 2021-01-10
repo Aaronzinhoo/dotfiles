@@ -10,7 +10,7 @@
 (setq user-init-file "~/.emacs.d/init.el")
 (setq user-emacs-directory "~/.config/emacs")
 (defvar home-directory (expand-file-name "~/.config/emacs"))
-(defvar backup-dir (concat home-directory "/backups"))
+(defconst backup-dir (concat home-directory "/backups"))
 (defvar autosave-dir (concat home-directory "/autosave"))
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
@@ -22,6 +22,7 @@
       gc-cons-threshold 402653184
       gc-cons-percentage 0.6
       auto-window-vscroll nil
+      scroll-margin 4
       global-auto-revert-mode t
       ad-redefinition-action 'accept
       calendar-latitude 33.916403
@@ -31,6 +32,7 @@
       inhibit-startup-screen t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
+(scroll-bar-mode -1) ;;remove the scroll bar
 ;; enable line numbers for some modes
 (dolist (mode '(text-mode-hook
                 prog-mode-hook
@@ -52,7 +54,7 @@
       kept-old-versions 0
       kept-new-versions 10
       auto-save-default t
-      backup-directory-alist `((".*" . ,(concat user-emacs-directory "/backups"))))
+      backup-directory-alist `((".*" . ,(concat backup-dir ""))))
 ;; we will call `blink-matching-open` ourselves...
 (remove-hook 'post-self-insert-hook
              #'blink-paren-post-self-insert-function)
@@ -172,7 +174,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (setq ring-bell-function 'ignore)
 (column-number-mode t) ;; enable column numbers globally
 (global-visual-line-mode t) ;; cause lines to wrap
-(scroll-bar-mode -1) ;;remove the scroll bar
 (put 'erase-buffer 'disabled nil)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -543,8 +544,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands yas-minor-mode
   :config
   (yas-reload-all))
-(use-package yasnippet-snippets
-  :defer t)
+(use-package yasnippet-snippets)
 (use-package lsp-ivy)
 (use-package lsp-mode
   :hook (((c-mode        ; clangd
