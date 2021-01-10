@@ -54,7 +54,7 @@
       kept-old-versions 0
       kept-new-versions 10
       auto-save-default t
-      backup-directory-alist `((".*" . ,(concat backup-dir ""))))
+      backup-directory-alist `((".*" . ,backup-dir)))
 ;; we will call `blink-matching-open` ourselves...
 (remove-hook 'post-self-insert-hook
              #'blink-paren-post-self-insert-function)
