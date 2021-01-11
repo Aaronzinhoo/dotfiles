@@ -3,7 +3,7 @@
 ;;; Commentary:
 ;;;init.el --- Emacs configuration
 
-;;; Code:
+;;; Code: hello
 
 ;; startup defaults
 (setq user-full-name "Aaron Gonzales")
