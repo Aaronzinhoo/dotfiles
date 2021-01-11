@@ -39,7 +39,7 @@
  ;; If there is more than one, they won't work right.
  '(dired-subtree-depth-1-face ((t (:background "slate blue"))))
  '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
- '(markdown-code-face ((t (:inherit fixed-pitch :background "khaki"))))
+ '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
  '(swiper-background-match-face-2 ((t (:background "steel blue" :foreground "gainsboro"))))
  '(swiper-match-face-1 ((t (:background "light cyan" :foreground "dim gray" :weight bold))))
  '(swiper-match-face-2 ((t (:background "light coral" :foreground "white smoke" :weight bold)))))

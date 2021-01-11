@@ -696,6 +696,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (ivy-use-virtual-buffers t)
   (ivy-count-format "%d/%d ")
   (ivy-display-style 'fancy))
+(use-package counsel-tramp
+  :commands (counsel-tramp))
 (use-package counsel-projectile
   :straight (:type git :host github :repo "ericdanan/counsel-projectile")
   :config
@@ -1160,6 +1162,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package docker
   :commands (docker)
   :bind ("C-c d" . docker))
+(use-package docker-tramp
+  :after (counsel-tramp))
 (use-package docker-compose-mode
   :mode ("docker-compose\\'" . docker-compose-mode))
 (use-package dockerfile-mode
@@ -1203,7 +1207,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
-;; (use-package grip)
+(use-package grip-mode
+  :hook ((markdown-mode org-mode) . grip-mode)
+  :custom
+  ;; Use embedded webkit to previe
+  ;; This requires GNU/Emacs version >= 26 and built with the `--with-xwidgets`
+  ;; option.
+  (grip-preview-use-webkit t))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; JS/react config

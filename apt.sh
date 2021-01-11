@@ -93,6 +93,11 @@ apt install tmux -y
 apt install fonts-hack-ttf -y
 ## Htop
 apt install htop -y
+# batcat (at the time batcat is 17.01 1/18/2021)
+export VER="0.17.1"
+wget "https://github.com/sharkdp/bat/releases/download/v${VER}/bat_${VER}_amd64.deb"
+dpkg -i bat_${VER}_amd64.deb
+rm bat_${VER}_amd64.deb
 #---------------------
 
 
