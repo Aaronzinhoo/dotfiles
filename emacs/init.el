@@ -169,7 +169,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
  tab-stop-list (number-sequence 4 120 4)
  scroll-preserve-screen-position t
  scroll-conservatively 10000)
-(setq ring-bell-function 'never)
+(setq ring-bell-function 'ignore)
 (column-number-mode t) ;; enable column numbers globally
 (global-visual-line-mode t) ;; cause lines to wrap
 (scroll-bar-mode -1) ;;remove the scroll bar
@@ -511,7 +511,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (global-aggressive-indent-mode 1)
-  (append aggressive-indent-excluded-modes '( web-mode html-mode python-mode)))
+  (append aggressive-indent-excluded-modes '( web-mode html-mode python-mode dockerfile-mode docker-compose-mode)))
 ;; use to highlight more characters with each use
 (use-package expand-region
   :bind (("M-2" . er/expand-region)
@@ -526,7 +526,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 er/mark-outer-tag))))
   :config
   (delete-selection-mode 1)
-  (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions))
+  (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'web-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'ng-mode 'er/add-rjsx-mode-expansions))
 (use-package all-the-icons
   :straight t)
 (use-package all-the-icons-dired
@@ -1113,7 +1115,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (editorconfig-mode 1))
 (use-package bookmark+
   :custom
-  (bookmark-default-file "~/.emacs.d/bookmarks") ;;define file to use.
+  (bookmark-default-file (concat home-directory "/bookmarks")) ;;define file to use.
   (bookmark-save-flag t) ;;save bookmarks to .emacs.bmk after each entry
   )
 (use-package projectile
@@ -1146,6 +1148,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; DEVOPS CONFIG
+(use-package docker
+  :commands (docker)
+  :bind ("C-c d" . docker))
 (use-package docker-compose-mode
   :mode ("docker-compose\\'" . docker-compose-mode))
 (use-package dockerfile-mode

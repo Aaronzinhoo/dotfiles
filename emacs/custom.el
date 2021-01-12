@@ -4,7 +4,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file
-   "/home/aaronzinho/.config/emacs/var/bmkp/current-bookmark.el")
+   "/home/aaron-gonzales/.config/emacs/var/bmkp/current-bookmark.el")
  '(company-dabbrev-ignore-case nil)
  '(org-structure-template-alist
    '(("py" . "src python")
