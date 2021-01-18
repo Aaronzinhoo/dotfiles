@@ -38,6 +38,8 @@ apt-get download ripgrep
 dpkg --force-overwrite -i ripgrep*.deb
 rm ripgrep*.deb
 apt install xclip -y
+apt-get install software-properties-common
+#--------------------
 
 #--------------------
 # shell configuration

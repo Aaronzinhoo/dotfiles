@@ -382,10 +382,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (dired-listing-switches "-lXGh --group-directories-first"
                           dired-dwim-target t)
-  (dired-auto-revert-buffer t)
-  :config
-  (use-package dired-single)
-  (use-package dired-collapse))
+  (dired-auto-revert-buffer t))
+(use-package dired-single)
+(use-package dired-collapse)
 (use-package dired-narrow
   :bind (("C-c C-n" . dired-narrow)))
 (use-package dired-subtree
@@ -633,6 +632,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; -----------------------------------------------------------------
   :config
   (global-company-mode t))
+(use-package company-web
+  :init
+  (require 'company-web-html)
+  :hook ((web-mode . (lambda ()
+                       (add-to-list 'company-backends 'company-css)
+                       (add-to-list 'company-backends 'company-web-html)
+                       (add-to-list 'company-backends 'company-web-slim)))
+         (ng2-html-mode . (lambda ()
+                            (set (make-local-variable 'company-backends)
+                                 '((company-web-html company-tide company-dabbrev company-capf)))))))
 (use-package company-quickhelp
   :after company
   :init
@@ -658,7 +667,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; IF NEW MACHINE USE M-x all-the-icons-install-fonts
 ;; should load ivy and swiper automatically
 (use-package flx  ;; Improves sorting for fuzzy-matched results
-  :defer t
+  :after ivy
   :init
   (setq ivy-flx-limit 10000))
 (use-package counsel
@@ -1070,8 +1079,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   :straight (:type git
 ;;                    :host github
 ;;                    :repo "manateelazycat/emacs-application-framework"
-;;                    :files ("*.el" "*.py" "core" "app"))
-;;   :load-path "/home/aaronzinho/.emacs.d/eaf/git/emacs-application-framework"
+;;                    :files ("*"))
+;;   ;; :load-path (concat home-directory "/eaf/git/emacs-application-framework")
 ;;   :custom
 ;;   (browse-url-browser-function 'eaf-open-browser) ;; Make EAF Browser my default browser
 ;;   (eaf-browser-continue-where-left-off t)
@@ -1102,7 +1111,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
 ;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
 ;;   )
-;;; Programming/Project Management
+;; Programming/Project Management
 ;; commenting
 (use-package evil-nerd-commenter
   :bind ("M-;" . evilnc-comment-or-uncomment-lines))
@@ -1155,6 +1164,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode ("docker-compose\\'" . docker-compose-mode))
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode))
+
 ;; WEB-DEV CONFIG
 (use-package simple-httpd
   :defer t)
@@ -1172,16 +1182,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((web-mode . emmet-mode)
          (ng2-html-mode . emmet-mode)
          (emmet-mode . emmet-preview-mode)))
-(use-package company-web
-  :init
-  (require 'company-web-html)
-  :hook ((web-mode . (lambda ()
-                       (add-to-list 'company-backends 'company-css)
-                       (add-to-list 'company-backends 'company-web-html)
-                       (add-to-list 'company-backends 'company-web-slim)))
-         (ng2-html-mode . (lambda ()
-                            (set (make-local-variable 'company-backends)
-                                 '((company-web-html company-tide company-dabbrev company-capf)))))))
 (use-package web-mode
   :mode (("\\.css\\$" . web-mode)
          ("\\.html\\$" . web-mode))
@@ -1198,7 +1198,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (web-mode-enable-auto-expanding t)
   (web-mode-enable-current-column-highlight t)
   (web-mode-enable-current-element-highlight t))
-
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("\\.md\\'" . gfm-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "pandoc"))
+;; (use-package grip)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; JS/react config
