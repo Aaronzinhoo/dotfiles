@@ -33,6 +33,7 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1) ;;remove the scroll bar
+(global-auto-revert-mode t)
 ;; enable line numbers for some modes
 (dolist (mode '(text-mode-hook
                 prog-mode-hook
@@ -76,7 +77,7 @@
                  (const :tag "Golden ratio" (round (* 21 (window-text-height)) 34))
                  (integer :tag "Lines from top" :value 10)
                  (const :tag "2 Lines above center" (- (round (window-text-height) 2) 2))))
-(defun post-func-recenter (&rest args)
+(defun post-func-recenter ()
   "Recenter display after func using ARGS as input."
   (recenter))
 (defun pop-local-mark-ring ()
@@ -177,7 +178,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (put 'erase-buffer 'disabled nil)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (defalias 'yes-or-no-p 'y-or-n-p)
+;; UTF-8 as default encoding
 (prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
 (when (display-graphic-p)
   (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
 ;;; Packages
@@ -378,6 +383,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight nil
   :hook ((dired-mode . dired-collapse-mode)
          (dired-mode . hl-line-mode)
+         (dired-mode . auto-revert-mode)
          (dired-mode . all-the-icons-dired-mode))
   :custom
   (dired-listing-switches "-lXGh --group-directories-first"
@@ -511,24 +517,36 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (global-aggressive-indent-mode 1)
-  (append aggressive-indent-excluded-modes '( web-mode html-mode python-mode dockerfile-mode docker-compose-mode)))
+  (setq aggressive-indent-excluded-modes (append aggressive-indent-excluded-modes '(web-mode dockerfile-mode docker-compose-mode))))
 ;; use to highlight more characters with each use
 (use-package expand-region
   :bind (("M-2" . er/expand-region)
          ("C-(" . er/mark-outside-pairs))
   :init
+  (defun ejmr-mark-line ()
+    "Mark the current line."
+    (interactive)
+    (end-of-line)
+    (set-mark (point))
+    (beginning-of-line-text))
   (defun er/add-rjsx-mode-expansions ()
     (make-variable-buffer-local 'er/try-expand-list)
     (setq er/try-expand-list (append
                               er/try-expand-list
-                              '(er/mark-html-attribute
+                              '(er/c-mark-statement
+                                er/c-mark-fully-qualified-name
+                                er/c-mark-function-call-1   er/c-mark-function-call-2
+                                er/c-mark-statement-block-1 er/c-mark-statement-block-2
+                                er/c-mark-vector-access-1   er/c-mark-vector-access-2
+                                ejmr-mark-line
+                                er/mark-html-attribute
                                 er/mark-inner-tag
                                 er/mark-outer-tag))))
   :config
   (delete-selection-mode 1)
+  (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
-  (er/enable-mode-expansions 'web-mode 'er/add-rjsx-mode-expansions)
-  (er/enable-mode-expansions 'ng-mode 'er/add-rjsx-mode-expansions))
+  (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions))
 (use-package all-the-icons
   :straight t)
 (use-package all-the-icons-dired
@@ -695,7 +713,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (ivy-extra-directories nil)
   (ivy-use-virtual-buffers t)
   (ivy-count-format "%d/%d ")
-  (ivy-display-style 'fancy))
+  (ivy-display-style 'fancy)
+  :config
+  (defun ivy-update-candidates-dynamic-collection-workaround-a (old-fun &rest args)
+    (cl-letf (((symbol-function #'completion-metadata) #'ignore))
+      (apply old-fun args)))
+  (advice-add #'ivy-update-candidates :around #'ivy-update-candidates-dynamic-collection-workaround-a))
 (use-package counsel-tramp
   :commands (counsel-tramp))
 (use-package counsel-projectile
@@ -735,12 +758,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq ivy-rich-path-style 'abbrev)
   (ivy-rich-mode 1))
 (use-package prescient
-  :after (counsel))
+  :after (counsel)
+  :config
+  (prescient-persist-mode t))
 (use-package ivy-prescient
   :after (prescient)
+  :custom
+  (ivy-prescient-enable-sorting t)
+  (ivy-prescient-enable-filtering t)
   :config
-  (setq ivy-prescient-enable-sorting t)
-  (setq ivy-prescient-enable-filtering t))
+  (ivy-prescient-mode t))
 (use-package company-prescient
   :after (company prescient)
   :config
@@ -770,23 +797,24 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Org Support
 ;; sudo apt-get install texlive-latex-base texlive-fonts-recommended \
 ;; texlive-fonts-extra texlive-latex-extra
-
 ;; for exporting html documents
-(use-package verb
-  :defer t
-  ;; C-C C-r C-k to kill buffers
-  ;; C-c C-r C-r to view header
-  )
 (use-package htmlize
   :straight t)
 (use-package ob-typescript)
 ;;; sudo apt install phantomjs
 (use-package ob-browser)
+;; better way to test APIs (like postman but with org files!)
+;; must keep here since org uses ob-verb
+(use-package verb
+  ;; C-C C-r C-k to kill buffers
+  ;; C-c C-r C-r to view header
+  )
 (use-package org
   ;; org-plus-contrib is a feature so must be loaded within org
   :straight org-plus-contrib
   :mode (("\\.org$" . org-mode))
-  :hook (org-mode . org-indent-mode)
+  :hook ((org-mode . org-indent-mode)
+         (org-mode . org-superstar-mode))
   :bind
   ("C-c l" . org-store-link)
   ("C-c a" . org-agenda)
@@ -855,6 +883,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (typescript . t)
      (js         . t)
      (browser    . t)
+     (verb       . t)
      (shell      . t)))
   (setq org-file-apps
         (quote
@@ -867,12 +896,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-src-lang-modes '("python" . python))
   (add-to-list 'org-src-lang-modes '("ts" . typescript))
   (add-to-list 'org-src-lang-modes '("browser" . web))
+  (add-to-list 'org-src-lang-modes '("verb" . verb))
   ;; add quick way to make code block with name "<s"[TAB]
   ;; arg: results: [output value replace silent]
   (add-to-list 'org-structure-template-alist '("html" . "src browser"))
   (add-to-list 'org-structure-template-alist '("js" . "src js"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
   (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
+  (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
   ;; make company backend simple for org files
   (add-hook 'org-mode-hook
             '(lambda ()
@@ -891,14 +922,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            "* TODO %?\n  %i\n  %a")
           ("j" "Journal" entry (file+datetree "~/org/journal.org")
            "* %?\nEntered on %U\n  %i\n  %a")
-          ("a"               ; key
-           "Article"         ; name
-           entry             ; type
-           (file+headline "~/org/references/articles.org" "Article")  ; target
-           "* %^{Title} %(org-set-tags)  :article: \n:PROPERTIES:\n:Created: %U\n:Linked: %a\n:END:\n%i\nBrief description:\n%?"  ; template
-           :prepend t        ; properties
-           :empty-lines 1    ; properties
-           :created t        ; properties
+          ("a"                          ; key
+           "Article"                    ; name
+           entry                        ; type
+           (file+headline "~/org/references/articles.org" "Article") ; target
+           "* %^{Title} %(org-set-tags)  :article: \n:PROPERTIES:\n:Created: %U\n:Linked: %a\n:END:\n%i\nBrief description:\n%?" ; template
+           :prepend t                   ; properties
+           :empty-lines 1               ; properties
+           :created t                   ; properties
            )))
   ;; TODO add to bind-keymap
   (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
@@ -1040,7 +1071,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Add org-protocol for org-capture
 (use-package org-protocol
   :straight nil
-  :config
+  ;; :config
   ;; (add-to-list 'org-capture-templates
   ;;              '("p" "Protocol" entry (file "~/org/references/articles.org")
   ;;                "* %?[[%:link][%:description]] %U\n%i\n" :prepend t))
@@ -1051,7 +1082,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package org-sidebar
   :straight (org-sidebar :type git :host github :repo "alphapapa/org-sidebar"))
 (use-package org-superstar
-  :hook (org-mode . org-superstar-mode)
   :custom
   (org-superstar-remove-leading-stars t))
 ;; autoload html files org
@@ -1170,12 +1200,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode ("Dockerfile\\'" . dockerfile-mode))
 
 ;; WEB-DEV CONFIG
+
+
+;; using verb instead because it is better
+(use-package restclient
+  :mode ("\\.http\\'" . restclient-mode))
 (use-package simple-httpd
   :defer t)
 (use-package skewer-mode
   :defer t)
-(use-package restclient
-  :mode ("\\.http\\'" . restclient-mode))
 (use-package add-node-modules-path
   :hook ((js2-mode . add-node-modules-path)
          (json-mode . add-node-modules-path))
@@ -1208,7 +1241,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 (use-package grip-mode
-  :hook ((markdown-mode org-mode) . grip-mode)
+  :hook ((markdown-mode) . grip-mode)
   :custom
   ;; Use embedded webkit to previe
   ;; This requires GNU/Emacs version >= 26 and built with the `--with-xwidgets`
@@ -1230,11 +1263,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;     npm install --save @types/browserify
 ;;     tsc --init
 
-;;   (local-set-key (kbd "C-c d") 'tide-documentation-at-point))
 (use-package tide
   :after ( typescript-mode company flycheck)
   :bind (:map typescript-mode-map
               ("C-c d" . tide-documentation-at-point)
+              ("C-c i" . import-js-fix)
               ("C-c '" . nil))
   :hook ((ng2-mode .        tide-setup)
          (rjsx-mode .       tide-setup)
@@ -1247,11 +1280,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver")))
+(use-package import-js
+  :init
+  (defun ts-import-hook ()
+    (run-import-js))
+  (add-hook 'tide-mode-hook 'ts-import-hook))
 (use-package prettier-js
   :after (rjsx-mode json-mode markdown-mode)
   :hook ((markdown-mode . prettier-js-mode)
          (json-mode . prettier-js-mode)
-         (rjsx-mode . prettier-js-mode))
+         (rjsx-mode . prettier-js-mode)
+         (typescript-mode . prettier-js-mode))
   :config
   (setq prettier-js-args '("--trailing-comma" "all"
                            "--bracket-spacing" "false")))

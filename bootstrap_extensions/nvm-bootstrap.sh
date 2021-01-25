@@ -9,5 +9,8 @@ echo_with_prompt "NVM home dir: $NVM_DIR"
 
 nvm install 'lts/*' --reinstall-packages-from=current
 nvm use --lts
-npm install -g typescript prettify
+npm install -g typescript
 npm install -g @angular/cli
+npm install -g prettier
+npm install -g import-js
+npm install -g eslint
