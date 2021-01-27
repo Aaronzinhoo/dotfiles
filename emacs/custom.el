@@ -3,8 +3,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(bmkp-last-as-first-bookmark-file
-   "~/.config/emacs/var/bmkp/current-bookmark.el")
+ '(bmkp-last-as-first-bookmark-file "~/.config/emacs/var/bmkp/current-bookmark.el")
  '(company-dabbrev-ignore-case nil)
  '(org-structure-template-alist
    '(("py" . "src python")
@@ -41,6 +40,7 @@
  '(dired-subtree-depth-1-face ((t (:background "slate blue"))))
  '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
  '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
+ '(markdown-table-face ((t (:inherit markdown-code-face :foreground "white smoke"))))
  '(swiper-background-match-face-2 ((t (:background "steel blue" :foreground "gainsboro"))))
  '(swiper-match-face-1 ((t (:background "light cyan" :foreground "dim gray" :weight bold))))
  '(swiper-match-face-2 ((t (:background "light coral" :foreground "white smoke" :weight bold)))))

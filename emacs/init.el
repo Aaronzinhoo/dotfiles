@@ -15,7 +15,7 @@
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 ;; font
-(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-16-*-*-*-m-0-iso10646-1"))
+(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
 ;; more defaults
 (setq package-enable-at-startup nil
       message-log-max 16384
@@ -348,6 +348,28 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                      (smerge-hydra/body)))))
 (use-package magit-todos
   :hook (magit-status-mode . magit-todos-mode))
+(use-package git-identity
+  :after magit
+  :custom
+  (git-identity-list
+   '(("aaron.gonzales@linquest.com"
+      :domains ("github.km.spaceforce.mil")
+      :dirs ("~/development/work"))
+     ("aaronzinho@ucla.edu"
+      :domains ("github.com")
+      ;; The identity is applied if the remote URL contains this organization as directory
+      :exclude-organizations ("kahless")
+      :dirs ("~/.emacs.d" "~/personal"))))
+  ;; Warn if the global identity setting violates your policy
+  (git-identity-verify t)
+  ;; The default user name
+  (git-identity-default-username "Aaronzinhoo")
+  :config
+  (git-identity-magit-mode t)
+  ;; Bind I to git-identity-info in magit-status
+  (define-key magit-status-mode-map (kbd "I") 'git-identity-info))
+
+;; And set git-identity-list in your custom-file or init file
 (use-package magit
   :commands (magit-status)
   :diminish
