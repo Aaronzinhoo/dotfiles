@@ -23,7 +23,6 @@
       gc-cons-percentage 0.6
       auto-window-vscroll nil
       scroll-margin 4
-      global-auto-revert-mode t
       ad-redefinition-action 'accept
       calendar-latitude 33.916403
       calendar-longitude -118.352575
@@ -33,7 +32,6 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1) ;;remove the scroll bar
-(global-auto-revert-mode t)
 ;; enable line numbers for some modes
 (dolist (mode '(text-mode-hook
                 prog-mode-hook
@@ -373,7 +371,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package magit
   :commands (magit-status)
   :diminish
-  :bind ("M-s" . 'magit-status)
+  :bind ("M-s" . magit-status)
+  :hook (magit-mode . magit-auto-revert-mode)
   :custom
   (magit-completing-read-function 'ivy-completing-read)
   :config
