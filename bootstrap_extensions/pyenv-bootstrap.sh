@@ -13,3 +13,4 @@ pyenv global 3.8.6
 
 echo_with_prompt "install grip for markdown preview"
 pip install grip
+pip install virtualenvwrapper

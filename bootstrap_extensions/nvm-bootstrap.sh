@@ -10,6 +10,10 @@ echo_with_prompt "NVM home dir: $NVM_DIR"
 nvm install 'lts/*' --reinstall-packages-from=current
 nvm use --lts
 npm install -g typescript
+npm install -g typescript-eslint
+npm install -g eslint-plugin-angular
+npm install -g eslint-config-angular
+npm install -g jsonlint
 npm install -g @angular/cli
 npm install -g prettier
 npm install -g import-js

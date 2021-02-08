@@ -81,7 +81,14 @@ apt install apt-transport-https ca-certificates software-properties-common -y
 apt install docker-compose -y
 #---------------------
 
-
+#---------------------
+# qutebrowser
+#---------------------
+echo_with_prompt "installing qutebrowser"
+apt install libtool -y;
+apt install libtool-bin -y
+apt install qutebrowser -y
+#---------------------
 
 #---------------------
 # misc
@@ -136,6 +143,7 @@ if [ "${DISTRO_VERSION}" != "20.04" ]; then
 fi
 apt install golang -y
 
-## c++
+## C++
 echo_with_prompt "installing c++ dependencies"
 apt install ccls -y
+apt install cmake -y

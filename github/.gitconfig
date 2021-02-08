@@ -1,5 +1,4 @@
-[user]
-	name = aaronzinhoo
-	email = aaronzinho@ucla.edu
+[http]
+	sslVerify = false
 [credential]
-	helper = manager
+	helper = cache

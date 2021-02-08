@@ -63,6 +63,7 @@
     (setq default-frame-alist
           (append default-frame-alist '((inhibit-double-buffering . t)))))
 
+
 ;;; custom functions
 (defun my-minibuffer-exit-hook ()
   "Set the garbage can threshold back to default value."
@@ -91,14 +92,14 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (split-window-below)
   (balance-windows)
   (other-window 1)
-  (previous-buffer))
+  (next-buffer))
 (defun split-and-follow-vertically ()
   "Split window vertically and follow with the previous buffer open."
   (interactive)
   (split-window-right)
   (balance-windows)
   (other-window 1)
-  (previous-buffer))
+  (next-buffer))
 (defun display-line-overlay+ (pos str &optional face)
   "Display line at POS as STR with FACE.  FACE defaults to inheriting from default and highlight."
   (let ((ol (save-excursion
@@ -192,13 +193,17 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (use-package f :straight t)
 (use-package pcre2el :straight t)
 (use-package bind-key :straight t)
+(use-package general
+  :defer t)
 (use-package dash
   :config
   (dash-enable-font-lock))
+(use-package diminish
+  :straight t)
 (use-package hl-line
   :straight nil
   :hook (prog-mode . hl-line-mode))
-;; org-noter/pdf-tools dependency
+;;org-noter/pdf-tools dependency
 (use-package tablist)
 (use-package tramp
   :straight nil
@@ -289,6 +294,158 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
 
+
+;; Hydra
+(use-package hydra
+  :bind
+  ("C-c f" . hydra-flycheck/body)
+  ("C-c o" . hydra-org/body)
+  ("C-c p" . hydra-projectile/body)
+  ("C-c i" . hydra-ivy/body)
+  ;; ("C-c x" . hydra-x/body)
+  :custom
+  (hydra-default-hint nil))
+(use-package major-mode-hydra
+  :after hydra
+  :preface
+  (defun aaronzinhoo-sgml-prettify-html ()
+    """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
+    (interactive)
+    (mark-whole-buffer)
+    (sgml-pretty-print (region-beginning) (region-end))
+    (mark-whole-buffer)
+    (indent-for-tab-command))
+  (defun with-alltheicon (icon str &optional height v-adjust)
+    "Displays an icon from all-the-icon."
+    (s-concat (all-the-icons-alltheicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+
+  (defun with-faicon (icon str &optional height v-adjust)
+    "Displays an icon from Font Awesome icon."
+    (s-concat (all-the-icons-faicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+
+  (defun with-fileicon (icon str &optional height v-adjust)
+    "Displays an icon from the Atom File Icons package."
+    (s-concat (all-the-icons-fileicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+
+  (defun with-octicon (icon str &optional height v-adjust)
+    "Displays an icon from the GitHub Octicons."
+    (s-concat (all-the-icons-octicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+  :config
+  (pretty-hydra-define hydra-projectile
+    (:hint nil :color teal :quit-key "q" :title (with-faicon "rocket" "Projectile" 1 -0.05))
+    ("Buffers"
+     (("b" counsel-projectile-switch-to-buffer "list")
+      ("k" projectile-kill-buffers "kill all")
+      ("S" projectile-save-project-buffers "save all"))
+     "Find"
+     (("d" counsel-projectile-find-dir "directory")
+      ("D" projectile-dired "root")
+      ("f" counsel-projectile-find-file "file")
+      ("p" counsel-projectile-switch-project "project"))
+     "Other"
+     (("N" projectile-cleanup-known-projects)
+      ("i" projectile-invalidate-cache "reset cache"))
+     "Search"
+     (("r" projectile-replace "replace")
+      ("R" projectile-replace-regexp "regexp replace")
+      ("s" counsel-projectile-rg "search"))))
+  (pretty-hydra-define hydra-flycheck
+    (:hint nil :color teal :quit-key "q" :title (with-faicon "plane" "Flycheck" 1 -0.05))
+    ("Checker"
+     (("?" flycheck-describe-checker "describe")
+      ("d" flycheck-disable-checker "disable")
+      ("m" flycheck-mode "mode")
+      ("s" flycheck-select-checker "select"))
+     "Errors"
+     (("<" flycheck-previous-error "previous" :color pink)
+      (">" flycheck-next-error "next" :color pink)
+      ("l" flycheck-list-errors "list"))
+     "Other"
+     (("r" recenter-top-bottom "recenter" :color pink)
+      ("M" flycheck-manual "manual")
+      ("v" flycheck-verify-setup "verify setup"))))
+  (pretty-hydra-define hydra-org
+    (:hint nil :color pink :quit-key "q" :title (with-fileicon "org" "Org" 1 -0.05))
+    ("Action"
+     (("a" org-agenda "agenda")
+      ("c" org-capture "capture")
+      ("d" org-decrypt-entry "decrypt")
+      ("i" org-insert-link-global "insert-link")
+      ("k" org-cut-subtree "cut-subtree")
+      ("o" org-open-at-point-global "open-link")
+      ("r" org-refile "refile")
+      ("s" org-store-link "store-link")
+      ("t" org-show-todo-tree "todo-tree"))))
+  (pretty-hydra-define hydra-org-nav
+    (:hint nil :color pink :quit-key "q" :title (with-fileicon "org" "Org" 1 -0.05))
+    ("Navigation"
+     (("p" org-previous-visible-heading "prev heading")
+      ("n" org-next-visible-heading "next heading")
+      ("g" counsel-org-goto "goto"))
+     "Links"
+     (("l" org-next-link "next link")
+      ("L" org-previous-link "prev link")
+      ("o" org-open-at-point "open link at point")
+      ("i" org-insert-link "insert link")
+      ("s" org-store-link "store link"))
+     "Outline"
+     (("N" org-toggle-narrow-to-subtree "narrow/unarrow" :color blue)
+      ("r" org-refile "refile")
+      ("v" org-overview "overview" :color blue)
+      ("a" outline-show-all "show-all" :color blue))))
+  (pretty-hydra-define hydra-ivy
+    (:hint nil :color teal :quit-key "q" :title (with-fileicon "tree" "Ivy" 1 -0.05))
+    ("Action"
+     (("f" counsel-recentf "recent-file")
+      ("t" counsel-faces "faces")
+      ("i" counsel-imenu "imenu")
+      ("l" counsel-find-library "library")
+      ("r" ivy-resume "resume"))
+     "Other"
+     (("s" counsel-info-lookup-symbol "symbol")
+      ("u" counsel-unicode-char "unicode"))))
+  (pretty-hydra-define hydra-lsp
+    (:hint nil :color teal :quit-key "q" :title (with-fileicon "cog" "LSP" 1 -0.05))
+    ("Goto"
+     (("r" lsp-find-references "refs")
+      ("d" lsp-find-definition "defs")
+      ("t" lsp-find-type-definition "type-def"))
+     "Refactor"
+     (("F" lsp-format-buffer "format"))
+     "UI"
+     (("p" lsp-ui-peek-mode "peek-mode")
+      ("R" lsp-ui-peek-find-references "peek-refs")
+      ("D" lsp-ui-peek-find-definitions "peek-defs")
+      ("i" lsp-ui-imenu "peek-menu"))
+     "Server"
+     (("s" lsp-describe-session "session")
+      ("I" lsp-install-server "install")
+      ("S" lsp-workspace-restart "restart"))))
+  (pretty-hydra-define hydra-web
+    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color amaranth)
+    ("Navigation"
+     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
+      ("e" sgml-skip-tag-forward "tag end | next tag")
+      ("n" web-mode-element-next "next tag")
+      ("p" web-mode-element-previous "previous tag")
+      ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
+      ("f" web-mode-fold-or-unfold "fold/unfold"))
+     "Edit"
+     (("t" aaronzinhoo-sgml-prettify-html "tidy html")
+      ("d" sgml-delete-tag "delete tag"))
+     "Error"
+     (("v" html-check-frag-next "next html error")
+      ("E" web-mode-dom-errors-show "show errors"))
+     "Action"
+     (("w" web-mode-element-wrap "wrap element in tag" )
+      ("N" web-mode-dom-normalize "normalize html" ));end action
+     "Other"
+     (("s" helm-emmet "Insert Emmet Snippet")
+      ("<SPC>" nil "Quit" :color blue)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; CONTROL VERSION UTILS
 (use-package diff-hl
   :hook ((prog-mode . diff-hl-mode))
@@ -303,8 +460,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (use-package hl-todo
   :config
   (global-hl-todo-mode))
-;; easily fix conflicts
-(use-package hydra)
 (use-package smerge-mode
   :straight nil
   :config
@@ -348,11 +503,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (magit-status-mode . magit-todos-mode))
 (use-package git-identity
   :after magit
+  :bind (:map magit-status-mode-map
+              ("I" . git-identity-info))
   :custom
   (git-identity-list
    '(("aaron.gonzales@linquest.com"
       :domains ("github.km.spaceforce.mil")
-      :dirs ("~/development/work"))
+      :dirs ("~/development/work")
+      :username )
      ("aaronzinho@ucla.edu"
       :domains ("github.com")
       ;; The identity is applied if the remote URL contains this organization as directory
@@ -360,14 +518,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       :dirs ("~/.emacs.d" "~/personal"))))
   ;; Warn if the global identity setting violates your policy
   (git-identity-verify t)
-  ;; The default user name
-  (git-identity-default-username "Aaronzinhoo")
-  :config
   (git-identity-magit-mode t)
-  ;; Bind I to git-identity-info in magit-status
-  (define-key magit-status-mode-map (kbd "I") 'git-identity-info))
-
-;; And set git-identity-list in your custom-file or init file
+  ;; The default user name
+  (git-identity-default-username "Aaron Gonzales"))
 (use-package magit
   :commands (magit-status)
   :diminish
@@ -439,7 +592,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package crux
   :bind (("C-a" . crux-move-beginning-of-line)
          ("C-c I" . crux-find-user-init-file))
-  :init
+  :preface
   (defun aaronzinho-delete-line ()
     "Delete from current position to end of line without pushing to `kill-ring'."
     (interactive)
@@ -462,20 +615,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (global-set-key (kbd "C-k") 'crux-smart-delete-line))
 
 ;;; WINDOW CONTROL
-(global-set-key (kbd "C-M-<left>") 'shrink-window-horizontally)
-(global-set-key (kbd "C-M-<right>") 'enlarge-window-horizontally)
-(global-set-key (kbd "C-M-<down>") 'shrink-window)
-(global-set-key (kbd "C-M-<up>") 'enlarge-window)
+(use-package resize-window
+  :straight (:type git :host github :repo "dpsutton/resize-window" :branch "master")
+  :bind ("C-M-w" . resize-window))
 (use-package winner
   :straight nil
   :config
   (winner-mode 1))
 (use-package ace-window
   :commands ace-window
-  :bind ("M-o" . ace-window)
+  :bind ("C-x o" . ace-window)
   :custom
   (aw-ignore-current t)
-  (aw-dispatch-always t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -503,17 +654,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-center-content t)
   :config
   (dashboard-setup-startup-hook))
-(use-package diminish
-  :straight t)
 (use-package beacon
   :straight t
   :diminish
+  :custom
+  (beacon-color "#111FFF")
   :config
-  (setq beacon-color "#111FFF")
   (beacon-mode 1))
 (use-package which-key
   :straight t
   :diminish
+  :custom
+  (which-key-use-C-h-commands nil)
   :config
   (which-key-mode t))
 (use-package default-text-scale
@@ -523,6 +675,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package eldoc
   :diminish eldoc-mode)
 (use-package flycheck
+  :straight (:type git :host github :repo "flycheck/flycheck" :branch "master")
   :diminish
   :commands flycheck-mode
   :hook (prog-mode . flycheck-mode)
@@ -531,20 +684,36 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (append flycheck-disabled-checkers
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'json-jsonlint 'json-mode)
-  (flycheck-add-mode 'typescript-tslint 'typescript-mode)
-  (flycheck-add-mode 'javascript-eslint 'rjsx-mode))
+  ;; eslint requires you to be careful with the configuration
+  ;; ensure to use .json files and setup accordingly
+  ;; test with shell command
+  (flycheck-add-mode 'javascript-eslint 'typescript-mode)
+  (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
+  (flycheck-add-mode 'javascript-eslint 'ng2-ts-mode)
+  (flycheck-add-mode 'typescript-tslint 'ng2-ts-mode))
 (use-package aggressive-indent
   :straight t
   :diminish
   :config
   (global-aggressive-indent-mode 1)
   (setq aggressive-indent-excluded-modes (append aggressive-indent-excluded-modes '(web-mode dockerfile-mode docker-compose-mode))))
-;; use to highlight more characters with each use
+(use-package fix-word
+  :bind (([remap capitalize-word] . fix-word-capitalize)
+         ([remap upcase-word] . fix-word-upcase)))
+(use-package easy-kill
+  :preface
+  (defun aaronzinhoo-open-line ()
+    "Mark the current line."
+    (interactive)
+    (beginning-of-line-text)
+    (open-line 1))
+  :bind (([remap open-line] . aaronzinhoo-open-line)
+         ([remap kill-ring-save] . easy-kill)))
 (use-package expand-region
   :bind (("M-2" . er/expand-region)
          ("C-(" . er/mark-outside-pairs))
-  :init
-  (defun ejmr-mark-line ()
+  :preface
+  (defun aaronzinhoo-mark-line ()
     "Mark the current line."
     (interactive)
     (end-of-line)
@@ -559,7 +728,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 er/c-mark-function-call-1   er/c-mark-function-call-2
                                 er/c-mark-statement-block-1 er/c-mark-statement-block-2
                                 er/c-mark-vector-access-1   er/c-mark-vector-access-2
-                                ejmr-mark-line
+                                aaronzinhoo-mark-line
                                 er/mark-html-attribute
                                 er/mark-inner-tag
                                 er/mark-outer-tag))))
@@ -580,6 +749,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer t
   :diminish yas-minor-mode
   :commands yas-minor-mode
+  :hook (prog-mode . yas-minor-mode)
   :config
   (yas-reload-all))
 (use-package yasnippet-snippets)
@@ -593,12 +763,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
+  :bind
+  (:map lsp-mode-map
+        ("C-c l" . hydra-lsp/body))
   :custom
   (lsp-enable-indentation nil)
+  (lsp-headerline-breadcrumb-enable nil)
   (lsp-enable-on-type-formatting nil)
   (lsp-prefer-flymake nil)
   (lsp-enable-symbol-highlighting t)
   (lsp-signature-auto-activate nil)
+  (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   :init
   (defun lsp-go-install-save-hooks ()
@@ -637,6 +812,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer 1
   :diminish company-mode
   :bind
+  ([remap indent-for-tab-command] . company-indent-or-complete-common)
   (:map company-active-map
         ("<tab>" . company-complete-common-or-cycle)
         ("<backtab>" . company-select-previous))
@@ -671,16 +847,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; -----------------------------------------------------------------
   :config
   (global-company-mode t))
+(use-package company-bootstrap
+  :straight (:type git :host github :repo "typefo/company-bootstrap" :branch "master"))
 (use-package company-web
   :init
-  (require 'company-web-html)
-  :hook ((web-mode . (lambda ()
-                       (add-to-list 'company-backends 'company-css)
-                       (add-to-list 'company-backends 'company-web-html)
-                       (add-to-list 'company-backends 'company-web-slim)))
-         (ng2-html-mode . (lambda ()
-                            (set (make-local-variable 'company-backends)
-                                 '((company-web-html company-tide company-dabbrev company-capf)))))))
+  (require 'company-web-html))
 (use-package company-quickhelp
   :after company
   :init
@@ -720,12 +891,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("C-c m" . counsel-imenu)
           ("C-r" . counsel-rg)
           ("M-t" .  swiper-thing-at-point)
+          :map ivy-switch-buffer-map
+          ("C-k" . ivy-switch-buffer-kill)
           :map ivy-minibuffer-map
           ("C-c o" . ivy-occur)
           ("M-i" . nil)
-          ("C-j" . ivy-immediate-done))
+          ("C-j" . ivy-immediate-done)
+          :map ivy-occur-grep-mode-map
+          ("." . hydra-ivy-occur/body))
   :hook ((after-init . ivy-mode)
          (ivy-mode . counsel-mode))
+  :preface
+  (defun ivy-update-candidates-dynamic-collection-workaround-a (old-fun &rest args)
+    (cl-letf (((symbol-function #'completion-metadata) #'ignore))
+      (apply old-fun args)))
   :custom
   (ivy-wrap t)
   (ivy-initial-inputs-alist nil)
@@ -736,9 +915,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (ivy-count-format "%d/%d ")
   (ivy-display-style 'fancy)
   :config
-  (defun ivy-update-candidates-dynamic-collection-workaround-a (old-fun &rest args)
-    (cl-letf (((symbol-function #'completion-metadata) #'ignore))
-      (apply old-fun args)))
+  (pretty-hydra-define hydra-ivy-occur
+    (:hint nil :color pink :quit-key "q" :title (with-faicon "tree" "Ivy-Occur" 1 -0.05))
+    ("Navigation"
+     (("n" ivy-occur-next-line "next")
+      ("p" ivy-occur-previous-line "prev"))
+     "Edit"
+     (("w" ivy-wgrep-change-to-wgrep-mode "wgrep" :color teal)
+      ("d" ivy-occur-delete-candidate "delete")
+      ("o" ivy-occur-dispatch "dispatch")
+      ("g" ivy-occur-revert-buffer))
+     "View"
+     (("v" ivy-occur-press "preview")
+      ("RET" ivy-occur-press-and-switch "goto" :color teal))))
+  ;; fix for async display of counsel-rg resuls
   (advice-add #'ivy-update-candidates :around #'ivy-update-candidates-dynamic-collection-workaround-a))
 (use-package counsel-tramp
   :commands (counsel-tramp))
@@ -795,6 +985,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (company-prescient-mode t))
 (use-package ag
   :defer 3)
+(use-package move-text
+  :straight (:type git :host github :repo "emacsfodder/move-text" :branch "master")
+  :init
+  (move-text-default-bindings))
 (use-package avy
   :bind* ("M-SPC" . avy-goto-char)
   :config
@@ -803,16 +997,47 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (electric-pair-mode 1))
 (use-package multiple-cursors
-  :bind (("M-3" . 'mc/mark-next-like-this)
-         ("M-1" . 'mc/mark-previous-like-this)
-         ("M-m" . 'mc/mark-all-like-this)
-         :map mc/keymap
-         ("M-h" . 'mc-hide-unmatched-lines-mode)
-         ("M-s n" . 'mc/skip-to-next-like-this)
-         ("M-s p" . 'mc/skip-to-previous-like-this))
+  :bind (("M-m" . 'hydra-multiple-cursors/body))
   :hook ((prog-mode . multiple-cursors-mode)
-         (text-mode . multiple-cursors-mode)))
-
+         (text-mode . multiple-cursors-mode))
+  :init
+  (defhydra hydra-multiple-cursors (global-map "M-m" :hint nil)
+    "
+     ^Up^            ^Down^        ^Miscellaneous^
+-----------------------------------------------------
+[_p_]   Next    [_n_]   Next    [_l_] Edit lines
+[_P_]   Skip    [_N_]   Skip    [_a_] Mark all
+[_M-p_] Unmark  [_M-n_] Unmark  [_q_] Quit
+                              [_h_] Hide
+"
+    ("l" mc/edit-lines :exit t)
+    ("a" mc/mark-all-like-this :exit t)
+    ("n" mc/mark-next-like-this)
+    ("N" mc/skip-to-next-like-this)
+    ("h" mc-hide-unmatched-lines-mode)
+    ("M-n"  mc/unmark-next-like-this)
+    ("p"  mc/mark-previous-like-this)
+    ("P" mc/skip-to-previous-like-this)
+    ("M-p" mc/unmark-previous-like-this)
+    ("q" nil))
+  ;; This file is automatically generated by the multiple-cursors extension.
+  ;; It keeps track of your preferences for running commands with multiple cursors.
+  :config
+  (setq mc/cmds-to-run-for-all
+        '(abbrev-prefix-mark
+          crux-smart-delete-line
+          hungry-delete-backward
+          hungry-delete-forward))
+  (setq mc/cmds-to-run-once
+        '(counsel-M-x
+          hydra-multiple-cursors/mc-hide-unmatched-lines-mode
+          hydra-multiple-cursors/mc/mark-all-like-this-and-exit
+          hydra-multiple-cursors/mc/mark-previous-like-this
+          hydra-multiple-cursors/mc/mark-next-like-this
+          hydra-multiple-cursors/mc/skip-to-previous-like-this
+          hydra-multiple-cursors/mc/skip-to-next-like-this
+          hydra-multiple-cursors/mc/nil
+          hydra-multiple-cursors/mc/edit-lines-and-exit)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Org Support
@@ -820,7 +1045,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; texlive-fonts-extra texlive-latex-extra
 ;; for exporting html documents
 (use-package htmlize
-  :straight t)
+  :defer t)
 (use-package ob-typescript)
 ;;; sudo apt install phantomjs
 (use-package ob-browser)
@@ -841,7 +1066,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ("C-c a" . org-agenda)
   ("C-c c" . org-capture)
   (:map org-mode-map
-        ("C-M-<return>" . org-insert-subheading))
+        ("C-M-<return>" . org-insert-subheading)
+        ("C-c h". hydra-org-nav/body))
   :custom
   (org-directory (concat (getenv "HOME") "/org"))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
@@ -854,7 +1080,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (org-refile-allow-creating-parent-nodes 'confirm)
   (org-refile-targets
    '(("~/org/notebook/programming/web-development.org" :maxlevel . 2)
-     (nil :maxlevel . 2)
+     (nil :maxlevel . 4)
      (org-agenda-files :maxlevel . 3)
      ))
   ;; single key press for certain movements when at first * in a heading
@@ -1164,6 +1390,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
 ;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
 ;;   )
+
+;; Terminal
+(use-package vterm
+  :commands vterm)
+
 ;; Programming/Project Management
 ;; commenting
 (use-package evil-nerd-commenter
@@ -1187,15 +1418,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; use .gitignore to exclude files from search
   (projectile-indexing-method 'alien)
   (projectile-sort-order 'recentf)
-  (projectile-completion-system 'ivy)
-  :config
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+  (projectile-completion-system 'ivy))
 
 ;;; Languages Support
 
 ;; Debugging
 (use-package realgud
   :defer t)
+
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 (use-package yaml-mode
@@ -1207,6 +1437,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq js-indent-level 2))
 (use-package dotenv-mode
   :mode ("\\.env\\'" . dotenv-mode))
+(use-package groovy-mode
+  :defer t)
+(use-package jenkinsfile-mode
+  :mode ("\\Jenkinsfile\\'" . jenkinsfile-mode)
+  :preface
+  (defun aaronzinhoo-company-jenkinsfile-mode-hook ()
+    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files))))
+  :config
+  (add-hook 'jenkinsfile-mode-hook 'aaronzinhoo-company-jenkinsfile-mode-hook))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; DEVOPS CONFIG
@@ -1222,7 +1461,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; WEB-DEV CONFIG
 
-
 ;; using verb instead because it is better
 (use-package restclient
   :mode ("\\.http\\'" . restclient-mode))
@@ -1231,18 +1469,33 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package skewer-mode
   :defer t)
 (use-package add-node-modules-path
-  :hook ((js2-mode . add-node-modules-path)
+  :hook ((rjsx-mode . add-node-modules-path)
+         (typescript-mode . add-node-modules-path)
+         (js2-mode . add-node-modules-path)
          (json-mode . add-node-modules-path))
   :config
+  (eval-after-load 'typescript-mode
+    (add-node-modules-path))
   (eval-after-load 'rjsx-mode
     (add-node-modules-path)))
 (use-package emmet-mode
   :hook ((web-mode . emmet-mode)
-         (ng2-html-mode . emmet-mode)
-         (emmet-mode . emmet-preview-mode)))
+         (ng2-html-mode . emmet-mode)))
+(use-package helm-emmet)
+(use-package html-check-frag
+  :straight (:type git :host github :repo "TobiasZawada/html-check-frag" :branch "master")
+  :hook (web-mode . html-check-frag-mode))
 (use-package web-mode
+  :hook (ng2-html-mode . web-mode)
   :mode (("\\.css\\$" . web-mode)
-         ("\\.html\\$" . web-mode))
+         ("\\.html\\$" . web-mode)
+         ("\\.component.html\\'" . web-mode))
+  :bind ((:map web-mode-map
+               ("C-c h" . hydra-web/body))
+         )
+  :preface
+  (defun aaronzinhoo-company-web-mode-hook ()
+    (set (make-local-variable 'company-backends) '((company-web-html company-bootstrap company-css company-tide))))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
@@ -1254,15 +1507,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (web-mode-enable-auto-closing t)
   (web-mode-enable-css-colorization t)
   (web-mode-enable-auto-expanding t)
+  (web-mode-enable-block-face t)
   (web-mode-enable-current-column-highlight t)
-  (web-mode-enable-current-element-highlight t))
+  (web-mode-enable-current-element-highlight t)
+  :config
+  (add-hook 'web-mode-hook 'aaronzinhoo-company-web-mode-hook))
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 (use-package grip-mode
-  :hook ((markdown-mode) . grip-mode)
   :custom
   ;; Use embedded webkit to previe
   ;; This requires GNU/Emacs version >= 26 and built with the `--with-xwidgets`
@@ -1290,15 +1545,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("C-c d" . tide-documentation-at-point)
               ("C-c i" . import-js-fix)
               ("C-c '" . nil))
-  :hook ((ng2-mode .        tide-setup)
-         (rjsx-mode .       tide-setup)
+  :hook ((rjsx-mode .       tide-setup)
          (typescript-mode . tide-setup)
          (typescript-mode . tide-hl-identifier-mode))
+  :preface
+  (defun aaronzinhoo-company-tide-mode-hook ()
+    (setq company-idle-delay 0.1)
+    ;; (setq-local 'company-backends '(company-tide company-files))
+    )
   :custom
-  (tide-sync-request-timeout 5)
-  (tide-server-max-response-length 204800)
   (typescript-indent-line 2)
   :config
+  (setq tide-tsserver-process-environment '("TSS_LOG=-level verbose -file /tmp/tss.log"))
+  (add-hook 'tide-mode-hook 'aaronzinhoo-company-tide-mode-hook)
   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver")))
 (use-package import-js
@@ -1313,8 +1572,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (rjsx-mode . prettier-js-mode)
          (typescript-mode . prettier-js-mode))
   :config
-  (setq prettier-js-args '("--trailing-comma" "all"
-                           "--bracket-spacing" "false")))
+  (setq prettier-js-args '("--single-quote" "true"
+                           "--trailing-comma" "all"
+                           "--bracket-spacing" "true")))
 (use-package js-comint
   :defer t
   :init
@@ -1331,11 +1591,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               (local-set-key (kbd "C-c C-b") 'js-send-buffer-and-go)))
   ;;(setq inferior-js-program-command "node")
   )
-;; angular setup
+;;angular setup
+(use-package typescript-mode
+  :defer t)
 (use-package ng2-mode
-  :config
-  (flycheck-add-mode 'typescript-tslint 'ng2-ts-mode)
-  (flycheck-add-mode 'typescript-tide 'ng2-ts-mode))
+  :defer t
+  :mode (("\\component.ts\\'" . ng2-mode)
+         ("\\component.html\\'" . web-mode)))
 ;; react setup
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
@@ -1364,6 +1626,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package python
   :delight " Py"
   :mode ("\\.py" . python-mode)
+  :preface
+  (defun aaronzinho-python-buffer-setup ()
+    (setq python-indent-offset 4)
+    (setq-local highlight-indentation-offset 4))
+  :custom
+  (python-shell-interpreter "ipython")
+  (python-shell-interpreter-args "--simple-prompt")
+  (python-check-command "flake8")
   :init
   (eval-after-load 'python
     (lambda ()
@@ -1376,8 +1646,27 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            (get-buffer-process (current-buffer))
            nil "_")))))
   :config
-  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
-  (setq python-indent-offset 4))
+  (add-hook 'python-mode-hook 'aaronzinho-python-buffer-setup)
+  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8))))
+
+;; MAY HAVE TO CHANGE PYTHON PATH
+(use-package elpy
+  :diminish ""
+  :init (with-eval-after-load 'python (elpy-enable))
+  :hook (elpy-mode . flycheck-mode)
+  :preface
+  (defun aaronzinhoo-company-elpy-setup ()
+    (add-to-list 'company-backends 'elpy-company-backend))
+  :custom
+  (elpy-shell-echo-output nil)
+  (elpy-rpc-virtualenv-path "~/.config/emacs/elpy/rpc-venv")
+  (elpy-rpc-backend "jedi")
+  (elpy-shell-starting-directory 'current-directory)
+  (elpy-syntax-check-command "~/.config/emacs/elpy/rpc-venv/bin/flake8")
+  :config
+  (add-hook 'python-mode-hook 'aaronzinhoo-company-elpy-setup)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-to-list 'process-coding-system-alist '("elpy" . (utf-8 . utf-8))))
 (use-package pyenv-mode
   :hook (elpy-mode . pyenv-mode)
   :bind
@@ -1386,27 +1675,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'exec-path "~/.pyenv/shims")
   (setenv "WORKON_HOME" "~/.pyenv/versions/"))
 (use-package pyenv-mode-auto
-  :after pyenv-mode)
-;; MAY HAVE TO CHANGE PYTHON PATH
-;; INSTALL PYENV, VIRTUALENVWRAPPER to be used by elpy
-(use-package elpy
-  :diminish ""
-  :init (with-eval-after-load 'python (elpy-enable))
-  :hook (elpy-mode . flycheck-mode)
-  :config
-  (add-to-list 'process-coding-system-alist '("elpy" . (utf-8 . utf-8)))
-  (setq python-shell-interpreter "ipython"
-        python-shell-interpreter-args "-i --simple-prompt")
-  (setq elpy-shell-starting-directory 'current-directory)
-  ;;use flake8
-  (setq python-check-command "flake8")
-  ;;replace flycheck with flymake
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (setq elpy-modules (delq 'elpy-module-company elpy-modules ))
-  ;; use jedi for completetions
-  (defun company-elpy-setup ()
-    (add-to-list 'company-backends 'elpy-company-backend))
-  (add-hook 'python-mode-hook 'company-elpy-setup))
+  :straight (:type git :host github :repo "ssbb/pyenv-mode-auto" :branch "master"))
 (use-package blacken
   :after elpy
   :delight " Bl"
@@ -1479,7 +1748,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; C-c C-c run org code block
 
 ;;CUSTOM EMACS BUILT-IN KEYS
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(global-set-key (kbd "
+<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "M-i") 'previous-line)
 (global-set-key (kbd "M-j") 'backward-char)
 (global-set-key (kbd "M-k") 'next-line)
@@ -1500,3 +1770,4 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (setq custom-file "~/.emacs.d/custom.el")
 (when (file-exists-p custom-file) (load custom-file))
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)
