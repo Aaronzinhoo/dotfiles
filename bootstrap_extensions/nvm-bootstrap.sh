@@ -13,8 +13,17 @@ npm install -g typescript
 npm install -g typescript-eslint
 npm install -g eslint-plugin-angular
 npm install -g eslint-config-angular
+npm install -g babel-eslint
 npm install -g jsonlint
 npm install -g @angular/cli
 npm install -g prettier
 npm install -g import-js
 npm install -g eslint
+npm install -g stylelint stylelint-config-standard
+npm install -g @typescript-eslint/eslint-plugin
+npm install -g @typescript-eslint/parser
+npm install -g trepan-ni
+npm install -g @angular/language-service@next
+npm install -g @angular/language-server
+# ts-compint/REPL
+npm install -g tsun
