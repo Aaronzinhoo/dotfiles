@@ -1,0 +1,16 @@
+{
+    "extends": "stylelint-config-standard",
+    "rules": {
+      "indentation": 2,
+      "string-quotes": "single",
+      "no-duplicate-selectors": true,
+      "color-hex-length": null,
+      "selector-attribute-quotes": "always",
+      "declaration-block-trailing-semicolon": "always",
+      "declaration-colon-space-before": "never",
+      "declaration-colon-space-after": "always",
+      "selector-max-universal": 0,
+      "length-zero-no-unit": null,
+      "media-feature-colon-space-after": "always"
+    }
+}
