@@ -192,6 +192,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (use-package async :straight t)
 (use-package f :straight t)
 (use-package pcre2el :straight t)
+(use-package command-log-mode
+  :commands (command-log-mode))
 (use-package bind-key :straight t)
 (use-package general
   :defer t)
@@ -294,7 +296,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
 
-
 ;; Hydra
 (use-package hydra
   :bind
@@ -302,7 +303,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   ("C-c o" . hydra-org/body)
   ("C-c p" . hydra-projectile/body)
   ("C-c i" . hydra-ivy/body)
-  ;; ("C-c x" . hydra-x/body)
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -318,15 +318,12 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (defun with-alltheicon (icon str &optional height v-adjust)
     "Displays an icon from all-the-icon."
     (s-concat (all-the-icons-alltheicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
-
   (defun with-faicon (icon str &optional height v-adjust)
     "Displays an icon from Font Awesome icon."
     (s-concat (all-the-icons-faicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
-
   (defun with-fileicon (icon str &optional height v-adjust)
     "Displays an icon from the Atom File Icons package."
     (s-concat (all-the-icons-fileicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
-
   (defun with-octicon (icon str &optional height v-adjust)
     "Displays an icon from the GitHub Octicons."
     (s-concat (all-the-icons-octicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
@@ -344,7 +341,9 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       ("p" counsel-projectile-switch-project "project"))
      "Other"
      (("N" projectile-cleanup-known-projects)
-      ("i" projectile-invalidate-cache "reset cache"))
+      ("i" projectile-invalidate-cache "reset cache")
+      ("c" projectile-compile-project "compile")
+      ("v" projectile-run-vterm "run vterm"))
      "Search"
      (("r" projectile-replace "replace")
       ("R" projectile-replace-regexp "regexp replace")
@@ -381,6 +380,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     ("Navigation"
      (("p" org-previous-visible-heading "prev heading")
       ("n" org-next-visible-heading "next heading")
+      ("B" org-previous-block)
+      ("b" org-next-block)
       ("g" counsel-org-goto "goto"))
      "Links"
      (("l" org-next-link "next link")
@@ -392,9 +393,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
      (("N" org-toggle-narrow-to-subtree "narrow/unarrow" :color blue)
       ("r" org-refile "refile")
       ("v" org-overview "overview" :color blue)
-      ("a" outline-show-all "show-all" :color blue))))
+      ("a" outline-show-all "show-all" :color blue))
+     "Other"
+     (("RET" nil :color blue))))
   (pretty-hydra-define hydra-ivy
-    (:hint nil :color teal :quit-key "q" :title (with-fileicon "tree" "Ivy" 1 -0.05))
+    (:hint nil :color teal :quit-key "q" :title (with-faicon "tree" "Ivy" 1 -0.05))
     ("Action"
      (("f" counsel-recentf "recent-file")
       ("t" counsel-faces "faces")
@@ -405,7 +408,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
      (("s" counsel-info-lookup-symbol "symbol")
       ("u" counsel-unicode-char "unicode"))))
   (pretty-hydra-define hydra-lsp
-    (:hint nil :color teal :quit-key "q" :title (with-fileicon "cog" "LSP" 1 -0.05))
+    (:hint nil :color teal :quit-key "q" :title (with-faicon "cog" "LSP" 1 -0.05))
     ("Goto"
      (("r" lsp-find-references "refs")
       ("d" lsp-find-definition "defs")
@@ -422,7 +425,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       ("I" lsp-install-server "install")
       ("S" lsp-workspace-restart "restart"))))
   (pretty-hydra-define hydra-web
-    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color amaranth)
+    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color pink)
     ("Navigation"
      (("a" sgml-skip-tag-backward "tag beginning | prev tag")
       ("e" sgml-skip-tag-forward "tag end | next tag")
@@ -437,23 +440,44 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
      (("v" html-check-frag-next "next html error")
       ("E" web-mode-dom-errors-show "show errors"))
      "Action"
-     (("w" web-mode-element-wrap "wrap element in tag" )
-      ("N" web-mode-dom-normalize "normalize html" ));end action
+     (("w" web-mode-element-wrap "wrap element in tag" ));end action
      "Other"
      (("s" helm-emmet "Insert Emmet Snippet")
-      ("<SPC>" nil "Quit" :color blue)))))
-
+      ("RET" nil "Quit" :color blue)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; CONTROL VERSION UTILS
-(use-package diff-hl
-  :hook ((prog-mode . diff-hl-mode))
-  :config
-  (diff-hl-margin-mode t)
-  (diff-hl-flydiff-mode t)
-  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+(use-package git-gutter
+  :after (all-the-icons)
+  :straight (:type git :host github :repo "emacsorphanage/git-gutter" :branch "master")
+  :hook (prog-mode . git-gutter-mode)
+  :bind ("C-c g" . hydra-git-gutter/body)
+  :commands (git-gutter-mode)
+  :diminish git-gutter-mode
+  :preface
+  (pretty-hydra-define hydra-git-gutter
+    (:hint nil :color "pink" :quit-key "q" :title (with-octicon "diff" "Diff" 1 -0.05))
+    ("Nav Hunks"
+     (("n" git-gutter:next-hunk "next")
+      ("p" git-gutter:previous-hunk "prev")
+      ("e" git-gutter:end-of-hunk "end"))
+     "Edit Hunks"
+     (("m" git-gutter:mark-hunk "mark")
+      ("P" git-gutter:popup-hunk "popup")
+      ("s" git-gutter:stage-hunk "stage")
+      ("r" git-gutter:revert-hunk "revert"))
+     "Other"
+     (("q" nil "Quit" :color blue))))
+  :custom
+  (git-gutter:ask-p nil)
+  (git-gutter:sign-width 1)
+  (git-gutter:hide-gutter t)
+  (git-gutter:window-width 2)
+  (git-gutter:modified-sign (all-the-icons-octicon "diff-modified" :height 0.85 :width 0.85))
+  (git-gutter:added-sign (all-the-icons-octicon "diff-added" :height 0.85 :width 0.85))
+  (git-gutter:deleted-sign (all-the-icons-octicon "diff-removed" :height 0.85 :width 0.85))
+  (git-gutter:update-interval 1))
 (use-package git-timemachine
   :defer t
   :commands (git-timemachine))
@@ -524,7 +548,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package magit
   :commands (magit-status)
   :diminish
-  :bind ("M-s" . magit-status)
+  :bind (("M-s" . magit-status)
+         :map magit-status-mode-map
+         ("RET" . magit-diff-visit-file-other-window))
   :hook (magit-mode . magit-auto-revert-mode)
   :custom
   (magit-completing-read-function 'ivy-completing-read)
@@ -679,6 +705,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :commands flycheck-mode
   :hook (prog-mode . flycheck-mode)
+  :custom
+  (flycheck-css-stylelint-executable "stylelint")
   :config
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
