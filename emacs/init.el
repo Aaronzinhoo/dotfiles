@@ -1085,9 +1085,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           hydra-multiple-cursors/mc/edit-lines-and-exit)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; Creating Diagrams
+(use-package plantuml-mode
+  :straight (:type git :host github :repo "skuro/plantuml-mode" :branch "master")
+  :mode (("\\plantuml\\'" . plantuml-mode))
+  :custom
+  (plantuml-executable-path "plantuml")
+  (plantuml-default-exec-mode 'executable)
+  :config
+  (add-hook 'plantuml-mode-hook (lambda ()
+                                  (set (make-local-variable 'company-backends)
+                                       '((company-capf company-dabbrev-code))))))
 ;;; Org Support
-;; sudo apt-get install texlive-latex-base texlive-fonts-recommended \
-;; texlive-fonts-extra texlive-latex-extra
 ;; for exporting html documents
 (use-package htmlize
   :defer t)
@@ -1174,6 +1183,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (python     . t)
      (typescript . t)
      (js         . t)
+     (plantuml   . t)
      (browser    . t)
      (verb       . t)
      (shell      . t)))
@@ -1183,7 +1193,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("\\.mm\\'" . default)
           ("\\.x?html?\\'" . default)
           ("\\.pdf\\'" . default))))
-  ;; add js2 mode to the src languages for org-mode blocks
+  ;; add modes to the src languages for org-mode blocks
+  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
   (add-to-list 'org-src-lang-modes '("js" . js2))
   (add-to-list 'org-src-lang-modes '("python" . python))
   (add-to-list 'org-src-lang-modes '("ts" . typescript))
@@ -1191,6 +1202,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-src-lang-modes '("verb" . verb))
   ;; add quick way to make code block with name "<s"[TAB]
   ;; arg: results: [output value replace silent]
+  (add-to-list 'org-structure-template-alist '("plantuml" . plantuml))
   (add-to-list 'org-structure-template-alist '("html" . "src browser"))
   (add-to-list 'org-structure-template-alist '("js" . "src js"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
@@ -1450,6 +1462,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package editorconfig
   :diminish
   :config
+  (setq editorconfig-exclude-modes (append editorconfig-exclude-modes '(image-mode nxml-mode)))
   (editorconfig-mode 1))
 (use-package bookmark+
   :custom
