@@ -712,13 +712,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (append flycheck-disabled-checkers
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'json-jsonlint 'json-mode)
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
   ;; eslint requires you to be careful with the configuration
   ;; ensure to use .json files and setup accordingly
   ;; test with shell command
+  ;; tide-typescript gives type errors so generally place first
+  ;; tide-typescript not helpful for javascript unless checkJs true so can use just eslint
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
-  (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
-  (flycheck-add-mode 'javascript-eslint 'ng2-ts-mode)
-  (flycheck-add-mode 'typescript-tslint 'ng2-ts-mode))
+  (flycheck-add-mode 'css-stylelint 'css-mode))
 (use-package aggressive-indent
   :straight t
   :diminish
@@ -788,6 +789,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            java-mode      ; eclipse-jdtls
            go-mode
            sql-mode
+           ng2-ts-mode
+           ng2-html-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -803,6 +806,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
+  (lsp-clients-angular-language-server-command
+   '("node"
+     "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules/@angular/language-server"
+     "--ngProbeLocations" "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules"
+     "--tsProbeLocations"
+     "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules/"
+     "--stdio"))
   :init
   (defun lsp-go-install-save-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer)
@@ -810,9 +820,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-gopls-staticcheck t)
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
+  (defun ng2-html-mode-setup ()
+    (set (make-local-variable 'company-backends) '((company-keywords company-web-html company-css company-bootstrap company-files))))
   :config
   (setq read-process-output-max (* 1024 1024)) ;;1MB
-  (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+  (add-hook 'go-mode-hook 'lsp-go-install-save-hooks)
+  (add-hook 'ng2-html-mode-hook 'ng2-html-mode-setup))
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -913,12 +926,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind* (("M-x" . counsel-M-x)
           ("C-x b" . counsel-switch-buffer)
           ("C-s" . counsel-grep-or-swiper)
+          ("C-S-s" . swiper-isearch)
           ("C-x C-f" . counsel-find-file)
           ("C-x C-r" . counsel-recentf)
           ("C-c r" . ivy-resume)
           ("C-c m" . counsel-imenu)
           ("C-r" . counsel-rg)
-          ("M-t" .  swiper-thing-at-point)
+          ("M-t" .  swiper-isearch-thing-at-point)
           :map ivy-switch-buffer-map
           ("C-k" . ivy-switch-buffer-kill)
           :map ivy-minibuffer-map
@@ -926,23 +940,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("M-i" . nil)
           ("C-j" . ivy-immediate-done)
           :map ivy-occur-grep-mode-map
-          ("." . hydra-ivy-occur/body))
+          ("C-c h" . hydra-ivy-occur/body))
   :hook ((after-init . ivy-mode)
          (ivy-mode . counsel-mode))
   :preface
   (defun ivy-update-candidates-dynamic-collection-workaround-a (old-fun &rest args)
     (cl-letf (((symbol-function #'completion-metadata) #'ignore))
       (apply old-fun args)))
-  :custom
-  (ivy-wrap t)
-  (ivy-initial-inputs-alist nil)
-  (swiper-action-recenter t)
-  (enable-recursive-minibuffers t)
-  (ivy-extra-directories nil)
-  (ivy-use-virtual-buffers t)
-  (ivy-count-format "%d/%d ")
-  (ivy-display-style 'fancy)
-  :config
   (pretty-hydra-define hydra-ivy-occur
     (:hint nil :color pink :quit-key "q" :title (with-faicon "tree" "Ivy-Occur" 1 -0.05))
     ("Navigation"
@@ -956,6 +960,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      "View"
      (("v" ivy-occur-press "preview")
       ("RET" ivy-occur-press-and-switch "goto" :color teal))))
+  :custom
+  (imenu-auto-rescan t)
+  (ivy-wrap t)
+  (ivy-initial-inputs-alist nil)
+  (swiper-action-recenter t)
+  (enable-recursive-minibuffers t)
+  (ivy-extra-directories nil)
+  (ivy-use-virtual-buffers t)
+  (ivy-count-format "%d/%d ")
+  (ivy-display-style 'fancy)
+  :config
+  (setq swiper-use-visual-line-p (lambda (_) nil))
   ;; fix for async display of counsel-rg resuls
   (advice-add #'ivy-update-candidates :around #'ivy-update-candidates-dynamic-collection-workaround-a))
 (use-package counsel-tramp
@@ -1025,29 +1041,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (electric-pair-mode 1))
 (use-package multiple-cursors
-  :bind (("M-m" . 'hydra-multiple-cursors/body))
+  :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
+  :bind (("M-m" . hydra-multiple-cursors/body))
   :hook ((prog-mode . multiple-cursors-mode)
          (text-mode . multiple-cursors-mode))
   :init
-  (defhydra hydra-multiple-cursors (global-map "M-m" :hint nil)
-    "
-     ^Up^            ^Down^        ^Miscellaneous^
------------------------------------------------------
-[_p_]   Next    [_n_]   Next    [_l_] Edit lines
-[_P_]   Skip    [_N_]   Skip    [_a_] Mark all
-[_M-p_] Unmark  [_M-n_] Unmark  [_q_] Quit
-                              [_h_] Hide
-"
-    ("l" mc/edit-lines :exit t)
-    ("a" mc/mark-all-like-this :exit t)
-    ("n" mc/mark-next-like-this)
-    ("N" mc/skip-to-next-like-this)
-    ("h" mc-hide-unmatched-lines-mode)
-    ("M-n"  mc/unmark-next-like-this)
-    ("p"  mc/mark-previous-like-this)
-    ("P" mc/skip-to-previous-like-this)
-    ("M-p" mc/unmark-previous-like-this)
-    ("q" nil))
+  (pretty-hydra-define hydra-multiple-cursors
+    (:hint nil :color pink :quit-key "q" :title (with-faicon "key" "Multiple Cursors" 1 -0.05))
+    ("Up"
+     (("p" mc/mark-previous-like-this "Prev")
+      ("P" mc/skip-to-previous-like-this "Skip Prev")
+      ("M-p" mc/unmark-previous-like-this "Unmark Prev"))
+     "Down"
+     (("n" mc/mark-next-like-this "Next")
+      ("N" mc/skip-to-next-like-this "Skip Next")
+      ("M-n" mc/unmark-next-like-this "Unmark Next"))
+     "Cycle"
+     (("c" mc/cycle-forward "next cursor")
+      ("C" mc/cycle-back "previous cursor"))
+     "Misc."
+     (("2" er/expand-region "Expand Region")
+      ("h" mc-hide-unmatched-lines-mode "Hide lines")
+      ("a" mc/mark-all-like-this "Mark All" :color blue)
+      ("RET" nil "Quit"))))
   ;; This file is automatically generated by the multiple-cursors extension.
   ;; It keeps track of your preferences for running commands with multiple cursors.
   :config
@@ -1058,13 +1074,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           hungry-delete-forward))
   (setq mc/cmds-to-run-once
         '(counsel-M-x
+          mc/mark-previous-like-this
           hydra-multiple-cursors/mc-hide-unmatched-lines-mode
           hydra-multiple-cursors/mc/mark-all-like-this-and-exit
-          hydra-multiple-cursors/mc/mark-previous-like-this
           hydra-multiple-cursors/mc/mark-next-like-this
           hydra-multiple-cursors/mc/skip-to-previous-like-this
           hydra-multiple-cursors/mc/skip-to-next-like-this
           hydra-multiple-cursors/mc/nil
+          hydra-multiple-cursors/mc/mark-previous-like-this
           hydra-multiple-cursors/mc/edit-lines-and-exit)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
