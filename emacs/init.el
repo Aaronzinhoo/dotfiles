@@ -1560,16 +1560,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "TobiasZawada/html-check-frag" :branch "master")
   :hook (web-mode . html-check-frag-mode))
 (use-package web-mode
+  :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
   :hook (ng2-html-mode . web-mode)
   :mode (("\\.css\\$" . web-mode)
          ("\\.html\\$" . web-mode)
-         ("\\.component.html\\'" . web-mode))
+         ("\\.component.html\\'" . web-mode)
+         )
   :bind ((:map web-mode-map
                ("C-c h" . hydra-web/body))
          )
   :preface
   (defun aaronzinhoo-company-web-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-web-html company-bootstrap company-css company-tide))))
+    (set (make-local-variable 'company-backends) '((company-capf company-bootstrap company-css company-tide))))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
