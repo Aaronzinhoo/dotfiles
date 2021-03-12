@@ -1483,6 +1483,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Debugging
 (use-package realgud
   :defer t)
+(use-package realgud-trepan-ni
+  :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master"))
+
+;; Code Coverage
+(use-package cov
+  :defer t
+  )
+(use-package coverlay
+  :commands (coverlay-mode))
 
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
@@ -1530,12 +1539,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((rjsx-mode . add-node-modules-path)
          (typescript-mode . add-node-modules-path)
          (js2-mode . add-node-modules-path)
-         (json-mode . add-node-modules-path))
+         (json-mode . add-node-modules-path)
+         ;; add completion for css class names in html files
+         (css-mode . add-node-modules-path)))
+(use-package ac-html-csswatcher
+  :hook (web-mode . company-web-csswatcher-setup)
   :config
-  (eval-after-load 'typescript-mode
-    (add-node-modules-path))
-  (eval-after-load 'rjsx-mode
-    (add-node-modules-path)))
+  (ac-html-csswatcher-setup-html-stuff-async))
+(use-package nxml-mode
+  :straight nil
+  :config
+  (add-to-list 'auto-mode-alist
+               (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
+                     'nxml-mode)))
 (use-package emmet-mode
   :hook ((web-mode . emmet-mode)
          (ng2-html-mode . emmet-mode)))
