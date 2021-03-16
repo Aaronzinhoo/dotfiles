@@ -1113,8 +1113,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; org-plus-contrib is a feature so must be loaded within org
   :straight org-plus-contrib
   :mode (("\\.org$" . org-mode))
-  :hook ((org-mode . org-indent-mode)
-         (org-mode . org-superstar-mode))
+  :hook ((org-mode . aaronzinhoo-org-setup)
+         (org-mode . aaronzinhoo-org-font-setup))
   :bind
   ("C-c l" . org-store-link)
   ("C-c a" . org-agenda)
@@ -1122,6 +1122,31 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
         ("C-c h". hydra-org-nav/body))
+  :preface
+  (defun aaronzinhoo-org-setup ()
+    (variable-pitch-mode t)
+    (org-indent-mode t)
+    (org-superstar-mode t))
+  (defun aaronzinhoo-org-font-setup ()
+    ;; Set faces for heading levels
+    (dolist (face '((org-level-1 . 1.2)
+                    (org-level-2 . 1.1)
+                    (org-level-3 . 1.05)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.1)
+                    (org-level-6 . 1.1)
+                    (org-level-7 . 1.1)
+                    (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
   :custom
   (org-directory (concat (getenv "HOME") "/org"))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
@@ -1182,8 +1207,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
    '((emacs-lisp . t)
      (python     . t)
      (typescript . t)
-     (js         . t)
      (plantuml   . t)
+     (js         . t)
      (browser    . t)
      (verb       . t)
      (shell      . t)))
@@ -1202,7 +1227,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-src-lang-modes '("verb" . verb))
   ;; add quick way to make code block with name "<s"[TAB]
   ;; arg: results: [output value replace silent]
-  (add-to-list 'org-structure-template-alist '("plantuml" . plantuml))
+
+  (add-to-list 'org-structure-template-alist '("plantuml" . "src plantuml"))
   (add-to-list 'org-structure-template-alist '("html" . "src browser"))
   (add-to-list 'org-structure-template-alist '("js" . "src js"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
