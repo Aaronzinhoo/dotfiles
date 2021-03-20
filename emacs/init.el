@@ -16,6 +16,8 @@
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 ;; font
 (add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 ;; more defaults
 (setq package-enable-at-startup nil
       message-log-max 16384
@@ -782,13 +784,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (yas-reload-all))
 (use-package yasnippet-snippets)
-(use-package lsp-ivy)
+(use-package lsp-ivy
+  :after ivy)
 (use-package lsp-mode
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
            java-mode      ; eclipse-jdtls
            go-mode
            sql-mode
+           html-mode
            ng2-ts-mode
            ng2-html-mode
            ) . lsp)
@@ -820,12 +824,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-gopls-staticcheck t)
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
-  (defun ng2-html-mode-setup ()
-    (set (make-local-variable 'company-backends) '((company-keywords company-web-html company-css company-bootstrap company-files))))
   :config
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks)
-  (add-hook 'ng2-html-mode-hook 'ng2-html-mode-setup))
+  )
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -845,7 +847,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-posframe
   :after company
   :diminish company-posframe-mode
-  :init (company-posframe-mode t)
+  :hook (company-mode . company-posframe-mode)
   :config
   (setq company-posframe-show-indicator nil)
   (setq company-posframe-show-metadata nil))
@@ -1587,17 +1589,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (web-mode . html-check-frag-mode))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
-  :hook (ng2-html-mode . web-mode)
+  :hook ((ng2-html-mode . web-mode)
+         (web-mode . aaronzinhoo-company-web-mode-hook)
+         )
   :mode (("\\.css\\$" . web-mode)
          ("\\.html\\$" . web-mode)
          ("\\.component.html\\'" . web-mode)
          )
   :bind ((:map web-mode-map
-               ("C-c h" . hydra-web/body))
-         )
+               ("C-c h" . hydra-web/body)))
   :preface
+  ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo-company-web-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-bootstrap company-css company-tide))))
+    (set (make-local-variable 'company-backends) '((company-capf company-web company-web-html company-bootstrap company-css company-files) company-capf)))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
@@ -1611,9 +1615,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (web-mode-enable-auto-expanding t)
   (web-mode-enable-block-face t)
   (web-mode-enable-current-column-highlight t)
-  (web-mode-enable-current-element-highlight t)
-  :config
-  (add-hook 'web-mode-hook 'aaronzinhoo-company-web-mode-hook))
+  (web-mode-enable-current-element-highlight t))
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("\\.md\\'" . gfm-mode)
