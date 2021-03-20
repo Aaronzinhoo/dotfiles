@@ -1642,43 +1642,78 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;     npm install --save typescript
 ;;     npm install --save @types/browserify
 ;;     tsc --init
-
+(use-package ts-comint
+  :commands (run-ts))
 (use-package tide
-  :after ( typescript-mode company flycheck)
+  :straight (:type git :host github :repo "ananthakumaran/tide" :branch "master")
+  :after (typescript-mode company flycheck)
   :bind (:map typescript-mode-map
-              ("C-c d" . tide-documentation-at-point)
-              ("C-c i" . import-js-fix)
+              ("C-c h" . hydra-tide/body)
               ("C-c '" . nil))
-  :hook ((rjsx-mode .       tide-setup)
-         (typescript-mode . tide-setup)
-         (typescript-mode . tide-hl-identifier-mode))
+  :hook (
+         (tide-mode . eslintd-fix-mode)
+         (rjsx-mode . aaronzinhoo-tide-rjsx-mode-hook))
   :preface
-  (defun aaronzinhoo-company-tide-mode-hook ()
-    (setq company-idle-delay 0.1)
-    ;; (setq-local 'company-backends '(company-tide company-files))
-    )
+  (defun aaronzinhoo-tide-rjsx-mode-hook ()
+    (aaronzinhoo-tide-mode-hook)
+    (flycheck-select-checker 'javascript-tide))
+  (defun aaronzinhoo-tide-ng2-mode-hook ()
+    (aaronzinhoo-tide-mode-hook)
+    (flycheck-add-mode 'typescript-tide 'ng2-ts-mode)
+    (flycheck-add-next-checker 'typescript-tide '(warning . javascript-eslint) 'append))
+  (defun aaronzinhoo-tide-mode-hook ()
+    (tide-setup)
+    (tide-hl-identifier-mode)
+    (set (make-local-variable 'company-backends) '((company-tide company-files)))
+    (setq company-idle-delay 0.1))
   :custom
   (typescript-indent-line 2)
+  :init
+  (pretty-hydra-define hydra-tide
+    (:hint nil :title (with-fileicon "typescript" "Tide Control" 1 -0.05) :quit-key "q" :color pink)
+    ("Navigation"
+     (("j" tide-jump-to-definition "goto def")
+      ("J" tide-jump-back "jump back")
+      ("r" tide-references "get refs" :color blue))
+     "Edit"
+     (("f" tide-rename-file "rename current file"))
+     "Imports"
+     (("i" import-js-fix "fix")
+      ("o" tide-organize-imports "organize"))
+     "Error"
+     (("e" tide-find-next-error "next error"))
+     "Action"
+     (("d" tide-documentation-at-point "documentation")
+      ("R" run-ts "run TS REPL" :color blue))
+     "Other"
+     (("RET" nil "Quit" :color blue))))
   :config
-  (setq tide-tsserver-process-environment '("TSS_LOG=-level verbose -file /tmp/tss.log"))
-  (add-hook 'tide-mode-hook 'aaronzinhoo-company-tide-mode-hook)
+  (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
+  (flycheck-add-mode 'javascript-eslint 'ng2-ts-mode)
+  (flycheck-add-mode 'typescript-tslint 'ng2-ts-mode)
+  (flycheck-add-next-checker 'typescript-tide '(warning . javascript-eslint) 'append)
+  ;; (flycheck-add-next-checker 'javascript-tide '(warning . javascript-eslint) 'append)
   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver")))
+(use-package eslintd-fix
+  :defer t
+  :config
+  (setq flycheck-javascript-eslint-executable "eslint_d"))
 (use-package import-js
-  :init
-  (defun ts-import-hook ()
-    (run-import-js))
-  (add-hook 'tide-mode-hook 'ts-import-hook))
+  :hook ((rjsx-mode . aaronzinhoo-run-import-js-hook)
+         (typescript-mode . aaronzinhoo-run-import-js-hook))
+  :preface
+  (defun aaronzinhoo-run-import-js-hook ()
+    (run-import-js)))
 (use-package prettier-js
-  :after (rjsx-mode json-mode markdown-mode)
+  :diminish
   :hook ((markdown-mode . prettier-js-mode)
          (json-mode . prettier-js-mode)
+         (css-mode . prettier-js-mode)
          (rjsx-mode . prettier-js-mode)
          (typescript-mode . prettier-js-mode))
   :config
-  (setq prettier-js-args '("--single-quote" "true"
-                           "--trailing-comma" "all"
-                           "--bracket-spacing" "true")))
+  (setq prettier-js-args '("--bracket-spacing" "false")))
 (use-package js-comint
   :defer t
   :init
