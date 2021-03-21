@@ -24,7 +24,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(dired-subtree-depth-1-face ((t (:background "slate blue"))))
+ '(dired-subtree-depth-1-face ((t nil)))
+ '(dired-subtree-depth-2-face ((t nil)))
+ '(dired-subtree-depth-3-face ((t nil)))
  '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
  '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
  '(markdown-table-face ((t (:inherit markdown-code-face :foreground "white smoke"))))
