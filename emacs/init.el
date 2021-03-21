@@ -437,7 +437,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       ("f" web-mode-fold-or-unfold "fold/unfold"))
      "Edit"
      (("t" aaronzinhoo-sgml-prettify-html "tidy html")
-      ("d" sgml-delete-tag "delete tag"))
+      ("d" aaronzinhoo-delete-tag "delete tag"))
      "Error"
      (("v" html-check-frag-next "next html error")
       ("E" web-mode-dom-errors-show "show errors"))
@@ -600,8 +600,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (:map dired-mode-map
               ("i" . dired-subtree-insert)
               ("k" . dired-subtree-remove)
-              ("<tab>" . dired-subtree-toggle)
-              ("<backtab>" . dired-subtree-cycle)))
+              ("<tab>" . aaronzinhoo-dired-subtree-toggle)
+              ("<backtab>" . aaronzinhoo-dired-subtree-toggle)
+              ("C-n" . dired-subtree-next-sibling)
+              ("C-p" . dired-subtree-previous-sibling))
+  :preface
+  (defun aaronzinhoo-dired-subtree-toggle ()
+    (interactive)
+    (dired-subtree-toggle)
+    (revert-buffer)))
 ;; font-locking colors for dired
 (use-package diredfl
   :after dired
@@ -1599,6 +1606,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind ((:map web-mode-map
                ("C-c h" . hydra-web/body)))
   :preface
+  (defun aaronzinhoo-delete-tag ()
+    (sgml-skip-tag-backward 1)
+    (point-to-register 8)
+    (sgml-skip-tag-forward 1)
+    (backward-char)
+    (web-mode-tag-beginning)
+    (er/mark-outer-tag)
+    (hungry-delete-backward 1)
+    (jump-to-register 8)
+    (er/mark-outer-tag)
+    (hungry-delete-backward 1))
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo-company-web-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-web company-web-html company-bootstrap company-css company-files) company-capf)))
