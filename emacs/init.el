@@ -791,9 +791,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (yas-reload-all))
 (use-package yasnippet-snippets)
-(use-package lsp-ivy
-  :after ivy)
 (use-package lsp-mode
+  :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
            java-mode      ; eclipse-jdtls
@@ -817,13 +816,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
-  (lsp-clients-angular-language-server-command
-   '("node"
-     "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules/@angular/language-server"
-     "--ngProbeLocations" "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules"
-     "--tsProbeLocations"
-     "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules/"
-     "--stdio"))
   :init
   (defun lsp-go-install-save-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer)
@@ -843,6 +835,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (lsp-ui-peek-enable t)
   (lsp-ui-doc-enable nil))
+(use-package lsp-ivy
+  :after (lsp-mode ivy))
 (use-package company-box
   :after company
   :diminish
@@ -1916,15 +1910,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
 (global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
+(global-set-key (kbd "C-c C-j") 'previous-buffer)
+(global-set-key (kbd "C-c C-l") 'next-buffer)
 (global-set-key (kbd "M-[") 'backward-up-list)
 (global-set-key (kbd "M-]") 'up-list)
 ;; delete pair of items
 (global-set-key (kbd "C-c C-p") 'delete-pair)
-;; This is your old M-x.
+;; this is your old m-x.
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 
 ;; load custom faces and vars for packages
 (setq custom-file "~/.emacs.d/custom.el")
 (when (file-exists-p custom-file) (load custom-file))
-;;; init.el ends here
 (put 'narrow-to-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
+;;; init.el ends here

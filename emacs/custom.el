@@ -5,8 +5,6 @@
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file "~/.config/emacs/var/bmkp/current-bookmark.el")
  '(company-dabbrev-ignore-case nil)
- '(lsp-clients-angular-language-server-command
-   '("node" "node_modules/@angular/language-server" "--ngProbeLocations" "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules" "--tsProbeLocations" "/home/aaron-gonzales/.config/nvm/versions/node/v14.15.4/lib/node_modules" "--stdio"))
  '(package-selected-packages
    '(keychain-environment company company-eclim go-mode lsp-ui frame-local pyenv-mode-auto pyenv-mode rg delight blacken powerline powermo company-posframe company-postframe company-box simpleclip all-the-icons-ivy-rich tide flycheck exec-path-from-shell company-web skewer-mode simple-httpd js2 prettier-js rjsx json-snatcher json-reformat js-comint web-mode emmet-mode add-node-modules-path yaml-mode lsp-mode dired-recent diredfl ivy-rich all-the-icons beginend default-text-scale company-prescient ivy-prescient prescient benchmark-init flx company-quickhelp-terminal crux company-quickhelp counsel ace-jump ace-jump-mode diminish auto-package-update electric-pair-mode moe-theme-switcher electric-pair ssh-agency jedi moe-theme bind-map rjsx-mode ag company-tern impatient-mode company-jedi smex idle-highlight-in-visible-buffers-mode idle-highlight-mode magit async git-commit list-packages-ext use-package image+ gnu-elpa-keyring-update magithub pylint python-black multiple-cursors material-theme elpy better-defaults python))
  '(web-mode-attr-indent-offset 2)
