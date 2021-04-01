@@ -19,7 +19,7 @@ npm install -g @angular/cli
 npm install -g prettier
 npm install -g import-js
 npm install -g eslint
-npm install -g stylelint stylelint-config-standard
+npm install -g stylelint stylelint-config-standard stylelint-scss
 npm install -g @typescript-eslint/eslint-plugin
 npm install -g @typescript-eslint/parser
 npm install -g trepan-ni

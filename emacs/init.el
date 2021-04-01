@@ -7,6 +7,7 @@
 
 ;; startup defaults
 (setq user-full-name "Aaron Gonzales")
+(setq user-init-dir "~/.emacs.d")
 (setq user-init-file "~/.emacs.d/init.el")
 (setq user-emacs-directory "~/.config/emacs")
 (defvar home-directory (expand-file-name "~/.config/emacs"))
@@ -1898,30 +1899,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; C-c ' edit code in buffer
 ;; C-c C-c run org code block
 
-;;CUSTOM EMACS BUILT-IN KEYS
-(global-set-key (kbd "
-<escape>") 'keyboard-escape-quit)
-(global-set-key (kbd "M-i") 'previous-line)
-(global-set-key (kbd "M-j") 'backward-char)
-(global-set-key (kbd "M-k") 'next-line)
-(global-set-key (kbd "M-l") 'forward-char)
-(global-set-key (kbd "M-q") 'yank)
-(global-set-key (kbd "M-4") 'pop-local-mark-ring)
-(global-set-key (kbd "C-x k") 'kill-this-buffer)
-(global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
-(global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
-(global-set-key (kbd "C-c C-j") 'previous-buffer)
-(global-set-key (kbd "C-c C-l") 'next-buffer)
-(global-set-key (kbd "M-[") 'backward-up-list)
-(global-set-key (kbd "M-]") 'up-list)
-;; delete pair of items
-(global-set-key (kbd "C-c C-p") 'delete-pair)
-;; this is your old m-x.
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-
 ;; load custom faces and vars for packages
 (setq custom-file "~/.emacs.d/custom.el")
 (when (file-exists-p custom-file) (load custom-file))
+(load (concat user-init-dir "/aaronzinhoo-custom-keybindings.el"))
 (put 'narrow-to-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 ;;; init.el ends here
