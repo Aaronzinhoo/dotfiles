@@ -1127,6 +1127,22 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("C-M-<return>" . org-insert-subheading)
         ("C-c h". hydra-org-nav/body))
   :preface
+  (defun aaronzinhoo-org-inline-css-hook (exporter)
+    "Insert custom inline css"
+    (when (eq exporter 'html)
+      (let* ((dir (ignore-errors (file-name-directory (buffer-file-name))))
+             (path (concat dir "style.css"))
+             (homestyle (or (null dir) (null (file-exists-p path))))
+             (final (if homestyle (concat user-init-dir "/org/sakura-dark-theme.css") path)))
+        (setq org-html-head-include-default-style nil)
+        (setq org-html-head (concat
+                             "<style type=\"text/css\">\n"
+                             "<!--/*--><![CDATA[/*><!--*/\n"
+                             (with-temp-buffer
+                               (insert-file-contents final)
+                               (buffer-string))
+                             "/*]]>*/-->\n"
+                             "</style>\n")))))
   (defun aaronzinhoo-org-setup ()
     (variable-pitch-mode t)
     (org-indent-mode t)
@@ -1180,6 +1196,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (org-babel-python-command "python3")
   ;; change ... to down arrow
   (org-ellipsis " ▾")
+  (org-export-headline-levels 5)
   :init
   ;; setup electric-pairs mode for org-mode
   (defvar org-electric-pairs '((?/ . ?/) (?= . ?=)) "Electric pairs for org-mode.")
@@ -1205,6 +1222,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (if my/wsl
       (progn
         (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
+  (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -1228,12 +1246,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-src-lang-modes '("python" . python))
   (add-to-list 'org-src-lang-modes '("ts" . typescript))
   (add-to-list 'org-src-lang-modes '("browser" . web))
+  (add-to-list 'org-src-lang-modes '("html" . web))
   (add-to-list 'org-src-lang-modes '("verb" . verb))
   ;; add quick way to make code block with name "<s"[TAB]
   ;; arg: results: [output value replace silent]
 
   (add-to-list 'org-structure-template-alist '("plantuml" . "src plantuml"))
-  (add-to-list 'org-structure-template-alist '("html" . "src browser"))
+  (add-to-list 'org-structure-template-alist '("html" . "src html"))
+  (add-to-list 'org-structure-template-alist '("browser" . "src browser"))
   (add-to-list 'org-structure-template-alist '("js" . "src js"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
   (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
