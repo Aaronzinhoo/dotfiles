@@ -716,7 +716,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands flycheck-mode
   :hook (prog-mode . flycheck-mode)
   :custom
+  (flycheck-stylelintrc "~/.stylelintrc")
   (flycheck-css-stylelint-executable "stylelint")
+  (flycheck-yamllintrc "~/.yamllintrc")
   :config
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
@@ -802,6 +804,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            html-mode
            ng2-ts-mode
            ng2-html-mode
+           yaml-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -1538,15 +1541,22 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Code Coverage
 (use-package cov
-  :defer t
-  )
+  :defer t)
 (use-package coverlay
   :commands (coverlay-mode))
 
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 (use-package yaml-mode
-  :mode (("\\.ya?ml$" . yaml-mode)))
+  :mode (("\\.ya?ml$" . yaml-mode)
+         ("\\.tpl$" . yaml-mode))
+  :hook ((yaml-mode . aaronzinhoo-yaml-mode-hook))
+  :preface
+  (defun aaronzinhoo-yaml-mode-hook ()
+    (flycheck-mode)
+    (highlight-indentation-mode)
+    (flycheck-select-checker 'yaml-yamllint 'yaml-mode)
+    (flycheck-add-next-checker 'yaml-yamllint '(warning . yaml-ruby) 'append)))
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
 (use-package json-mode
   :mode ("\\.json" . json-mode)

@@ -25,5 +25,7 @@ npm install -g @typescript-eslint/parser
 npm install -g trepan-ni
 npm install -g @angular/language-service@next
 npm install -g @angular/language-server
+# yaml
+npm install -g yaml-language-server
 # ts-compint/REPL
 npm install -g tsun
