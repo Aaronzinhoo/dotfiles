@@ -4,7 +4,6 @@
 ;;;init.el --- Emacs configuration
 
 ;;; Code:
-
 ;; startup defaults
 (setq user-full-name "Aaron Gonzales")
 (setq user-init-dir "~/.emacs.d")
@@ -311,13 +310,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 (use-package major-mode-hydra
   :after hydra
   :preface
-  (defun aaronzinhoo-sgml-prettify-html ()
-    """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
-    (interactive)
-    (mark-whole-buffer)
-    (sgml-pretty-print (region-beginning) (region-end))
-    (mark-whole-buffer)
-    (indent-for-tab-command))
   (defun with-alltheicon (icon str &optional height v-adjust)
     "Displays an icon from all-the-icon."
     (s-concat (all-the-icons-alltheicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
@@ -862,13 +854,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (:map company-active-map
         ("<tab>" . company-complete-common-or-cycle)
         ("<backtab>" . company-select-previous))
-  :init
+  :preface
   (defun company-preview-if-not-tng-frontend (command)
     "`company-preview-frontend', but not when tng is active."
     (unless (and (eq command 'post-command)
                  company-selection-changed
                  (memq 'company-tng-frontend company-frontends))
       (company-preview-frontend command)))
+  :init
   (setq company-idle-delay 0.1
         company-echo-delay 0 ;; remove annoying blinking
         company-tooltip-flip-when-above t
@@ -889,7 +882,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-unless-just-one-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  ;; -----------------------------------------------------------------
   :config
   (global-company-mode t))
 (use-package company-posframe
