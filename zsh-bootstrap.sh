@@ -34,6 +34,8 @@ git clone https://github.com/lukechilds/zsh-nvm "${CUSTOM_PLUGINS}"/zsh-nvm
 
 git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUGINS}"/zsh-better-npm-completion
 
+git clone https://github.com/go/rancher-zsh-completion "${CUSTOM_PLUGINS}"/rancher
+
 echo_with_prompt "adding poetry completion to zsh"
 check_and_mkdir "${CUSTOM_PLUGINS}/poetry"
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3

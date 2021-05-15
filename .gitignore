@@ -1,3 +1,4 @@
+# emacs files
 emacs/backups/
 emacs/dired-history
 emacs/emojis/
@@ -11,5 +12,7 @@ emacs/transient/
 emacs/image-dired
 emacs/auto-save-list
 emacs/.mc-lists.el
+emacs/ac-html-csswatcher
+# zsh
 zsh/.zcomp*
 zsh/.zhistory
