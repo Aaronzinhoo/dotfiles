@@ -20,5 +20,6 @@
 ;; this is your old m-x.
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 
+(global-set-key (kbd "<Scroll_Lock>") 'nil)
 (provide 'aaronzinhoo-custom-keybindings)
 ;;; aaronzinhoo-custom-keybindings ends here

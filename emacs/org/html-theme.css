@@ -93,7 +93,7 @@ code {
 pre {
   border: 1pt solid #aebdcc;
   border-left: 4px solid #767676;
-  background: #eee;
+  background: #798ca4;
   padding: 5pt;
   overflow: auto;
   border-radius: 4px;
@@ -177,6 +177,22 @@ h3 {
 
 h4 {
   font-size: 140%;
+  font-family: palatino, serif;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.2em;
+  padding-left: 0;
+}
+
+h5 {
+  font-size: 120%;
+  font-family: palatino, serif;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.2em;
+  padding-left: 0;
+}
+
+h6 {
+  font-size: 110%;
   font-family: palatino, serif;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.2em;
@@ -726,6 +742,7 @@ th {
   color: #ff0000;
   font-weight: bold;
 }
+
 .org-outline-1 {
   /* outline-1 */
   color: #0000ff;
@@ -758,6 +775,7 @@ th {
   /* outline-8 */
   color: #bc8f8f;
 }
+
 .org-preprocessor {
   /* font-lock-preprocessor-face */
   color: #da70d6;
