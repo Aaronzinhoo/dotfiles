@@ -111,6 +111,7 @@ apt install libtool-bin -y
 apt install qutebrowser -y
 #---------------------
 
+
 #---------------------
 # misc
 #---------------------
@@ -169,3 +170,7 @@ apt install golang -y
 echo_with_prompt "installing c++ dependencies"
 apt install ccls -y
 apt install cmake -y
+
+## Rust
+echo_with_prompt "installing rust";
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
