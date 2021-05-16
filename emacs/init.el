@@ -34,6 +34,7 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1) ;;remove the scroll bar
+(scroll-lock-mode nil)
 ;; enable line numbers for some modes
 (dolist (mode '(text-mode-hook
                 prog-mode-hook
@@ -209,6 +210,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :hook (prog-mode . hl-line-mode))
 ;;org-noter/pdf-tools dependency
 (use-package tablist)
+;; required to be updated for company mode
+(use-package pos-tip)
+(use-package posframe
+  :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package tramp
   :straight nil
   :custom
@@ -297,7 +303,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   ;; To disable collection of benchmark data after init is done.
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
-
 ;; Hydra
 (use-package hydra
   :bind
@@ -399,46 +404,30 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       ("i" counsel-imenu "imenu")
       ("l" counsel-find-library "library")
       ("r" ivy-resume "resume"))
+     "Text"
+     (("c" ivy-insert-current "current cand." :color red)
+      ("w" ivy-yank-word "yank subword" :color red))
      "Other"
      (("s" counsel-info-lookup-symbol "symbol")
       ("u" counsel-unicode-char "unicode"))))
   (pretty-hydra-define hydra-lsp
-    (:hint nil :color teal :quit-key "q" :title (with-faicon "cog" "LSP" 1 -0.05))
+    (:hint nil :color pink :quit-key "q" :title (with-faicon "cog" "LSP" 1 -0.05))
     ("Goto"
      (("r" lsp-find-references "refs")
       ("d" lsp-find-definition "defs")
-      ("t" lsp-find-type-definition "type-def"))
+      ("t" lsp-find-type-definition "type-def")
+      ("b" xref-pop-marker-stack "pop back" :color red))
      "Refactor"
      (("F" lsp-format-buffer "format"))
      "UI"
-     (("p" lsp-ui-peek-mode "peek-mode")
-      ("R" lsp-ui-peek-find-references "peek-refs")
-      ("D" lsp-ui-peek-find-definitions "peek-defs")
+     (("p" lsp-ui-peek-mode "peek-mode" :toggle t)
+      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
+      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
       ("i" lsp-ui-imenu "peek-menu"))
      "Server"
      (("s" lsp-describe-session "session")
       ("I" lsp-install-server "install")
-      ("S" lsp-workspace-restart "restart"))))
-  (pretty-hydra-define hydra-web
-    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color pink)
-    ("Navigation"
-     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
-      ("e" sgml-skip-tag-forward "tag end | next tag")
-      ("n" web-mode-element-next "next tag")
-      ("p" web-mode-element-previous "previous tag")
-      ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
-      ("f" web-mode-fold-or-unfold "fold/unfold"))
-     "Edit"
-     (("t" aaronzinhoo-sgml-prettify-html "tidy html")
-      ("d" aaronzinhoo-delete-tag "delete tag"))
-     "Error"
-     (("v" html-check-frag-next "next html error")
-      ("E" web-mode-dom-errors-show "show errors"))
-     "Action"
-     (("w" web-mode-element-wrap "wrap element in tag" ));end action
-     "Other"
-     (("s" helm-emmet "Insert Emmet Snippet")
-      ("RET" nil "Quit" :color blue)))))
+      ("S" lsp-workspace-restart "restart")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -557,6 +546,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer t)
 (use-package grep
   :defer t)
+;; convert elisp to reg-exp
+(use-package rx)
+;; convert reg-exp to elisp code
+(use-package xr
+  :straight (:type git :host github :repo "mattiase/xr" :branch "master"))
 (use-package wgrep
   :custom
   (wgrep-auto-save-buffer t))
@@ -847,7 +841,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   :config
 ;;   (setq company-box-backends-colors nil))
 (use-package company
-  :straight (:type git :host github :repo "company-mode/company-mode" :branch "master")
+  :straight (company :files (:defaults "icons"))
   :diminish company-mode
   :bind
   ([remap indent-for-tab-command] . company-indent-or-complete-common)
@@ -862,6 +856,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                  (memq 'company-tng-frontend company-frontends))
       (company-preview-frontend command)))
   :init
+  (setq company-format-margin-function #'company-vscode-dark-icons-margin)
   (setq company-idle-delay 0.1
         company-echo-delay 0 ;; remove annoying blinking
         company-tooltip-flip-when-above t
@@ -876,16 +871,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         company-transformers '(company-sort-by-backend-importance
                                company-sort-prefer-same-case-prefix
                                company-sort-by-occurrence))
-  (setq company-auto-complete #'my-company-visible-and-explicit-action-p)
+  ;; (setq company-auto-complete #'my-company-visible-and-explicit-action-p)
   (setq company-frontends
         '(company-preview-if-not-tng-frontend
-          company-pseudo-tooltip-unless-just-one-frontend
+          company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
   :config
   (global-company-mode t))
 (use-package company-posframe
-  :after company
+  :straight (:type git :host github :repo "tumashu/company-posframe" :branch "master")
   :diminish company-posframe-mode
   :hook (company-mode . company-posframe-mode)
   :config
@@ -898,6 +893,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (require 'company-web-html))
 (use-package company-quickhelp
   :after company
+  :straight (:type git :host github :repo "company-mode/company-quickhelp" :branch "master")
   :init
   (company-quickhelp-mode t)
   (setq company-quickhelp-delay 0.1))
@@ -927,15 +923,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package counsel
   :diminish (ivy-mode counsel-mode)
   :bind* (("M-x" . counsel-M-x)
-          ("C-x b" . counsel-switch-buffer)
           ("C-s" . counsel-grep-or-swiper)
+          ("C-r" . counsel-rg)
+          ("M-t" .  swiper-isearch-thing-at-point)
           ("C-S-s" . swiper-isearch)
+          ("C-x d" . counsel-dired)
+          ("C-x D" . dired-jump)
+          ("C-x b" . counsel-switch-buffer)
           ("C-x C-f" . counsel-find-file)
           ("C-x C-r" . counsel-recentf)
           ("C-c r" . ivy-resume)
           ("C-c m" . counsel-imenu)
-          ("C-r" . counsel-rg)
-          ("M-t" .  swiper-isearch-thing-at-point)
           :map ivy-switch-buffer-map
           ("C-k" . ivy-switch-buffer-kill)
           :map ivy-minibuffer-map
@@ -1024,6 +1022,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (ivy-prescient-enable-sorting t)
   (ivy-prescient-enable-filtering t)
+  (ivy-re-builders-alist
+   '((swiper-isearch . ivy-prescient-re-builder)
+     (swiper . ivy-prescient-re-builder)
+     (swiper-isearch-thing-at-point . ivy-prescient-re-builder)
+     (t . ivy--regex-plus)))
   :config
   (ivy-prescient-mode t))
 (use-package company-prescient
@@ -1543,16 +1546,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
+;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
 (use-package yaml-mode
   :mode (("\\.ya?ml$" . yaml-mode)
          ("\\.tpl$" . yaml-mode))
   :hook ((yaml-mode . aaronzinhoo-yaml-mode-hook))
   :preface
+  (defun aaronzinhoo-company-yaml-mode-hook ()
+    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files))))
+  (defun aaronzinhoo-yaml-expand-region-hook ()
+    )
   (defun aaronzinhoo-yaml-mode-hook ()
     (flycheck-mode)
+    (lsp)
+    (hungry-delete-mode)
+    (aaronzinhoo-company-yaml-mode-hook)
     (highlight-indentation-mode)
-    (flycheck-select-checker 'yaml-yamllint 'yaml-mode)
-    (flycheck-add-next-checker 'yaml-yamllint '(warning . yaml-ruby) 'append)))
+    (when (flycheck-may-enable-checker 'yaml-yamllint)
+      (flycheck-select-checker 'yaml-yamllint))
+    (flycheck-add-next-checker 'yaml-yamllint '(warning . lsp) 'append)))
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
 (use-package json-mode
   :mode ("\\.json" . json-mode)
@@ -1621,19 +1633,33 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package html-check-frag
   :straight (:type git :host github :repo "TobiasZawada/html-check-frag" :branch "master")
   :hook (web-mode . html-check-frag-mode))
+(use-package css-mode
+  :straight nil
+  :hook (css-mode . aaronzinhoo-company-css-mode-hook)
+  :preface
+  (defun aaronzinhoo-company-css-mode-hook ()
+    (set (make-local-variable 'company-backends) '((company-bootstrap company-css company-files)))))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
   :hook ((ng2-html-mode . web-mode)
          (web-mode . aaronzinhoo-company-web-mode-hook)
          )
-  :mode (("\\.css\\$" . web-mode)
+  :mode (("\\.css\\$"  . web-mode)
          ("\\.html\\$" . web-mode)
          ("\\.component.html\\'" . web-mode)
          )
   :bind ((:map web-mode-map
                ("C-c h" . hydra-web/body)))
   :preface
+  (defun aaronzinhoo-sgml-prettify-html ()
+    """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
+    (interactive)
+    (mark-whole-buffer)
+    (sgml-pretty-print (region-beginning) (region-end))
+    (mark-whole-buffer)
+    (indent-for-tab-command))
   (defun aaronzinhoo-delete-tag ()
+    (interactive)
     (sgml-skip-tag-backward 1)
     (point-to-register 8)
     (sgml-skip-tag-forward 1)
@@ -1647,6 +1673,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo-company-web-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-web company-web-html company-bootstrap company-css company-files) company-capf)))
+  (pretty-hydra-define hydra-web
+    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color pink)
+    ("Navigation"
+     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
+      ("e" sgml-skip-tag-forward "tag end | next tag")
+      ("n" web-mode-element-next "next tag")
+      ("p" web-mode-element-previous "previous tag")
+      ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
+      ("f" web-mode-fold-or-unfold "fold/unfold"))
+     "Edit"
+     (("t" aaronzinhoo-sgml-prettify-html "tidy html")
+      ("d" aaronzinhoo-delete-tag "delete tag"))
+     "Error"
+     (("v" html-check-frag-next "next html error")
+      ("E" web-mode-dom-errors-show "show errors"))
+     "Action"
+     (("w" web-mode-element-wrap "wrap element in tag" ));end action
+     "Other"
+     (("s" helm-emmet "Insert Emmet Snippet")
+      ("RET" nil "Quit" :color blue))))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
@@ -1781,6 +1827,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package ng2-mode
   :defer t
   :mode (("\\component.ts\\'" . ng2-mode)
+         ("\\.service.spec.ts\\'" . ng2-ts-mode)
+         ("\\.component.spec.ts\\'" . ng2-ts-mode)
+         ("\\.view.spec.ts\\'" . ng2-ts-mode)
          ("\\component.html\\'" . web-mode)))
 ;; react setup
 (use-package rjsx-mode
@@ -1931,7 +1980,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; C-c ' edit code in buffer
 ;; C-c C-c run org code block
 
-;; load custom faces and vars for packages
+;; load custom faces, vars, & keybindings for packages
 (setq custom-file "~/.emacs.d/custom.el")
 (when (file-exists-p custom-file) (load custom-file))
 (load (concat user-init-dir "/aaronzinhoo-custom-keybindings.el"))
