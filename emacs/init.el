@@ -791,6 +791,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            ng2-ts-mode
            ng2-html-mode
            yaml-mode
+           rustic-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -1966,7 +1967,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          '(("CMakeLists\\.txt\\'" . cmake-mode))
          '(("\\.cmake\\'" . cmake-mode))
          auto-mode-alist)))
+
+;;; Rust
+(use-package rustic
+  :custom
+  (rustic-lsp-server 'rls))
+
 ;; ----------------------------------------------------------------
+
+
 (use-package moe-theme
   :straight (moe-theme-switcher :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :config
