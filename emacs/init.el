@@ -1969,6 +1969,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          auto-mode-alist)))
 
 ;;; Rust
+(use-package toml-mode)
 (use-package rustic
   :custom
   (rustic-lsp-server 'rls))
