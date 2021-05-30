@@ -1533,6 +1533,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;;; Languages Support
 
+;; Syntax Highlighting
+(use-package tree-sitter
+  :config
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+(use-package tree-sitter-langs)
+
 ;; Debugging
 (use-package realgud
   :defer t)
