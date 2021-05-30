@@ -12,3 +12,9 @@ if [ ! -z "$WSL_DISTRO_NAME" ] && [ ! -z "$WSL_IF_IP" ]; then
 else
 	export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0
 fi
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
