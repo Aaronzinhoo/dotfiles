@@ -1116,9 +1116,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; C-C C-r C-k to kill buffers
   ;; C-c C-r C-r to view header
   )
+(use-package org-contrib)
 (use-package org
-  ;; org-plus-contrib is a feature so must be loaded within org
-  :straight org-plus-contrib
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo-org-setup)
          (org-mode . aaronzinhoo-org-font-setup))
@@ -1537,6 +1536,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package tree-sitter
   :config
   (global-tree-sitter-mode)
+  (cl-pushnew '(ng2-ts-mode . typescript) tree-sitter-major-mode-language-alist)
+  (cl-pushnew '(ng2-html-mode . html) tree-sitter-major-mode-language-alist)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 (use-package tree-sitter-langs)
 
