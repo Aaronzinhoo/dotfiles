@@ -534,7 +534,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :bind (("M-s" . magit-status)
          :map magit-status-mode-map
-         ("RET" . magit-diff-visit-file-other-window))
+         ("RET" . magit-diff-visit-file-other-window)
+         ("M-i" . magit-section-backward)
+         ("M-k" . magit-section-forward))
   :hook (magit-mode . magit-auto-revert-mode)
   :custom
   (magit-completing-read-function 'ivy-completing-read)
@@ -556,10 +558,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (wgrep-auto-save-buffer t))
 ;; Ripgrep
 (use-package rg
-  :commands (rg rg-dwim)
-  :config
-  (global-set-key (kbd "C-M-g") 'rg)
-  (global-set-key (kbd "C-M-d") 'rg-dwim))
+  :commands (rg rg-dwim rg-menu)
+  :bind* ("C-c r" . rg-menu)
+  :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer)))))
 (use-package hungry-delete
   :straight t
   :config
@@ -578,6 +579,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dired-listing-switches "-lXGh --group-directories-first"
                           dired-dwim-target t)
   (dired-auto-revert-buffer t))
+;;; use to search files in multiple directories and place in one
+(use-package fd-dired
+  :custom
+  (fd-dired-program "fdfind"))
 (use-package dired-single)
 (use-package dired-collapse)
 (use-package dired-narrow
@@ -689,6 +694,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (which-key-use-C-h-commands nil)
   :config
+  (which-key-setup-side-window-right-bottom)
   (which-key-mode t))
 (use-package default-text-scale
   :defer 2
