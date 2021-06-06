@@ -1099,7 +1099,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
-  :straight (:type git :host github :repo "skuro/plantuml-mode" :branch "master")
+  :straight (:type git :host github :repo "Aaronzinhoo/plantuml-mode" :branch "master")
   :mode (("\\plantuml\\'" . plantuml-mode))
   :custom
   (plantuml-executable-path "plantuml")
