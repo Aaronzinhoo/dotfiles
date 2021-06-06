@@ -1729,7 +1729,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (web-mode-enable-auto-expanding t)
   (web-mode-enable-block-face t)
   (web-mode-enable-current-column-highlight t)
-  (web-mode-enable-current-element-highlight t))
+  (web-mode-enable-current-element-highlight t)
+  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word hydra-multiple-cursors/nil hydra-multiple-cursors/body)))
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("\\.md\\'" . gfm-mode)
