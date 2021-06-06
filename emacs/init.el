@@ -582,8 +582,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)
-  :custom
-  (fd-dired-program "fdfind"))
+  :config
+  (setq fd-dired-program "fdfind"))
 (use-package dired-single)
 (use-package dired-collapse)
 (use-package dired-narrow
