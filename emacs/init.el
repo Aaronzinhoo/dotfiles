@@ -939,7 +939,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("C-x b" . counsel-switch-buffer)
           ("C-x C-f" . counsel-find-file)
           ("C-x C-r" . counsel-recentf)
-          ("C-c r" . ivy-resume)
           ("C-c m" . counsel-imenu)
           :map ivy-switch-buffer-map
           ("C-k" . ivy-switch-buffer-kill)
@@ -1514,9 +1513,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; commenting
 (use-package evil-nerd-commenter
   :bind ("M-;" . evilnc-comment-or-uncomment-lines))
-;; Window Manager
+;; Window|buffer Managers
 (use-package burly
-  :straight (burly :type git :host github :repo "alphapapa/burly.el"))
+  :straight (burly :type git :host github :repo "alphapapa/burly.el")
+  :commands (burly-open-bookmark burly-bookmark-frames))
+(use-package iflipb
+  :bind (("C-<tab>" . iflipb-next-buffer)
+         ("C-<iso-lefttab>" . iflipb-previous-buffer))
+  :custom
+  (iflipb-wrap-around t)
+  (iflipb-always-ignore-buffers '("^ " "magit*")))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package editorconfig
   :diminish
   :config
@@ -1540,6 +1547,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Syntax Highlighting
 (use-package tree-sitter
+  :diminish
   :config
   (global-tree-sitter-mode)
   (cl-pushnew '(ng2-ts-mode . typescript) tree-sitter-major-mode-language-alist)
@@ -1841,7 +1849,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer t)
 (use-package ng2-mode
   :defer t
-  :mode (("\\component.ts\\'" . ng2-mode)
+  :diminish
+  :mode (("\\.ts\\'" . ng2-mode)
+         ("\\component.ts\\'" . ng2-mode)
          ("\\.service.spec.ts\\'" . ng2-ts-mode)
          ("\\.component.spec.ts\\'" . ng2-ts-mode)
          ("\\.view.spec.ts\\'" . ng2-ts-mode)
