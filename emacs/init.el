@@ -814,6 +814,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
+  (lsp-disabled-clients '(ng2-mode eslint))
   (lsp-yaml-schemas
    `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
      (,(intern
@@ -828,8 +829,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-gopls-complete-unimported t))
   :config
   (setq read-process-output-max (* 1024 1024)) ;;1MB
-  (add-hook 'go-mode-hook 'lsp-go-install-save-hooks)
-  )
+  (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -902,9 +902,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-quickhelp
   :after company
   :straight (:type git :host github :repo "company-mode/company-quickhelp" :branch "master")
-  :init
-  (company-quickhelp-mode t)
-  (setq company-quickhelp-delay 0.1))
+  :custom
+  (company-quickhelp-delay 0.1))
 ;; use if only on terminal
 (use-package company-quickhelp-terminal
   :if (not (display-graphic-p))
@@ -1812,6 +1811,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver")))
 (use-package eslintd-fix
+  ;;; why is this not being used with ng2-mode? Really need refactoring tool control....
   :defer t
   :config
   (setq flycheck-javascript-eslint-executable "eslint_d"))
@@ -1821,15 +1821,22 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :preface
   (defun aaronzinhoo-run-import-js-hook ()
     (run-import-js)))
-(use-package prettier-js
+(use-package prettier
   :diminish
-  :hook ((markdown-mode . prettier-js-mode)
-         (json-mode . prettier-js-mode)
-         (css-mode . prettier-js-mode)
-         (rjsx-mode . prettier-js-mode)
-         (typescript-mode . prettier-js-mode))
-  :config
-  (setq prettier-js-args '("--bracket-spacing" "false")))
+  :hook ((markdown-mode . prettier-mode)
+         (json-mode . prettier-mode)
+         (css-mode . prettier-mode)
+         (rjsx-mode . prettier-mode)
+         (typescript-mode . prettier-mode)))
+;; (use-package prettier-js
+;;   :diminish
+;;   :hook ((markdown-mode . prettier-js-mode)
+;;          (json-mode . prettier-js-mode)
+;;          (css-mode . prettier-js-mode)
+;;          (rjsx-mode . prettier-js-mode)
+;;          (typescript-mode . prettier-js-mode))
+;;   :config
+;;   (setq prettier-js-args '("--bracket-spacing" "false")))
 (use-package js-comint
   :defer t
   :init
