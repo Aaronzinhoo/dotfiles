@@ -793,6 +793,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            sql-mode
            html-mode
            typescript-mode
+           web-mode
            yaml-mode
            rustic-mode
            ) . lsp)
@@ -861,7 +862,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (company-preview-frontend command)))
   :init
   (setq company-format-margin-function #'company-vscode-dark-icons-margin)
-  (setq company-idle-delay 0.1
+  (setq company-idle-delay 0.0
         company-echo-delay 0 ;; remove annoying blinking
         company-tooltip-flip-when-above t
         company-tooltip-limit 15
