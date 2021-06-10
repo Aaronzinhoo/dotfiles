@@ -79,9 +79,6 @@
                  (const :tag "Golden ratio" (round (* 21 (window-text-height)) 34))
                  (integer :tag "Lines from top" :value 10)
                  (const :tag "2 Lines above center" (- (round (window-text-height) 2) 2))))
-(defun post-func-recenter ()
-  "Recenter display after func using ARGS as input."
-  (recenter))
 (defun pop-local-mark-ring ()
   "Move cursor to last mark position of current buffer.
 Call this repeatedly will cycle all positions in `mark-ring'.
@@ -114,7 +111,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
                  (or face '(:inherit default :inherit highlight)))
     ol))
 
-(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+;; (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 (toggle-frame-maximized)
 
 ;;; Random useful code
@@ -795,8 +792,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            go-mode
            sql-mode
            html-mode
-           ng2-ts-mode
-           ng2-html-mode
+           typescript-mode
            yaml-mode
            rustic-mode
            ) . lsp)
@@ -814,7 +810,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
-  (lsp-disabled-clients '(ng2-mode eslint))
   (lsp-yaml-schemas
    `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
      (,(intern
@@ -828,6 +823,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
   :config
+  (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
 (use-package lsp-ui
@@ -1046,9 +1042,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :init
   (move-text-default-bindings))
 (use-package avy
-  :bind* ("M-SPC" . avy-goto-char)
-  :config
-  (advice-add 'avy-goto-char :after 'post-func-recenter))
+  :bind* ("M-SPC" . avy-goto-char))
 (use-package electric
   :config
   (electric-pair-mode 1))
@@ -1550,8 +1544,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (global-tree-sitter-mode)
-  (cl-pushnew '(ng2-ts-mode . typescript) tree-sitter-major-mode-language-alist)
-  (cl-pushnew '(ng2-html-mode . html) tree-sitter-major-mode-language-alist)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 (use-package tree-sitter-langs)
 
@@ -1650,8 +1642,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
                      'nxml-mode)))
 (use-package emmet-mode
-  :hook ((web-mode . emmet-mode)
-         (ng2-html-mode . emmet-mode)))
+  :hook (web-mode . emmet-mode))
 (use-package helm-emmet)
 (use-package html-check-frag
   :straight (:type git :host github :repo "TobiasZawada/html-check-frag" :branch "master")
@@ -1664,8 +1655,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '((company-bootstrap company-css company-files)))))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
-  :hook ((ng2-html-mode . web-mode)
-         (web-mode . aaronzinhoo-company-web-mode-hook)
+  :hook ((web-mode . aaronzinhoo-company-web-mode-hook)
          )
   :mode (("\\.css\\$"  . web-mode)
          ("\\.html\\$" . web-mode)
@@ -1772,10 +1762,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (defun aaronzinhoo-tide-rjsx-mode-hook ()
     (aaronzinhoo-tide-mode-hook)
     (flycheck-select-checker 'javascript-tide))
-  (defun aaronzinhoo-tide-ng2-mode-hook ()
-    (aaronzinhoo-tide-mode-hook)
-    (flycheck-add-mode 'typescript-tide 'ng2-ts-mode)
-    (flycheck-add-next-checker 'typescript-tide '(warning . javascript-eslint) 'append))
   (defun aaronzinhoo-tide-mode-hook ()
     (tide-setup)
     (tide-hl-identifier-mode)
@@ -1804,8 +1790,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (("RET" nil "Quit" :color blue))))
   :config
   (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
-  (flycheck-add-mode 'javascript-eslint 'ng2-ts-mode)
-  (flycheck-add-mode 'typescript-tslint 'ng2-ts-mode)
   (flycheck-add-next-checker 'typescript-tide '(warning . javascript-eslint) 'append)
   ;; (flycheck-add-next-checker 'javascript-tide '(warning . javascript-eslint) 'append)
   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
@@ -1856,16 +1840,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;angular setup
 (use-package typescript-mode
   :defer t)
-(use-package ng2-mode
-  :defer t
-  :diminish
-  :mode (("\\.ts\\'" . ng2-mode)
-         ("\\component.ts\\'" . ng2-mode)
-         ("\\.service.spec.ts\\'" . ng2-ts-mode)
-         ("\\.component.spec.ts\\'" . ng2-ts-mode)
-         ("\\.view.spec.ts\\'" . ng2-ts-mode)
-         ("\\component.html\\'" . web-mode)))
-;; react setup
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
@@ -1873,7 +1847,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq js2-mode-show-strict-warnings nil)
   (setq js-indent-level 2)
   (add-hook 'js2-mode-hook #'prettier-js-mode))
-
 (use-package exec-path-from-shell
   :if (string-equal system-type "gnu/linux")
   :custom
