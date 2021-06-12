@@ -802,6 +802,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind
   (:map lsp-mode-map
         ("C-c l" . hydra-lsp/body))
+  :preface
+  (defun lsp-go-install-save-hooks ()
+    (add-hook 'before-save-hook 'lsp-format-buffer)
+    (add-hook 'before-save-hook 'lsp-organize-imports)
+    (setq lsp-gopls-staticcheck t)
+    (setq lsp-eldoc-render-all t)
+    (setq lsp-gopls-complete-unimported t))
   :custom
   (lsp-enable-indentation nil)
   (lsp-headerline-breadcrumb-enable nil)
@@ -816,13 +823,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (,(intern
         "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["docker-compose.yml", "docker-compose.yaml"])
      (kubernetes . ["/proj_template.yaml"])))
-  :init
-  (defun lsp-go-install-save-hooks ()
-    (add-hook 'before-save-hook 'lsp-format-buffer)
-    (add-hook 'before-save-hook 'lsp-organize-imports)
-    (setq lsp-gopls-staticcheck t)
-    (setq lsp-eldoc-render-all t)
-    (setq lsp-gopls-complete-unimported t))
   :config
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
@@ -865,7 +865,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq company-idle-delay 0.0
         company-echo-delay 0 ;; remove annoying blinking
         company-tooltip-flip-when-above t
-        company-tooltip-limit 15
+        company-tooltip-limit 20
         company-require-match nil
         company-dabbrev-ignore-case nil
         company-dabbrev-downcase nil
@@ -894,6 +894,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-bootstrap
   :straight (:type git :host github :repo "typefo/company-bootstrap" :branch "master"))
 (use-package company-web
+  :after (company web-mode)
   :init
   (require 'company-web-html))
 (use-package company-quickhelp
@@ -906,9 +907,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :if (not (display-graphic-p))
   :straight t)
 (use-package company-shell
-  :after company
-  :config
-  (add-to-list 'company-backends '(company-shell company-shell-env company-files)))
+  :hook (sh-mode . aaronzinhoo-company-shell-setup)
+  :preface
+  (defun aaronzinhoo-company-shell-setup ()
+    (set (make-local-variable 'company-backends) '((company-shell company-shell-env company-files company-capf company-keywords company-dabbrev-code)))))
 (use-package company-jedi
   :commands (jedi:goto-definition jedi-mode company-jedi)
   :bind (:map jedi-mode-map
@@ -1006,7 +1008,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         '(ivy-switch-buffer
           (:columns
            ((ivy-rich-switch-buffer-icon (:width 2))
-            (ivy-rich-candidate (:width 30))
+            (ivy-rich-candidate (:width 50))
             (ivy-rich-switch-buffer-size (:width 7))
             (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
             (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))
@@ -1840,7 +1842,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   )
 ;;angular setup
 (use-package typescript-mode
-  :defer t)
+  :hook (typescript-mode . typescript-company-mode-setup)
+  :preface
+  (defun typescript-company-mode-setup ()
+    (set (make-local-variable 'company-backends) '((company-capf :with company-yasnippet :with company-files)))))
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
