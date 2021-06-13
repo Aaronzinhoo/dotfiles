@@ -894,13 +894,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         company-transformers '(company-sort-by-backend-importance
                                company-sort-prefer-same-case-prefix
                                company-sort-by-occurrence))
-  ;; (setq company-auto-complete #'my-company-visible-and-explicit-action-p)
   (setq company-frontends
         '(company-preview-if-not-tng-frontend
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '(company-capf company-keywords company-dabbrev-ignore-case company-files company-ispell))
+  (setq company-backends '(company-capf company-keywords company-files company-ispell))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
@@ -1835,15 +1834,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (css-mode . prettier-mode)
          (rjsx-mode . prettier-mode)
          (typescript-mode . prettier-mode)))
-;; (use-package prettier-js
-;;   :diminish
-;;   :hook ((markdown-mode . prettier-js-mode)
-;;          (json-mode . prettier-js-mode)
-;;          (css-mode . prettier-js-mode)
-;;          (rjsx-mode . prettier-js-mode)
-;;          (typescript-mode . prettier-js-mode))
-;;   :config
-;;   (setq prettier-js-args '("--bracket-spacing" "false")))
 (use-package js-comint
   :defer t
   :init
