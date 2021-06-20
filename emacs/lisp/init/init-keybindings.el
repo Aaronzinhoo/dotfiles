@@ -1,10 +1,17 @@
 ;;; package --- Summary
 ;;; Commentary:
+
 ;;; Code:
+
+;; Helpful Defualt keys
+;; C-h k <key> -> describe what key is binded to
+;; M-DEL del backward one word
+;; C-c ' edit code in buffer
+;; C-c C-c run org code block
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(global-set-key (kbd "M-i") 'previous-line)
-(global-set-key (kbd "M-j") 'backward-char)
-(global-set-key (kbd "M-k") 'next-line)
+(global-set-key (kbd "M-h") 'backward-char)
+(global-set-key (kbd "M-j") 'next-line)
+(global-set-key (kbd "M-k") 'previous-line)
 (global-set-key (kbd "M-l") 'forward-char)
 (global-set-key (kbd "M-q") 'yank)
 (global-set-key (kbd "M-4") 'pop-local-mark-ring)
@@ -21,5 +28,6 @@
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 
 (global-set-key (kbd "<Scroll_Lock>") 'nil)
-(provide 'aaronzinhoo-custom-keybindings)
-;;; aaronzinhoo-custom-keybindings ends here
+
+(provide 'init-keybindings)
+;;; init-keybindings ends here
