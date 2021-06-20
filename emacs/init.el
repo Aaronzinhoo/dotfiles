@@ -1,121 +1,26 @@
-;;; -*- lexical-binding: t -*-
-;;; package --- Summary
+;;; package --- Summary --- -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;;init.el --- Emacs configuration
 
 ;;; Code:
-;; startup defaults
-(setq user-full-name "Aaron Gonzales")
-(setq user-init-dir "~/.emacs.d")
-(setq user-init-file "~/.emacs.d/init.el")
-(setq user-emacs-directory "~/.config/emacs")
-(defvar home-directory (expand-file-name "~/.config/emacs"))
-(defconst backup-dir (concat home-directory "/backups"))
-(defvar autosave-dir (concat home-directory "/autosave"))
-(defvar file-name-handler-alist-old file-name-handler-alist)
-(defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
-;; font
-(add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
-;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
-;; more defaults
-(setq package-enable-at-startup nil
-      message-log-max 16384
-      gc-cons-threshold 402653184
-      gc-cons-percentage 0.6
-      auto-window-vscroll nil
-      scroll-margin 4
-      ad-redefinition-action 'accept
-      calendar-latitude 33.916403
-      calendar-longitude -118.352575
-      create-lockfiles nil
-      select-enable-clipboard t
-      inhibit-startup-screen t)
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1) ;;remove the scroll bar
-(scroll-lock-mode nil)
-;; enable line numbers for some modes
-(dolist (mode '(text-mode-hook
-                prog-mode-hook
-                conf-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 1))))
-;; Disable line numbers for some modes
-(dolist (mode '(org-mode-hook
-                term-mode-hook
-                dashboard-mode-hook
-                shell-mode-hook
-                treemacs-mode-hook
-                eshell-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
-(setq byte-compile-warnings '(cl-functions))
-(setq make-backup-files t
-      backup-by-copying t ;; safest method to backup
-      delete-old-versions t ;; delete excess backups
-      delete-by-moving-to-trash t
-      kept-old-versions 0
-      kept-new-versions 10
-      auto-save-default t
-      backup-directory-alist `((".*" . ,backup-dir)))
-;; we will call `blink-matching-open` ourselves...
-(remove-hook 'post-self-insert-hook
-             #'blink-paren-post-self-insert-function)
-;; improve startup performance
-;; disable double buffering if on Windows
-(if (and (getenv "PATH") (string-match-p "Windows" (getenv "PATH")))
-    (setq default-frame-alist
-          (append default-frame-alist '((inhibit-double-buffering . t)))))
+;; load the early init file if this is not a recent emacs
+(when (version< emacs-version "27")
+  (load (concat user-emacs-directory "early-init.el")))
+;; load init packages
+(let ((dir (file-name-directory (or load-file-name buffer-file-name))))
+  (add-to-list 'load-path (expand-file-name (concat dir "lisp/init"))))
+;; load the utils for some helper functions
+(require 'init-constants)
+(require 'init-defaults)
+(require 'init-straight)
+(require 'init-fonts)
+(require 'init-keybindings)
+(require 'init-utils)
 
 
-;;; custom functions
-(defun my-minibuffer-exit-hook ()
-  "Set the garbage can threshold back to default value."
-  (setq gc-cons-threshold 800000))
-(defcustom ccm-vpos-init '(round (window-text-height) 2)
-  "This is the screen line position where the cursor initially stays."
-  :group 'centered-cursor
-  :tag "Vertical cursor position"
-  :type '(choice (const :tag "Center" (round (window-text-height) 2))
-                 (const :tag "Golden ratio" (round (* 21 (window-text-height)) 34))
-                 (integer :tag "Lines from top" :value 10)
-                 (const :tag "2 Lines above center" (- (round (window-text-height) 2) 2))))
-(defun pop-local-mark-ring ()
-  "Move cursor to last mark position of current buffer.
-Call this repeatedly will cycle all positions in `mark-ring'.
-URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
-  Version 2016-04-04"
-  (interactive)
-  (set-mark-command t))
-(defun split-and-follow-horizontally ()
-  "Split window horizontally and follow with the previous buffer open."
-  (interactive)
-  (split-window-below)
-  (balance-windows)
-  (other-window 1)
-  (next-buffer))
-(defun split-and-follow-vertically ()
-  "Split window vertically and follow with the previous buffer open."
-  (interactive)
-  (split-window-right)
-  (balance-windows)
-  (other-window 1)
-  (next-buffer))
-(defun display-line-overlay+ (pos str &optional face)
-  "Display line at POS as STR with FACE.  FACE defaults to inheriting from default and highlight."
-  (let ((ol (save-excursion
-              (goto-char pos)
-              (make-overlay (line-beginning-position)
-                            (line-end-position)))))
-    (overlay-put ol 'display str)
-    (overlay-put ol 'face
-                 (or face '(:inherit default :inherit highlight)))
-    ol))
-
-;; (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
-(toggle-frame-maximized)
-
-;;; Random useful code
 ;; overlay to help display where other paren is unobtrusively
+;; ov is enclosed in show-paren--off-screen+
+;; TODO: figure out where to put this damn function
 (let ((ov nil)) ; keep track of the overlay
   (advice-add
    #'show-paren-function
@@ -147,47 +52,67 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
                       (setq ov (display-line-overlay+
                                 (window-start) msg ))))))
          (blink-matching-open))))))
-;; load packages and repos
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" home-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously  "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-                                     'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-(straight-use-package 'use-package)
-(setq straight-use-package-by-default t)
-(setq use-package-always-demand t)
 
-;;; Quick Defaults
-(setq-default
- ;; make indent commands use space only (never tab character)
- indent-tabs-mode nil
- tab-width 4
- tab-stop-list (number-sequence 4 120 4)
- scroll-preserve-screen-position t
- scroll-conservatively 10000)
-(setq ring-bell-function 'ignore)
-(column-number-mode t) ;; enable column numbers globally
-(global-visual-line-mode t) ;; cause lines to wrap
-(put 'erase-buffer 'disabled nil)
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-(defalias 'yes-or-no-p 'y-or-n-p)
-;; UTF-8 as default encoding
-(prefer-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(when (display-graphic-p)
-  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
 ;;; Packages
+
+;; built-in
+(use-package simple
+  :straight nil
+  :config
+  (column-number-mode t)
+  (global-visual-line-mode t))
+(use-package delsel
+  :straight nil
+  :config
+  (delete-selection-mode t))
+(use-package paren
+  :straight nil
+  :custom
+  (show-paren-style 'paren)
+  (show-paren-delay 0.03)
+  (show-paren-highlight-openparen t)
+  (show-paren-when-point-inside-paren nil)
+  (show-paren-when-point-in-periphery t)
+  :config
+  (show-paren-mode t))
+(use-package display-line-numbers
+  :straight nil
+  :hook ((conf-mode . display-line-numbers-mode)
+         (text-mode . display-line-numbers-mode)
+         (prog-mode . display-line-numbers-mode))
+  :config
+  (dolist (mode '(org-mode-hook
+                  term-mode-hook
+                  dashboard-mode-hook
+                  shell-mode-hook
+                  treemacs-mode-hook
+                  eshell-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0)))))
+(use-package elec-pair
+  :straight nil
+  :hook (org-mode . org-add-electric-pairs)
+  :preface
+  ;; setup electric-pairs mode for org-mode
+  (defun org-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  :init
+  ;; disable <> auto pairing in electric-pair-mode for org-mode
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (setq-local electric-pair-inhibit-predicate
+                          `(lambda (c)
+                             (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
+  :config
+  (electric-pair-mode t))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package s :straight t)
 (if (version< emacs-version "27.1")
     (use-package cl))
+;; garbage collector magic
+(use-package gcmh
+  :straight t)
 (use-package gh :straight t)
 (use-package async :straight t)
 (use-package f :straight t)
@@ -251,18 +176,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :config
   (dolist (mode (cons 'beginend-global-mode (mapcar #'cdr beginend-modes)))
     (diminish mode)))
-;; show matching parens by highlighting parens
-(use-package paren
-  :straight nil
-  :hook (prog-mode . show-paren-mode)
-  :custom
-  (show-paren-style 'paren)
-  (show-paren-delay 0.03)
-  (show-paren-highlight-openparen t)
-  (show-paren-when-point-inside-paren nil)
-  (show-paren-when-point-in-periphery t)
-  :config
-  (setq blink-matching-paren 'show))
 ;; only use agency when windows detected
 (use-package ssh-agency
   :if (string-equal system-type "windows-nt"))
@@ -649,10 +562,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (winner-mode 1))
 (use-package ace-window
   :commands ace-window
-  :bind ("C-x o" . ace-window)
+  :bind* ("C-b" . ace-window)
   :custom
   (aw-ignore-current t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+;;; window management hydra?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -764,7 +678,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 er/mark-inner-tag
                                 er/mark-outer-tag))))
   :config
-  (delete-selection-mode 1)
   (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions))
@@ -782,18 +695,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands yas-minor-mode
   :hook (prog-mode . yas-minor-mode)
   :config
+  (use-package yasnippet-snippets)
   (yas-reload-all))
-(use-package yasnippet-snippets)
 (use-package lsp-mode
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
-           java-mode      ; eclipse-jdtls
            go-mode
            sql-mode
            html-mode
            typescript-mode
-           web-mode
            yaml-mode
            rustic-mode
            ) . lsp)
@@ -824,9 +735,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["docker-compose.yml", "docker-compose.yaml"])
      (kubernetes . ["/proj_template.yaml"])))
   :config
+  (push '(web-mode . "html") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+(use-package lsp-java
+  :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
+  :hook (java-mode . lsp)
+  :config
+  (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
+    (setq lsp-java-vmargs
+          (list "-noverify"
+                "-Xmx4G"
+                "-XX:+UseG1GC"
+                "-XX:+UseStringDeduplication"
+                (concat "-javaagent:" lombok-file)))))
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -837,14 +760,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-ui-doc-enable nil))
 (use-package lsp-ivy
   :after (lsp-mode ivy))
-;; (use-package company-box
-;;   :after company
-;;   :diminish
-;;   :hook (company-mode . company-box-mode)
-;;   :init
-;;   (setq company-box-enable-icon (display-graphic-p))
-;;   :config
-;;   (setq company-box-backends-colors nil))
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
@@ -963,10 +878,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("C-k" . ivy-switch-buffer-kill)
           :map ivy-minibuffer-map
           ("C-c o" . ivy-occur)
-          ("M-i" . nil)
+          ("M-j" . nil)
           ("C-j" . ivy-immediate-done)
           :map ivy-occur-grep-mode-map
-          ("C-c h" . hydra-ivy-occur/body))
+          ("C-c h" . hydra-ivy-occur/body)
+          :map swiper-map
+          ("C-SPC" . swiper-avy))
   :hook ((after-init . ivy-mode)
          (ivy-mode . counsel-mode))
   :preface
@@ -996,6 +913,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (ivy-use-virtual-buffers t)
   (ivy-count-format "%d/%d ")
   (ivy-display-style 'fancy)
+  (ivy-height 20)
   :config
   (setq swiper-use-visual-line-p (lambda (_) nil))
   ;; fix for async display of counsel-rg resuls
@@ -1009,6 +927,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; load before ivy-rich for better performance
 (use-package all-the-icons-ivy-rich
   :hook (ivy-mode . all-the-icons-ivy-rich-mode))
+(use-package ivy-avy
+  :after (ivy)
+  :bind* (:map ivy-minibuffer-map
+               ("C-SPC" . ivy-avy)))
 (use-package ivy-rich
   :hook (all-the-icons-ivy-rich-mode . ivy-rich-mode)
   :init
@@ -1023,17 +945,23 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (ivy-rich-parse-remote-buffer nil)
   :config
-  ;; ;; All the icon support to ivy-rich
+  ;; All the icon support to ivy-rich
   (setq ivy-rich-display-transformers-list
         '(ivy-switch-buffer
           (:columns
            ((ivy-rich-switch-buffer-icon (:width 2))
-            (ivy-rich-candidate (:width 50))
+            (ivy-rich-candidate (:width 30))
             (ivy-rich-switch-buffer-size (:width 7))
             (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
             (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))
             (ivy-rich-switch-buffer-project (:width 15 :face success))
             (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3))))))
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          counsel-projectile-find-file
+          (:columns
+           ((ivy-rich-switch-buffer-icon (:width 2))
+            (ivy-rich-candidate (:width 50)))
            :predicate
            (lambda (cand) (get-buffer cand)))))
   (setq ivy-rich-path-style 'abbrev)
@@ -1065,10 +993,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :init
   (move-text-default-bindings))
 (use-package avy
-  :bind* ("M-SPC" . avy-goto-char))
-(use-package electric
-  :config
-  (electric-pair-mode 1))
+  :bind* ("M-SPC" . avy-goto-char-timer)
+  :custom
+  (avy-all-windows nil))
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
   :bind (("M-m" . hydra-multiple-cursors/body))
@@ -1157,7 +1084,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (let* ((dir (ignore-errors (file-name-directory (buffer-file-name))))
              (path (concat dir "style.css"))
              (homestyle (or (null dir) (null (file-exists-p path))))
-             (final (if homestyle (concat user-init-dir "/org/sakura-dark-theme.css") path)))
+             (final (if homestyle (concat user-init-dir "org/sakura-dark-theme.css") path)))
         (setq org-html-head-include-default-style nil)
         (setq org-html-head (concat
                              "<style type=\"text/css\">\n"
@@ -1222,12 +1149,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (org-ellipsis " ▾")
   (org-export-headline-levels 5)
   :init
-  ;; setup electric-pairs mode for org-mode
-  (defvar org-electric-pairs '((?/ . ?/) (?= . ?=)) "Electric pairs for org-mode.")
-  ;; set a local variable ot contain new pairs for org-mode buffers
-  (defun org-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs org-electric-pairs))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
   (defun org-keyword-backend (command &optional arg &rest ignored)
     "Add completions in org-mode when prefix is ^#+"
     (interactive (list 'interactive))
@@ -1287,14 +1208,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             '(lambda ()
                (set (make-local-variable 'company-backends)
                     '(company-capf company-org-block org-keyword-backend company-ispell company-dabbrev))))
-  ;; activate local electric-pair mode for org-buffer
-  ;; disable <> auto pairing in electric-pair-mode for org-mode
-  (add-hook 'org-mode-hook 'org-add-electric-pairs)
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (setq-local electric-pair-inhibit-predicate
-                          `(lambda (c)
-                             (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "~/org/gtd.org" "Tasks")
            "* TODO %?\n  %i\n  %a")
@@ -1563,18 +1476,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Languages Support
 
 ;; Syntax Highlighting
-(use-package tree-sitter
-  :diminish
-  :config
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-(use-package tree-sitter-langs)
-
+;; (use-package tree-sitter-langs)
+;; (use-package tree-sitter
+;;   :diminish
+;;   :hook ((prog-mode . tree-sitter-mode)
+;;          (tree-sitter-after-on . tree-sitter-hl-mode)))
 ;; Debugging
+(use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 (use-package realgud
   :defer t)
 (use-package realgud-trepan-ni
-  :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master"))
+  :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master")
+  :defer t)
 
 ;; Code Coverage
 (use-package cov
@@ -1640,6 +1553,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; WEB-DEV CONFIG
 
+;; formatting
+(use-package unibeautify
+  :straight (:type git :host github :repo "Aaronzinhoo/unibeautify" :branch "master")
+  :commands unibeautify)
+
 ;; using verb instead because it is better
 (use-package restclient
   :mode ("\\.http\\'" . restclient-mode))
@@ -1679,11 +1597,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
   :hook ((web-mode . aaronzinhoo-company-web-mode-hook)
-         )
-  :mode (("\\.css\\$"  . web-mode)
-         ("\\.html\\$" . web-mode)
-         ("\\.component.html\\'" . web-mode)
-         )
+         (web-mode . lsp-mode))
+  :mode (("\\.html\\$" . web-mode)
+         ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
                ("C-c h" . hydra-web/body)))
   :preface
@@ -1719,7 +1635,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
       ("f" web-mode-fold-or-unfold "fold/unfold"))
      "Edit"
-     (("t" aaronzinhoo-sgml-prettify-html "tidy html")
+     (("r" unibeautify "refactor HTML")
       ("d" aaronzinhoo-delete-tag "delete tag"))
      "Error"
      (("v" html-check-frag-next "next html error")
@@ -2004,16 +1920,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq moe-theme-highlight-buffer-id t)
   (powerline-moe-theme))
 
-;; Helpful Defualt keys
-;; C-h k <key> -> describe what key is binded to
-;; M-DEL del backward one word
-;; C-c ' edit code in buffer
-;; C-c C-c run org code block
-
-;; load custom faces, vars, & keybindings for packages
-(setq custom-file "~/.emacs.d/custom.el")
-(when (file-exists-p custom-file) (load custom-file))
-(load (concat user-init-dir "/aaronzinhoo-custom-keybindings.el"))
-(put 'narrow-to-region 'disabled nil)
-(put 'downcase-region 'disabled nil)
+;; ensure scroll-lock never enabled
+(scroll-lock-mode -1)
 ;;; init.el ends here
