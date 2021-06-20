@@ -29,3 +29,5 @@ npm install -g @angular/language-server
 npm install -g yaml-language-server
 # ts-compint/REPL
 npm install -g tsun
+# unibeautify
+npm install -g js-beautify unibeautify @unibeautify/beautifier-js-beautify
