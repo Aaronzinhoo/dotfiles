@@ -13,6 +13,9 @@
 
 ;;; Code:
 (message "Loading straight package manager")
+;; dont check all my straight repos for changes. Really slows down speed
+;; keep eye on https://github.com/raxod502/straight.el/pull/694#issuecomment-805197632 for updates on watcher
+(setq straight-check-for-modifications '(find-when-checking))
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" home-directory))
