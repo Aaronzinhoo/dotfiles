@@ -1478,11 +1478,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Languages Support
 
 ;; Syntax Highlighting
-;; (use-package tree-sitter-langs)
-;; (use-package tree-sitter
-;;   :diminish
-;;   :hook ((prog-mode . tree-sitter-mode)
-;;          (tree-sitter-after-on . tree-sitter-hl-mode)))
+(use-package tree-sitter-langs)
+(use-package tree-sitter
+  :diminish
+  :hook ((typescript-mode . tree-sitter-mode)
+         (java-mode . tree-sitter-mode)
+         (rustic-mode . tree-sitter-mode)
+         (python-mode . tree-sitter-mode)
+         (js2-mode . tree-sitter-mode)
+         (rjsx-mode . tree-sitter-mode)
+         (go-mode . tree-sitter-mode)
+         (tree-sitter-after-on . tree-sitter-hl-mode)))
+
 ;; Debugging
 (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 (use-package realgud
