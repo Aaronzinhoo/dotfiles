@@ -704,6 +704,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            go-mode
            sql-mode
            html-mode
+           web-mode
            typescript-mode
            yaml-mode
            rustic-mode
@@ -829,7 +830,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-bootstrap
   :straight (:type git :host github :repo "typefo/company-bootstrap" :branch "master"))
 (use-package company-web
-  :after (company web-mode)
+  :after (company)
   :init
   (require 'company-web-html))
 (use-package company-quickhelp
@@ -1583,6 +1584,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
                      'nxml-mode)))
 (use-package emmet-mode
+  :diminish
   :hook (web-mode . emmet-mode))
 (use-package helm-emmet)
 (use-package html-check-frag
@@ -1596,8 +1598,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '((company-bootstrap company-css company-files)))))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
-  :hook ((web-mode . aaronzinhoo-company-web-mode-hook)
-         (web-mode . lsp-mode))
+  :hook (web-mode . aaronzinhoo-company-web-mode-hook)
   :mode (("\\.html\\$" . web-mode)
          ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
@@ -1624,7 +1625,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (hungry-delete-backward 1))
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo-company-web-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-web company-web-html company-bootstrap company-css company-files) company-capf)))
+    (set (make-local-variable 'company-backends) '((company-capf company-web-html company-bootstrap company-css company-files) company-capf)))
   (pretty-hydra-define hydra-web
     (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color pink)
     ("Navigation"
