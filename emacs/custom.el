@@ -24,6 +24,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(git-gutter:modified ((t (:background nil :foreground "dodgerblue" :weight bold))))
+ '(git-gutter:added ((t (:background nil :foreground "limegreen"))))
+ '(git-gutter:deleted ((t (:background nil))))
  '(dired-subtree-depth-1-face ((t nil)))
  '(dired-subtree-depth-2-face ((t nil)))
  '(dired-subtree-depth-3-face ((t nil)))
