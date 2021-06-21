@@ -8,6 +8,7 @@
 ;; M-DEL del backward one word
 ;; C-c ' edit code in buffer
 ;; C-c C-c run org code block
+(message "Loading keybindings")
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "M-h") 'backward-char)
 (global-set-key (kbd "M-j") 'next-line)
@@ -26,8 +27,7 @@
 (global-set-key (kbd "C-c C-p") 'delete-pair)
 ;; this is your old m-x.
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-
-(global-set-key (kbd "<Scroll_Lock>") 'nil)
+(message "Done loading keybindings")
 
 (provide 'init-keybindings)
 ;;; init-keybindings ends here

@@ -11,7 +11,7 @@
 ;; Emacs27 introduces init-constant.el which inits all constants needed for packages.
 ;;
 ;;; Code:
-
+(message "Loading constants")
 (defconst user-full-name "Aaron Gonzales")
 (defconst user-init-dir "~/.emacs.d/")
 (defconst user-init-file "~/.emacs.d/init.el")
@@ -22,7 +22,7 @@
 (defconst calendar-latitude 33.916403)
 (defconst calendar-longitude -118.352575)
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
-
+(message "Done loading constants")
 
 (provide 'init-constants)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

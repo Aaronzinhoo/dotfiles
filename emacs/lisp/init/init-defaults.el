@@ -12,6 +12,7 @@
 ;;
 
 ;;; Code:
+(message "Loading defaults")
 (setq message-log-max 16384
       auto-window-vscroll nil
       scroll-margin 4
@@ -48,6 +49,8 @@
 
 ;; load custom faces & vars here
 (when (file-exists-p "~/.emacs.d/custom.el") (load "~/.emacs.d/custom.el"))
+
+(message "Done loading defaults")
 
 (provide 'init-defaults)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

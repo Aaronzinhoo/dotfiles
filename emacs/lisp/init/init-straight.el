@@ -12,8 +12,7 @@
 ;;
 
 ;;; Code:
-
-;; load packages and repos
+(message "Loading straight package manager")
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" home-directory))
@@ -28,6 +27,7 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 (setq use-package-always-demand t)
+(message "Done loading straight package manager")
 
 (provide 'init-straight)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

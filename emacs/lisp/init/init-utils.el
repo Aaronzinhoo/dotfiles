@@ -1,7 +1,8 @@
 ;;; package --- Summary
 ;;; Commentary:
+
 ;;; Code:
-;;; custom functions
+(message "Loading utils")
 (defcustom ccm-vpos-init '(round (window-text-height) 2)
   "This is the screen line position where the cursor initially stays."
   :group 'centered-cursor
@@ -75,6 +76,7 @@ If FRAME is omitted or nil, use currently selected frame."
 (add-hook 'after-init-hook #'aaronzinhoo-frame-recenter)
 (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
 (toggle-frame-maximized)
+(message "Done loading utils")
 
 (provide 'init-utils)
 ;;; init-utils.el ends here

@@ -18,6 +18,7 @@
 (require 'init-utils)
 
 
+(message "Loading packages")
 ;; overlay to help display where other paren is unobtrusively
 ;; ov is enclosed in show-paren--off-screen+
 ;; TODO: figure out where to put this damn function
@@ -1923,4 +1924,5 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; ensure scroll-lock never enabled
 (scroll-lock-mode -1)
+(message "Done loading packages")
 ;;; init.el ends here
