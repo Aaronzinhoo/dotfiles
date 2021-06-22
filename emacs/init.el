@@ -1514,8 +1514,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :preface
   (defun aaronzinhoo-company-yaml-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files))))
-  (defun aaronzinhoo-yaml-expand-region-hook ()
-    )
   (defun aaronzinhoo-yaml-mode-hook ()
     (flycheck-mode)
     (lsp)
@@ -1523,8 +1521,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (aaronzinhoo-company-yaml-mode-hook)
     (highlight-indentation-mode)
     (when (flycheck-may-enable-checker 'yaml-yamllint)
-      (flycheck-select-checker 'yaml-yamllint))
-    (flycheck-add-next-checker 'yaml-yamllint '(warning . lsp) 'append)))
+      (flycheck-select-checker 'yaml-yamllint))))
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
 (use-package json-mode
   :mode ("\\.json" . json-mode)
@@ -1552,11 +1549,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package docker-compose-mode
   :straight (:type git :host github :repo "aaronzinhoo/docker-compose-mode" :branch "master")
   :mode ("docker-compose\\'" . docker-compose-mode)
+  :hook (docker-compose-mode . aaronzinhoo-docker-compose-mode-setup)
   :preface
-  (defun aaronzinhoo-docker-compose-mode-hook ()
-    (set (make-local-variable 'company-backends) '(company-capf company-keywords)))
-  :config
-  (add-hook 'docker-compose-mode-hook 'aaronzinhoo-docker-compose-mode-hook))
+  (defun aaronzinhoo-docker-compose-mode-setup ()
+    (message "start hoook")
+    (flycheck-mode)
+    (lsp)
+    (message "middle hoook")
+    (hungry-delete-mode)
+    (highlight-indentation-mode)
+    (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
+
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode))
 
