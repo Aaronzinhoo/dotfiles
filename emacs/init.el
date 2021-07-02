@@ -93,8 +93,12 @@
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package elec-pair
   :straight nil
-  :hook (org-mode . org-add-electric-pairs)
+  :hook ((git-commit-mode . git-commit-add-electric-pairs)
+         (org-mode . org-add-electric-pairs))
   :preface
+  (defun git-commit-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
   ;; setup electric-pairs mode for org-mode
   (defun org-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
@@ -570,6 +574,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (aw-ignore-current t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+(use-package transpose-frame
+  :commands (transpose-frame  rotate-frame-anticlockwise rotate-frame-clockwise))
 ;;; window management hydra?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1109,10 +1115,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (org-superstar-mode t))
   (defun aaronzinhoo-org-font-setup ()
     ;; Set faces for heading levels
-    (dolist (face '((org-level-1 . 1.2)
-                    (org-level-2 . 1.1)
-                    (org-level-3 . 1.05)
-                    (org-level-4 . 1.0)
+    (dolist (face '((org-level-1 . 1.75)
+                    (org-level-2 . 1.5)
+                    (org-level-3 . 1.25)
+                    (org-level-4 . 1.15)
                     (org-level-5 . 1.1)
                     (org-level-6 . 1.1)
                     (org-level-7 . 1.1)
