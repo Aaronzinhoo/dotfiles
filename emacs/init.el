@@ -2013,6 +2013,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (rustic-lsp-server 'rls))
 
 ;; ----------------------------------------------------------------
+
+;;; Theme
 (use-package moe-theme
   :straight (moe-theme-switcher :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :config
