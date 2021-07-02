@@ -271,7 +271,7 @@
      "Errors"
      (("<" flycheck-previous-error "previous" :color pink)
       (">" flycheck-next-error "next" :color pink)
-      ("l" flycheck-list-errors "list"))
+      ("l" flycheck-list-errors "list errors"))
      "Other"
      (("r" recenter-top-bottom "recenter" :color pink)
       ("M" flycheck-manual "manual")
@@ -858,6 +858,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("M-b" . jedi:goto-definition-pop-marker)))
 (use-package company-org-block
   :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
+(use-package imenu-list
+  :bind (("C-c m" . imenu-list-smart-toggle))
+  :custom
+  (imenu-list-focus-after-activation t)
+  (imenu-list-auto-resize t))
 (use-package smex
   :straight t)
 ;; IF NEW MACHINE USE M-x all-the-icons-install-fonts
@@ -878,7 +883,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("C-x b" . counsel-switch-buffer)
           ("C-x C-f" . counsel-find-file)
           ("C-x C-r" . counsel-recentf)
-          ("C-c m" . counsel-imenu)
           :map ivy-switch-buffer-map
           ("C-k" . ivy-switch-buffer-kill)
           :map ivy-minibuffer-map
@@ -1793,6 +1797,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   )
 ;;angular setup
 (use-package typescript-mode
+  :delight " Ts"
   :hook (typescript-mode . typescript-company-mode-setup)
   :preface
   (defun typescript-company-mode-setup ()
@@ -1877,8 +1882,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after elpy
   :delight " Bl"
   :hook (python-mode . blacken-mode)
-  :config
-  (setq blacken-line-length '80))
+  :custom
+  (blacken-line-length 120))
 
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
