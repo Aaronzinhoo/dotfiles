@@ -29,7 +29,7 @@
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 ;; need this otherwise on windows M-<tab> (changing windows)
 ;; will activate scroll-lock
-(global-set-key (kbd "<Scroll_Lock>") nil)
+(global-set-key (kbd "<Scroll_Lock>") 'ignore)
 (message "Done loading keybindings")
 
 (provide 'init-keybindings)
