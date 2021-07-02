@@ -222,8 +222,15 @@
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 ;; TODO: once add projectile, have this hook to projectile
 ;; Hydra
+(use-package block-nav
+  :straight (:type git :host github :repo "nixin72/block-nav.el")
+  :custom
+  (block-nav-move-skip-shallower t)
+  (block-nav-center-after-scroll t))
+
 (use-package hydra
   :bind
+  ("C-c n" . hydra-nav/body)
   ("C-c f" . hydra-flycheck/body)
   ("C-c o" . hydra-org/body)
   ("C-c p" . hydra-projectile/body)
@@ -350,7 +357,40 @@
      "Server"
      (("s" lsp-describe-session "session")
       ("I" lsp-install-server "install")
-      ("S" lsp-workspace-restart "restart")))))
+      ("S" lsp-workspace-restart "restart"))))
+  (pretty-hydra-define hydra-undo-fu
+    (:hint nil :color red :quit-key "q" :title (with-faicon "undo" "Undo/Redo" 1 -0.05))
+    ("Action"
+     (("/" undo-fu-only-undo "Undo")
+      ("r" undo-fu-only-redo "Redo")
+      ("RET" nil "Quit" :color blue))))
+  (pretty-hydra-define hydra-nav
+    (:hint nil :color amaranth :quit-key "q" :title (with-faicon "cog" "Navigation" 1 -0.05))
+    ("Buffer"
+     (("a" crux-move-beginning-of-line "Begin Line")
+      ("z" end-of-visual-line "End Line")
+      ("d" block-nav-previous-block "Block Up")
+      ("c" block-nav-next-block "Block Down")
+      ("s" swiper "Search")
+      ("l" backward-up-list "Up pair")
+      ("." up-list "Down pair"))
+     "Avy"
+     (("j" avy-goto-char-timer "Jump Char(s)")
+      ("g" avy-goto-line "Jump Line"))
+     "Text"
+     (("f" forward-word "Forward Word")
+      ("v" backward-word "Backward Word")
+      ("r" er/contract-region "Contract Region")
+      ("e" er/expand-region "Expand Region")
+      ("w" easy-kill "Copy")
+      ("q" yank "Paste"))
+     "Project"
+     (("S" counsel-projectile-rg "Search" :color blue)
+      ("n" counsel-projectile-find-file "Find File" :color blue)
+      ("m" counsel-projectile-switch-to-buffer "Switch Buffer" :color blue))
+     "Window"
+     (("b" avy-window "Switch to window")
+      ("x" delete-window "Delete Window")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
