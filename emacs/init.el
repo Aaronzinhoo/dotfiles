@@ -484,7 +484,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package rg
   :commands (rg rg-dwim rg-menu)
   :bind* ("C-c r" . rg-menu)
-  :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer)))))
+  :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer))))
+  :config
+  (rg-enable-menu))
 (use-package hungry-delete
   :straight t
   :config
