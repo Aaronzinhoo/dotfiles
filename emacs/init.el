@@ -660,13 +660,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
+  (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
   (flycheck-add-mode 'json-jsonlint 'json-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   ;; eslint requires you to be careful with the configuration
   ;; ensure to use .json files and setup accordingly
   ;; test with shell command
-  ;; tide-typescript gives type errors so generally place first
-  ;; tide-typescript not helpful for javascript unless checkJs true so can use just eslint
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
   (flycheck-add-mode 'css-stylelint 'css-mode))
 (use-package aggressive-indent
@@ -739,7 +738,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            html-mode
            web-mode
            typescript-mode
-           yaml-mode
            rustic-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
@@ -765,11 +763,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-completion-enable t)
   (lsp-yaml-schemas
    `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
-     (,(intern
-        "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["docker-compose.yml", "docker-compose.yaml"])
+     (,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
      (kubernetes . ["/proj_template.yaml"])))
   :config
   (push '(web-mode . "html") lsp-language-id-configuration)
+  (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
