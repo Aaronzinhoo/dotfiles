@@ -87,6 +87,8 @@
                   dashboard-mode-hook
                   shell-mode-hook
                   treemacs-mode-hook
+                  compilation-mode-hook
+                  vterm-mode-hook
                   eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package elec-pair
@@ -1441,6 +1443,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Terminal
 (use-package vterm
   :commands vterm)
+(use-package ansi-color
+  :hook (compilation-filter . colorize-compilation-buffer)
+  :preface
+  ;; Support for ANSI escape color codes in emacs compilation buffer
+  ;; Fixes build and test execution output in LSP and DAP
+  ;; from https://github.com/kipcd/dotfiles/blob/main/emacs/.emacs.default/init.el#L97
+  (defun colorize-compilation-buffer ()
+    (when (derived-mode-p 'compilation-mode)
+      (ansi-color-process-output nil)
+      (setq-local comint-last-output-start (point-marker)))))
 
 ;; Programming/Project Management
 ;; commenting

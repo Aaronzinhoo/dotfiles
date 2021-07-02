@@ -32,7 +32,9 @@
       blink-cursor-blinks -1
       ring-bell-function 'ignore)
 ;; setq will only set for local-buffer so must use setq-default
+;; for variables that are not buffer specific
 (setq-default
+ compilation-scroll-output t
  indent-tabs-mode nil
  tab-width 4
  tab-stop-list (number-sequence 4 120 4)
