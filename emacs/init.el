@@ -418,8 +418,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
                                      (smerge-hydra/body)))))
-(use-package magit-todos
-  :hook (magit-status-mode . magit-todos-mode))
+(use-package magit-todos)
 (use-package git-identity
   :after magit
   :bind (:map magit-status-mode-map
@@ -447,9 +446,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          :map magit-status-mode-map
          ("RET" . magit-diff-visit-file-other-window)
          ("M-i" . magit-section-backward)
-         ("M-k" . magit-section-forward))
+         ("M-k" . magit-section-forward)
+         ("M-t" . magit-todos-mode))
   :hook (magit-mode . magit-auto-revert-mode)
   :custom
+  (magit-bind-magit-project-status nil)
   (magit-completing-read-function 'ivy-completing-read)
   :config
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
