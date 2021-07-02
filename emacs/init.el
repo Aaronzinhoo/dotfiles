@@ -500,15 +500,30 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (dired-mode . auto-revert-mode)
          (dired-mode . all-the-icons-dired-mode))
   :custom
-  (dired-listing-switches "-lXGh --group-directories-first"
-                          dired-dwim-target t)
+  (dired-listing-switches "-lXGh --group-directories-first")
+  (dired-dwim-target t)
+  (dired-recursive-deletes 'always)
+  (dired-recursive-copies 'always)
+  ;; revert dired buffers but dont state it
+  (global-auto-revert-non-file-buffers t)
+  (auto-revert-verbose nil)
   (dired-auto-revert-buffer t))
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)
   :config
   (setq fd-dired-program "fdfind"))
-(use-package dired-single)
+(use-package dired-single
+  :preface
+  ;; taken from https://github.com/ianyepan/.macOS-emacs.d/blob/master/init.el#L605
+  (defun aaronzinhoo-dired-single-init ()
+    (define-key dired-mode-map [return] #'dired-single-buffer)
+    (define-key dired-mode-map [remap dired-mouse-find-file-other-window] #'dired-single-buffer-mouse)
+    (define-key dired-mode-map [remap dired-up-directory] #'dired-single-up-directory))
+  :config
+  (if (boundp 'dired-mode-map)
+      (aaronzinhoo-dired-single-init)
+    (add-hook 'dired-load-hook #'aaronzinhoo-dired-single-init)))
 (use-package dired-collapse)
 (use-package dired-narrow
   :bind (("C-c C-n" . dired-narrow)))
