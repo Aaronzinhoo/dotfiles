@@ -143,6 +143,7 @@
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+(use-package undo-fu) ;; for hydra check hydra config
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package tramp
   :straight nil
@@ -227,6 +228,7 @@
   ("C-c o" . hydra-org/body)
   ("C-c p" . hydra-projectile/body)
   ("C-c i" . hydra-ivy/body)
+  ("C-/" . undo-and-activate-hydra-undo)
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -244,6 +246,10 @@
   (defun with-octicon (icon str &optional height v-adjust)
     "Displays an icon from the GitHub Octicons."
     (s-concat (all-the-icons-octicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+  (defun undo-and-activate-hydra-undo ()
+    (interactive)
+    (undo-fu-only-undo)
+    (hydra-undo-fu/body))
   :config
   (pretty-hydra-define hydra-projectile
     (:hint nil :color teal :quit-key "q" :title (with-faicon "rocket" "Projectile" 1 -0.05))
@@ -1956,7 +1962,5 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq moe-theme-highlight-buffer-id t)
   (powerline-moe-theme))
 
-;; ensure scroll-lock never enabled
-(scroll-lock-mode -1)
 (message "Done loading packages")
 ;;; init.el ends here
