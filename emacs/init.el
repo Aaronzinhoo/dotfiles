@@ -753,6 +753,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
   :custom
+  (lsp-auto-guess-root t)
+  (lsp-log-io nil)
   (lsp-enable-indentation nil)
   (lsp-headerline-breadcrumb-enable nil)
   (lsp-enable-on-type-formatting nil)
@@ -788,6 +790,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
               ([remap xref-find-references] . lsp-ui-peek-find-references))
   :custom
+  (lsp-ui-sideline-show-code-actions nil)
   (lsp-ui-peek-enable t)
   (lsp-ui-doc-enable nil))
 (use-package lsp-ivy
