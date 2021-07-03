@@ -143,6 +143,11 @@
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+(use-package undo-fu-session
+  :custom
+  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  :config
+  (global-undo-fu-session-mode))
 (use-package undo-fu) ;; for hydra check hydra config
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package tramp
