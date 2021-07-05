@@ -59,4 +59,5 @@ Version 2016-11-22"
       (backward-sexp))
      (t (backward-up-list 1 'ESCAPE-STRINGS 'NO-SYNTAX-CROSSING)))))
 
+(provide 'pair-navigator)
 ;;; pair-navigator.el ends here

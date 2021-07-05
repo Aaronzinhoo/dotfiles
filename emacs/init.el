@@ -9,6 +9,8 @@
 ;; load init packages
 (let ((dir (file-name-directory (or load-file-name buffer-file-name))))
   (add-to-list 'load-path (expand-file-name (concat dir "lisp/init"))))
+(let ((dir (file-name-directory (or load-file-name buffer-file-name))))
+  (add-to-list 'load-path (expand-file-name (concat dir "lisp/pair-navigation"))))
 ;; load the utils for some helper functions
 (require 'init-constants)
 (require 'init-defaults)
@@ -16,6 +18,7 @@
 (require 'init-fonts)
 (require 'init-keybindings)
 (require 'init-utils)
+(require 'pair-navigator)
 
 
 (message "Loading packages")
