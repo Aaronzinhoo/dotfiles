@@ -244,6 +244,7 @@
   ("C-c p" . hydra-projectile/body)
   ("C-c i" . hydra-ivy/body)
   ("C-c /" . undo-and-activate-hydra-undo)
+  ("C-c B" . hydra-bookmark/body)
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -401,7 +402,18 @@
       ("m" counsel-projectile-switch-to-buffer "Switch Buffer" :color blue))
      "Window"
      (("b" ace-window "Switch to window")
-      ("x" delete-window "Delete Window")))))
+      ("x" delete-window "Delete Window"))))
+  (pretty-hydra-define hydra-bookmark
+    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "bookmark" "Bookmark" 1 -0.05))
+    ("Burly"
+     (("o" burly-open-bookmark "Open Burly Bookmark")
+      ("s" burly-bookmark-frames "Bookmark Frames"))
+     "Cycle"
+     (("c" bmkp-cycle "Cycle Bookmarks" :color red))
+     "Jump"
+     (("j" counsel-bookmark "Jump to bookmark"))
+     "List"
+     (("l" bookmark-bmenu-list "List Bookmarks")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
