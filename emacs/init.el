@@ -912,7 +912,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '(company-capf company-keywords company-ispell company-dabbrev  company-files ))
+  (setq company-backends '(company-capf company-keywords company-files company-ispell company-dabbrev))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
