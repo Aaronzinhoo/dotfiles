@@ -397,7 +397,7 @@
       ("n" counsel-projectile-find-file "Find File" :color blue)
       ("m" counsel-projectile-switch-to-buffer "Switch Buffer" :color blue))
      "Window"
-     (("b" avy-window "Switch to window")
+     (("b" ace-window "Switch to window")
       ("x" delete-window "Delete Window")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
