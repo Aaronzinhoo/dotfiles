@@ -235,12 +235,12 @@
 
 (use-package hydra
   :bind
-  ("C-c n" . hydra-nav/body)
+  ("C-c SPC" . hydra-nav/body)
   ("C-c f" . hydra-flycheck/body)
   ("C-c o" . hydra-org/body)
   ("C-c p" . hydra-projectile/body)
   ("C-c i" . hydra-ivy/body)
-  ("C-/" . undo-and-activate-hydra-undo)
+  ("C-c /" . undo-and-activate-hydra-undo)
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -634,14 +634,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; WINDOW CONTROL
 (use-package resize-window
   :straight (:type git :host github :repo "dpsutton/resize-window" :branch "master")
-  :bind ("C-M-w" . resize-window))
+  :bind ("C-c w" . resize-window))
 (use-package winner
   :straight nil
   :config
   (winner-mode 1))
 (use-package ace-window
   :commands ace-window
-  :bind* ("C-b" . ace-window)
+  :bind* ("C-c b" . ace-window)
   :custom
   (aw-ignore-current t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
