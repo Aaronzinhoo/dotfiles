@@ -264,7 +264,7 @@
     (hydra-undo-fu/body))
   :config
   (pretty-hydra-define hydra-projectile
-    (:hint nil :color teal :quit-key "q" :title (with-faicon "rocket" "Projectile" 1 -0.05))
+    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "rocket" "Projectile" 1 -0.05))
     ("Buffers"
      (("b" counsel-projectile-switch-to-buffer "list")
       ("k" projectile-kill-buffers "kill all")
@@ -284,7 +284,7 @@
       ("R" projectile-replace-regexp "regexp replace")
       ("s" counsel-projectile-rg "search"))))
   (pretty-hydra-define hydra-flycheck
-    (:hint nil :color teal :quit-key "q" :title (with-faicon "plane" "Flycheck" 1 -0.05))
+    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "plane" "Flycheck" 1 -0.05))
     ("Checker"
      (("?" flycheck-describe-checker "describe")
       ("d" flycheck-disable-checker "disable")
@@ -299,7 +299,7 @@
       ("M" flycheck-manual "manual")
       ("v" flycheck-verify-setup "verify setup"))))
   (pretty-hydra-define hydra-org
-    (:hint nil :color pink :quit-key "q" :title (with-fileicon "org" "Org" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-fileicon "org" "Org" 1 -0.05))
     ("Action"
      (("a" org-agenda "agenda")
       ("c" org-capture "capture")
@@ -311,7 +311,7 @@
       ("s" org-store-link "store-link")
       ("t" org-show-todo-tree "todo-tree"))))
   (pretty-hydra-define hydra-org-nav
-    (:hint nil :color pink :quit-key "q" :title (with-fileicon "org" "Org" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-fileicon "org" "Org" 1 -0.05))
     ("Navigation"
      (("p" org-previous-visible-heading "prev heading")
       ("n" org-next-visible-heading "next heading")
@@ -332,7 +332,7 @@
      "Other"
      (("RET" nil :color blue))))
   (pretty-hydra-define hydra-ivy
-    (:hint nil :color teal :quit-key "q" :title (with-faicon "tree" "Ivy" 1 -0.05))
+    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "tree" "Ivy" 1 -0.05))
     ("Action"
      (("f" counsel-recentf "recent-file")
       ("t" counsel-faces "faces")
@@ -346,7 +346,7 @@
      (("s" counsel-info-lookup-symbol "symbol")
       ("u" counsel-unicode-char "unicode"))))
   (pretty-hydra-define hydra-lsp
-    (:hint nil :color pink :quit-key "q" :title (with-faicon "cog" "LSP" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "cog" "LSP" 1 -0.05))
     ("Goto"
      (("r" lsp-find-references "refs")
       ("d" lsp-find-definition "defs")
@@ -364,28 +364,31 @@
       ("I" lsp-install-server "install")
       ("S" lsp-workspace-restart "restart"))))
   (pretty-hydra-define hydra-undo-fu
-    (:hint nil :color red :quit-key "q" :title (with-faicon "undo" "Undo/Redo" 1 -0.05))
+    (:hint nil :color red :quit-key "SPC" :title (with-faicon "undo" "Undo/Redo" 1 -0.05))
     ("Action"
      (("/" undo-fu-only-undo "Undo")
       ("r" undo-fu-only-redo "Redo")
       ("RET" nil "Quit" :color blue))))
   (pretty-hydra-define hydra-nav
-    (:hint nil :color amaranth :quit-key "q" :title (with-faicon "cog" "Navigation" 1 -0.05))
+    (:hint nil :color amaranth :quit-key "SPC" :title (with-faicon "cog" "Navigation" 1 -0.05))
     ("Buffer"
      (("a" crux-move-beginning-of-line "Begin Line")
       ("z" end-of-visual-line "End Line")
       ("d" block-nav-previous-block "Block Up")
       ("c" block-nav-next-block "Block Down")
-      ("s" swiper "Search")
-      ("l" backward-up-list "Up pair")
-      ("." up-list "Down pair"))
+      ("s" swiper "Search"))
      "Avy"
      (("j" avy-goto-char-timer "Jump Char(s)")
       ("g" avy-goto-line "Jump Line"))
+     "Pair"
+     (("[" pair-navigator-forward-left-bracket "Up pair")
+      ("]" pair-navigator-forward-right-bracket "Down pair")
+      ("p" pair-navigator-goto-matching-bracket "Matching pair"))
      "Text"
      (("f" forward-word "Forward Word")
-      ("v" backward-word "Backward Word")
-      ("r" er/contract-region "Contract Region")
+      ("v" backward-word "Backward Word"))
+     "Copy/Paste"
+     (("r" er/contract-region "Contract Region")
       ("e" er/expand-region "Expand Region")
       ("w" easy-kill "Copy")
       ("q" yank "Paste"))
@@ -409,7 +412,7 @@
   :diminish git-gutter-mode
   :preface
   (pretty-hydra-define hydra-git-gutter
-    (:hint nil :color "pink" :quit-key "q" :title (with-octicon "diff" "Diff" 1 -0.05))
+    (:hint nil :color "pink" :quit-key "SPC" :title (with-octicon "diff" "Diff" 1 -0.05))
     ("Nav Hunks"
      (("n" git-gutter:next-hunk "next")
       ("p" git-gutter:previous-hunk "prev")
@@ -975,7 +978,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (cl-letf (((symbol-function #'completion-metadata) #'ignore))
       (apply old-fun args)))
   (pretty-hydra-define hydra-ivy-occur
-    (:hint nil :color pink :quit-key "q" :title (with-faicon "tree" "Ivy-Occur" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "tree" "Ivy-Occur" 1 -0.05))
     ("Navigation"
      (("n" ivy-occur-next-line "next")
       ("p" ivy-occur-previous-line "prev"))
@@ -1087,7 +1090,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (text-mode . multiple-cursors-mode))
   :init
   (pretty-hydra-define hydra-multiple-cursors
-    (:hint nil :color pink :quit-key "q" :title (with-faicon "key" "Multiple Cursors" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "key" "Multiple Cursors" 1 -0.05))
     ("Up"
      (("p" mc/mark-previous-like-this "Prev")
       ("P" mc/skip-to-previous-like-this "Skip Prev")
