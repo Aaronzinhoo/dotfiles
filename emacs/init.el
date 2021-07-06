@@ -1548,6 +1548,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   )
 
 ;; Terminal
+(use-package eshell-up
+  :straight (:type git :host github :repo "peterwvj/eshell-up" :branch "master"))
+(use-package aweshell
+  :straight (:type git :host github :repo "manateelazycat/aweshell" :branch "master")
+  :commands (aweshell))
 (use-package vterm
   :commands vterm)
 (use-package ansi-color
