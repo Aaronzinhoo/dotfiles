@@ -695,6 +695,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (beacon-color "#111FFF")
   :config
+  (dolist (mode '(term-mode-hook
+                  dashboard-mode-hook
+                  shell-mode-hook
+                  treemacs-mode-hook
+                  compilation-mode-hook
+                  vterm-mode-hook
+                  eshell-mode-hook))
+    (add-hook mode (lambda () (beacon-mode 0))))
   (beacon-mode 1))
 (use-package which-key
   :straight t
