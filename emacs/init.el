@@ -410,6 +410,7 @@
     (:hint nil :color teal :quit-key "SPC" :title (with-faicon "bookmark" "Bookmark" 1 -0.05))
     ("Burly"
      (("o" burly-open-bookmark "Open Burly Bookmark")
+      ("b" burly-open-last-opened-bookmark "Most Recently Opened Bookmark")
       ("s" burly-bookmark-frames "Bookmark Frames"))
      "Cycle"
      (("c" bmkp-cycle "Cycle Bookmarks" :color red))
@@ -1153,6 +1154,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           hydra-multiple-cursors/mc/skip-to-next-like-this
           hydra-multiple-cursors/mc/nil
           hydra-multiple-cursors/mc/mark-previous-like-this
+          hydra-multiple-cursors/mc/mark-all-dwim
           hydra-multiple-cursors/mc/edit-lines-and-exit)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
