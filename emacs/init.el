@@ -1184,7 +1184,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (org-mode . aaronzinhoo-org-font-setup))
   :bind
   ("C-c l" . org-store-link)
-  ("C-c a" . org-agenda)
+  ("C-c A" . org-agenda)
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
@@ -1552,7 +1552,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "peterwvj/eshell-up" :branch "master"))
 (use-package aweshell
   :straight (:type git :host github :repo "manateelazycat/aweshell" :branch "master")
-  :commands (aweshell))
+  :bind ("C-c a" . hydra-aweshell/body)
+  :preface
+  (pretty-hydra-define hydra-aweshell
+    (:hint nil :title (with-fileicon "terminal" "Aweshell Commands" 1 -0.05) :quit-key "SPC" :color pink)
+    ("Create"
+     (("a" aweshell-new "New Aweshell"))
+     "Switch"
+     (("n" aweshell-next "Next Aweshell")
+      ("p" aweshell-prev "Prev Aweshell")
+      ("b" aweshell-switch-buffer "Switch Aweshell Buffer"))
+     "Clear"
+     (("l" aweshell-clear-buffer "Clear Buffer"))
+     "History"
+     (("h" aweshell-search-history "Command History" ));end action
+     )))
 (use-package vterm
   :commands vterm)
 (use-package ansi-color
@@ -1763,7 +1777,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (defun aaronzinhoo-company-web-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-web-html company-bootstrap company-css company-files) company-capf)))
   (pretty-hydra-define hydra-web
-    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "q" :color pink)
+    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
     ("Navigation"
      (("a" sgml-skip-tag-backward "tag beginning | prev tag")
       ("e" sgml-skip-tag-forward "tag end | next tag")
