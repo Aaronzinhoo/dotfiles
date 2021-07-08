@@ -378,14 +378,17 @@
     ("Buffer"
      (("a" crux-move-beginning-of-line "Begin Line")
       ("z" end-of-visual-line "End Line")
-      ("d" block-nav-previous-block "Block Up")
-      ("c" block-nav-next-block "Block Down")
       ("s" swiper "Search"))
+     "Block"
+     (("d" block-nav-previous-block "Block Up")
+      ("c" block-nav-next-block "Block Down")
+      ("C" block-nav-previous-indentation-level "Indent Up")
+      ("D" block-nav-next-indentation-level "Indent Down"))
      "Avy"
      (("j" avy-goto-char-timer "Jump Char(s)")
       ("g" avy-goto-line "Jump Line"))
      "Pair"
-     (("[" pair-navigator-forward-left-bracket "Up pair")
+     (("[" pair-navigator-backward-left-bracket "Up pair")
       ("]" pair-navigator-forward-right-bracket "Down pair")
       ("p" pair-navigator-goto-matching-bracket "Matching pair"))
      "Text"
