@@ -570,14 +570,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (dired-mode . auto-revert-mode)
          (dired-mode . all-the-icons-dired-mode))
   :custom
-  (dired-listing-switches "-lXGh --group-directories-first")
   (dired-dwim-target t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
   ;; revert dired buffers but dont state it
   (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
-  (dired-auto-revert-buffer t))
+  (dired-auto-revert-buffer t)
+  (dired-listing-switches "-lAXGh --group-directories-first"))
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)
