@@ -530,9 +530,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-t" . magit-todos-mode))
   :hook (magit-mode . magit-auto-revert-mode)
   :custom
-  (magit-bind-magit-project-status nil)
   (magit-completing-read-function 'ivy-completing-read)
   :config
+  (setq magit-bind-magit-project-status nil)
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
