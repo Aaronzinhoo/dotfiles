@@ -1253,6 +1253,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
   :custom
   (org-directory (concat (getenv "HOME") "/org"))
+  (org-publish-project-alist
+   `(("blog"
+      :base-directory ,(concat org-directory "/personal/")
+      :base-extension "org"
+      :publishing-directory ,(concat org-directory "/personal/blog/public/")
+      :publishing-function org-html-publish-to-html
+      :recursive t)))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
   (org-agenda-files (list org-directory))
   ;; TODO: look to make refile easier to use (refile and delete)
@@ -1281,6 +1288,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; change ... to down arrow
   (org-ellipsis " ▾")
   (org-export-headline-levels 5)
+  (org-export-with-section-numbers nil)
+  (org-export-with-toc nil)
+  (org-html-postamble t)
+  (org-html-postamble-format
+   '(("en" "<p class=\"footer\">%a &nbsp; | &nbsp; %e | &nbsp; %C</p>")))
+  (org-html-link-home "/")
+  (org-html-link-up ".")
+  (org-html-use-infojs t)
+  (org-html-infojs-options
+   '((path . "/js/org-info.js")
+     (view . "showall")
+     (toc . "0")
+     (ftoc . "0")
+     (tdepth . "max")
+     (sdepth . "max")
+     (mouse . "underline")
+     (buttons . "nil")
+     (ltoc . "0")
+     (up . :html-link-up)
+     (home . :html-link-home)))
   :init
   ;; view items using emacs browser
   (if my/wsl
