@@ -2,3 +2,4 @@ alias fd='fdfind'
 alias cat='bat'
 alias fixtime='sudo hwclock -s'
 alias chrome='/mnt/c/Program\ Files\ \(x86\)/Google/Chrome/Application/chrome.exe'
+alias k=kubectl

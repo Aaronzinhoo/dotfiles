@@ -122,6 +122,10 @@ export ZSHZ_CASE=smart
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+# kubernetes completion
+source <(minikube completion zsh) # for zsh users
+complete -F __start_kubectl k
+
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
