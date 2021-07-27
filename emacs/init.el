@@ -456,6 +456,7 @@
   :defer t
   :commands (git-timemachine))
 (use-package hl-todo
+  :hook (org-mode . hl-todo-mode)
   :config
   (global-hl-todo-mode))
 (use-package smerge-mode
@@ -1193,8 +1194,23 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
-        ("C-c h". hydra-org-nav/body))
+        ("C-c h". hydra-org-nav/body)
+        ("C-c /" . undo-and-activate-hydra-undo))
+  :config (define-key org-mode-map (kbd "C-c v") verb-command-map)
   :preface
+  (defun org-keyword-backend (command &optional arg &rest ignored)
+    (interactive (list 'interactive))
+    (cl-case command
+      (interactive (company-begin-backend 'org-keyword-backend))
+      (prefix (and (eq major-mode 'org-mode)
+                   (cons (company-grab-line "#\\+\\(\\w*\\)" 1)
+                         t)))
+      (candidates (mapcar #'upcase
+                          (cl-remove-if-not
+                           (lambda (c) (string-prefix-p arg c))
+                           (pcomplete-completions))))
+      (ignore-case t)
+      (duplicates t)))
   (defun aaronzinhoo-org-inline-css-hook (exporter)
     "Insert custom inline css"
     (when (eq exporter 'html)
@@ -1266,20 +1282,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (org-ellipsis " ▾")
   (org-export-headline-levels 5)
   :init
-  (defun org-keyword-backend (command &optional arg &rest ignored)
-    "Add completions in org-mode when prefix is ^#+"
-    (interactive (list 'interactive))
-    (cl-case command
-      (interactive (company-begin-backend 'org-keyword-backend))
-      (prefix (and (eq major-mode 'org-mode)
-                   (company-grab-line "^#\\+\\(\\w*\\)"
-                                      t)))
-      (candidates (mapcar #'upcase
-                          (cl-remove-if-not
-                           (lambda (c) (string-prefix-p arg c))
-                           (pcomplete-completions))))
-      (ignore-case t)
-      (duplicates t)))
   ;; view items using emacs browser
   (if my/wsl
       (progn
@@ -1324,7 +1326,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-hook 'org-mode-hook
             '(lambda ()
                (set (make-local-variable 'company-backends)
-                    '(company-capf company-org-block org-keyword-backend company-ispell company-dabbrev))))
+                    '(company-capf company-org-block org-keyword-backend company-dabbrev company-ispell))))
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "~/org/gtd.org" "Tasks")
            "* TODO %?\n  %i\n  %a")
@@ -1339,8 +1341,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            :empty-lines 1               ; properties
            :created t                   ; properties
            )))
-  ;; TODO add to bind-keymap
-  (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
+  (require 'ox-publish)
   ;; (org-reload)
   )
 (use-package ivy-bibtex
