@@ -1,0 +1,28 @@
+* Quick Start for Verb                                                :verb:
+
+# Comments start with '#'. You can only place
+# comments before the URL and in the headers.
+
+template https://reqres.in/api
+Accept: application/json
+
+** Create a new user
+# Because the base URL is defined in the parent
+# heading, there's no need to repeat it here.
+# We can also add more headers here, or override
+# ones defined in parents.
+
+post /users
+Content-Type: application/json; charset=utf-8
+
+{
+    "name": "Jane Smith",
+    "city": "Berlin"
+}
+
+** Fetch a product
+# Use Emacs Lisp code tags to make the request
+# content dynamic. Code tags can be used anywhere
+# in the request specification.
+
+get /products/{{(read-number "Product ID: ")}}
