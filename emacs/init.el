@@ -411,7 +411,7 @@
     ("Burly"
      (("o" burly-open-bookmark "Open Burly Bookmark")
       ("b" burly-open-last-opened-bookmark "Most Recently Opened Bookmark")
-      ("s" burly-bookmark-frames "Bookmark Frames"))
+      ("s" burly-bookmark-windows "Bookmark Windows"))
      "Cycle"
      (("c" bmkp-cycle "Cycle Bookmarks" :color red))
      "Jump"
