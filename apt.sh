@@ -83,8 +83,19 @@ apt install docker-compose -y
 #---------------------
 
 #---------------------
+# kubectl
+#---------------------
+echo_with_prompt "installing kubectl\n"
+curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+apt-get update
+apt-get install kubectl -y
+#---------------------
+
+#---------------------
 # helm
 #---------------------
+echo_with_prompt "installing helm\n"
 curl https://baltocdn.com/helm/signing.asc | apt-key add -
 apt-get install apt-transport-https -y
 echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
@@ -92,13 +103,12 @@ apt-get update -y
 apt-get install helm -y
 #---------------------
 
+#---------------------
+# kustomize
 #----------------------
-# Rancher
-#----------------------
-rancher_version=2.4.10
-wget https://github.com/rancher/cli/releases/download/v${rancher_version}/rancher-linux-amd64-v${rancher_version}.tar.gz
-cp rancher-v${rancher_version}/rancher /usr/bin
-rm -rf rancher-*
+echo_with_prompt "installing kustomize\n"
+curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+mv kustomize /usr/local/bin/kustomize
 #----------------------
 
 
