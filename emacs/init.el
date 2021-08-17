@@ -1319,6 +1319,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
    'org-babel-load-languages
    '((emacs-lisp . t)
      (python     . t)
+     (C          . t)
+     (C++        . nil)
      (typescript . t)
      (plantuml   . t)
      (js         . t)
@@ -1339,9 +1341,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-src-lang-modes '("browser" . web))
   (add-to-list 'org-src-lang-modes '("html" . web))
   (add-to-list 'org-src-lang-modes '("verb" . verb))
+
   ;; add quick way to make code block with name "<s"[TAB]
   ;; arg: results: [output value replace silent]
-
   (add-to-list 'org-structure-template-alist '("plantuml" . "src plantuml"))
   (add-to-list 'org-structure-template-alist '("html" . "src html"))
   (add-to-list 'org-structure-template-alist '("browser" . "src browser"))
@@ -1349,11 +1351,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
   (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
   (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
+
   ;; make company backend simple for org files
   (add-hook 'org-mode-hook
             '(lambda ()
                (set (make-local-variable 'company-backends)
-                    '(company-capf company-org-block org-keyword-backend company-dabbrev company-ispell))))
+                    '(company-capf company-org-block company-ispell org-keyword-backend company-dabbrev))))
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "~/org/gtd.org" "Tasks")
            "* TODO %?\n  %i\n  %a")
