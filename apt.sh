@@ -111,6 +111,19 @@ curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack
 mv kustomize /usr/local/bin/kustomize
 #----------------------
 
+#---------------------
+# aws-cli & iam-authenticator
+#----------------------
+echo_with_prompt "installing aws packages\n"
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+rm -r awscliv2.zip aws
+curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator
+chmod +x ./aws-iam-authenticator
+cp ./aws-iam-authenticator /usr/local/bin
+#----------------------
+
 
 #---------------------
 # qutebrowser
