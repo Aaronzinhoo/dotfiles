@@ -121,7 +121,7 @@ unzip awscliv2.zip
 rm -r awscliv2.zip aws
 curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator
 chmod +x ./aws-iam-authenticator
-cp ./aws-iam-authenticator /usr/local/bin
+mv ./aws-iam-authenticator /usr/local/bin
 #----------------------
 
 
@@ -190,13 +190,18 @@ fi
 apt install golang -y
 
 ## C++
-echo_with_prompt "installing c++ dependencies"
+echo_with_prompt "installing C++ dependencies"
 apt install ccls -y
 apt install cmake -y
 
 ## Rust
-echo_with_prompt "installing rust";
+echo_with_prompt "installing Rust dependencies";
 curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+
+## Java
+echo_with_prompt "installing Java dependencies";
+apt install openjdk-11-jdk-headless
+curl -s "https://get.sdkman.io" | bash
 
 ## networking
 apt install mtr -y
