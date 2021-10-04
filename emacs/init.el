@@ -359,7 +359,7 @@
      "Refactor"
      (("F" lsp-format-buffer "format"))
      "UI"
-     (("p" lsp-ui-peek-mode "peek-mode" :toggle t)
+     (("p" lsp-ui-peek-mode "peek-mode")
       ("R" lsp-ui-peek-find-references "peek-refs" :color red)
       ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
       ("i" lsp-ui-imenu "peek-menu"))
@@ -732,6 +732,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-stylelintrc "~/.stylelintrc")
   (flycheck-css-stylelint-executable "stylelint")
   (flycheck-yamllintrc "~/.yamllintrc")
+  (flycheck-rust-cargo-executable "/home/aaron-gonzales/.cargo/bin/cargo")
   :config
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
@@ -1666,12 +1667,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (tree-sitter-after-on . tree-sitter-hl-mode)))
 
 ;; Debugging
-(use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
+(use-package dap-mode
+  :after lsp-mode
+  :config
+  (require 'dap-java)
+  (dap-auto-configure-mode))
 (use-package realgud
   :defer t)
 (use-package realgud-trepan-ni
   :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master")
   :defer t)
+(use-package realgud-jdb)
 
 ;; Code Coverage
 (use-package cov
@@ -2100,6 +2106,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (rustic-lsp-server 'rls))
 
+;;; Java | C++ | C
+(use-package cc-mode
+  :straight nil
+  :hook (java-mode . (lambda ()
+                       (setq c-basic-offset 2
+                             tab-width 2))))
 ;; ----------------------------------------------------------------
 
 ;;; Theme
