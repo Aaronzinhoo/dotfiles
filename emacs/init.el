@@ -854,6 +854,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook (java-mode . lsp)
   :config
+  (require 'lsp-java-boot)
   (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
     (setq lsp-java-vmargs
           (list "-noverify"
