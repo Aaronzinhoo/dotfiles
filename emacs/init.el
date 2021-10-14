@@ -797,7 +797,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish)
 (use-package emojify
   :if (display-graphic-p)
-  :hook (after-init . global-emojify-mode))
+  :hook (prog-mode . (lambda () (emojify-mode 0)))
+  :config
+  (global-emojify-mode))
 (use-package yasnippet
   :defer t
   :diminish yas-minor-mode
