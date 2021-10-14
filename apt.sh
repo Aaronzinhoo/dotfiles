@@ -193,6 +193,7 @@ apt install golang -y
 echo_with_prompt "installing C++ dependencies"
 apt install ccls -y
 apt install cmake -y
+apt install gdb -y
 
 ## Rust
 echo_with_prompt "installing Rust dependencies";
