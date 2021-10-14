@@ -382,8 +382,8 @@
      "Block"
      (("d" block-nav-previous-block "Block Up")
       ("c" block-nav-next-block "Block Down")
-      ("C" block-nav-previous-indentation-level "Indent Up")
-      ("D" block-nav-next-indentation-level "Indent Down"))
+      ("C" block-nav-next-indentation-level "Indent Up")
+      ("D" block-nav-previous-indentation-level "Indent Down"))
      "Avy"
      (("j" avy-goto-char-timer "Jump Char(s)")
       ("g" avy-goto-line "Jump Line"))
