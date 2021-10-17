@@ -25,9 +25,15 @@ npm install -g @typescript-eslint/parser
 npm install -g trepan-ni
 npm install -g @angular/language-service@next
 npm install -g @angular/language-server
+
 # yaml
 npm install -g yaml-language-server
+
 # ts-compint/REPL
 npm install -g tsun
+
 # unibeautify
 npm install -g js-beautify unibeautify @unibeautify/beautifier-js-beautify
+
+# docker language server & syntax checker
+npm i -g dockerfile-language-server-nodejs

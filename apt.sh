@@ -204,5 +204,14 @@ echo_with_prompt "installing Java dependencies";
 apt install openjdk-11-jdk-headless
 curl -s "https://get.sdkman.io" | bash
 
+# ------------------
+## Dockerfile
+# ------------------
+echo_with_prompt "installing Docker dependencies";
+wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.7.0/hadolint-Linux-x86_64
+chmod +x /bin/hadolint
+# ------------------
+
+
 ## networking
 apt install mtr -y

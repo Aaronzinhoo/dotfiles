@@ -744,7 +744,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; ensure to use .json files and setup accordingly
   ;; test with shell command
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
-  (flycheck-add-mode 'css-stylelint 'css-mode))
+  (flycheck-add-mode 'css-stylelint 'css-mode)
+  (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-mode)
+  )
 (use-package aggressive-indent
   :straight t
   :diminish
@@ -818,6 +820,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            web-mode
            typescript-mode
            rustic-mode
+           dockerfile-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -1745,7 +1748,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
 
 (use-package dockerfile-mode
-  :mode ("Dockerfile\\'" . dockerfile-mode))
+  :mode ("Dockerfile\\'" . dockerfile-mode)
+  :bind (("C-c h" . hydra-dockerfile-mode/body))
+  :preface
+  (pretty-hydra-define hydra-dockerfile-mode
+    (:hint nil :title (with-fileicon "dockerfile" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
+    ("Build"
+     (("b" dockerfile-build-buffer "Build Image")
+      ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 
 ;; WEB-DEV CONFIG
 
@@ -2050,6 +2060,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :delight " Bl"
   :hook (python-mode . blacken-mode)
   :custom
+  (blacken-skip-string-normalization t)
   (blacken-line-length 120))
 
 ;; Golang Setup
