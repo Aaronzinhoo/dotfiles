@@ -871,6 +871,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((java-mode . lsp)
          (java-mode . lsp-lens-mode)
          (java-mode . lsp-java-boot-lens-mode))
+  :bind (:map java-mode-map
+              ("C-c h" . hydra-java-mode/body))
   :preface
   (pretty-hydra-define hydra-java-mode
     (:hint nil :color amaranth :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
@@ -880,17 +882,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
       ("ct" lsp-java-add-throws "Add Throws"))
      "Import"
-     (("i" lsp-java-add-imports "Add")
+     (("a" lsp-java-add-import "Add")
       ("o" lsp-java-organize-imports "Organize"))
      "Notifications"
      (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
      "Project"
-     (("ps" lsp-java-spring-initializer "Spring Init")
-      ("ps" lsp-java  "Organize")
+     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
       ("pd" lsp-dependency-list "List Dependencies"))
      "Test"
-     (("tb" lsp-jt-browser "Test Browser"))
-     ))
+     (("tb" lsp-jt-browser "Test Browser"))))
   :config
   (require 'lsp-java-boot)
   (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
@@ -1828,8 +1828,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (web-mode . company-web-csswatcher-setup)
   :config
   (ac-html-csswatcher-setup-html-stuff-async))
+;; TODO add electric pair for < or add snippet
 (use-package nxml-mode
   :straight nil
+  :bind ((:map nxml-mode-map
+               ("C-c h" . hydra-web/body)))
   :config
   (add-to-list 'auto-mode-alist
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
