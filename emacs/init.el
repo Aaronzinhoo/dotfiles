@@ -1793,7 +1793,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
-  :bind (("C-c h" . hydra-dockerfile-mode/body))
+  :bind (:map dockerfile-mode-map
+              ("C-c h" . hydra-dockerfile-mode/body))
   :preface
   (pretty-hydra-define hydra-dockerfile-mode
     (:hint nil :title (with-fileicon "dockerfile" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
