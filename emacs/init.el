@@ -362,15 +362,17 @@
     ("Goto"
      (("r" lsp-find-references "refs")
       ("d" lsp-find-definition "defs")
+      ("i" lsp-goto-implementation "implementation (interface)")
       ("t" lsp-find-type-definition "type-def")
       ("b" xref-pop-marker-stack "pop back" :color red))
      "Refactor"
-     (("F" lsp-format-buffer "format"))
+     (("f" lsp-format-buffer "format")
+      ("n" lsp-rename "rename"))
      "UI"
      (("p" lsp-ui-peek-mode "peek-mode")
       ("R" lsp-ui-peek-find-references "peek-refs" :color red)
       ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
-      ("i" lsp-ui-imenu "peek-menu"))
+      ("m" lsp-ui-imenu "peek-menu"))
      "Server"
      (("s" lsp-describe-session "session")
       ("I" lsp-install-server "install")
@@ -865,7 +867,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
-  :hook (java-mode . lsp)
+  :hook ((java-mode . lsp)
+         (java-mode . lsp-lens-mode)
+         (java-mode . lsp-java-boot-lens-mode))
+  :preface
+  (pretty-hydra-define hydra-java-mode
+    (:hint nil :color amaranth :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
+    ("Class"
+     (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
+      ("co" lsp-java-generate-overrides "Generate Overides")
+      ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
+      ("ct" lsp-java-add-throws "Add Throws"))
+     "Import"
+     (("i" lsp-java-add-imports "Add")
+      ("o" lsp-java-organize-imports "Organize"))
+     "Notifications"
+     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
+     "Project"
+     (("ps" lsp-java-spring-initializer "Spring Init")
+      ("ps" lsp-java  "Organize")
+      ("pd" lsp-dependency-list "List Dependencies"))
+     "Test"
+     (("tb" lsp-jt-browser "Test Browser"))
+     ))
   :config
   (require 'lsp-java-boot)
   (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
@@ -1765,7 +1789,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (hungry-delete-mode)
     (highlight-indentation-mode)
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
-
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
   :bind (("C-c h" . hydra-dockerfile-mode/body))
@@ -1775,7 +1798,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     ("Build"
      (("b" dockerfile-build-buffer "Build Image")
       ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
-
+(use-package kubernetes
+  :commands (kubernetes-overview))
 ;; WEB-DEV CONFIG
 
 ;; formatting
