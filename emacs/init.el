@@ -831,6 +831,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            typescript-mode
            rustic-mode
            dockerfile-mode
+           sh-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -991,11 +992,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-quickhelp-terminal
   :if (not (display-graphic-p))
   :straight t)
-(use-package company-shell
-  :hook (sh-mode . aaronzinhoo-company-shell-setup)
-  :preface
-  (defun aaronzinhoo-company-shell-setup ()
-    (set (make-local-variable 'company-backends) '((company-shell company-shell-env company-files company-capf company-keywords company-dabbrev-code)))))
 (use-package company-jedi
   :commands (jedi:goto-definition jedi-mode company-jedi)
   :bind (:map jedi-mode-map
@@ -1622,7 +1618,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
 ;;   )
 
-;; Environment
+;; Environment | Shell
 (use-package exec-path-from-shell
   :if (string-equal system-type "gnu/linux")
   :custom
@@ -1632,7 +1628,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (exec-path-from-shell-initialize))
 (use-package list-environment
   :commands (list-environment))
-
+;; depends on ctags install
+(use-package modern-sh
+  :hook ((sh-mode . modern-sh-mode)
+         (sh-mode . aaronzinhoo-sh-mode-setup))
+  :preface
+  (defun aaronzinhoo-sh-mode-setup ()
+    (set (make-local-variable 'company-backends) '((company-files company-capf company-dabbrev-code)))))
 ;; Terminal
 (use-package eshell-up
   :straight (:type git :host github :repo "peterwvj/eshell-up" :branch "master"))
@@ -2066,6 +2068,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8))))
 
 ;; MAY HAVE TO CHANGE PYTHON PATH
+;; TODO replace with lsp-pyright
 (use-package elpy
   :diminish ""
   :init (with-eval-after-load 'python (elpy-enable))

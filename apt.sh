@@ -5,7 +5,6 @@
 
 PROMPT='[ AptInstaller ]: '
 
-
 # check user is running as root
 if [ "$(whoami)" != "root" ]; then
     echo_with_prompt "[FAIL]: must run with root privledges\n";
@@ -39,6 +38,7 @@ dpkg --force-overwrite -i ripgrep*.deb
 rm ripgrep*.deb
 apt install xclip -y
 apt-get install software-properties-common
+apt-get install ctags
 #--------------------
 
 #--------------------
