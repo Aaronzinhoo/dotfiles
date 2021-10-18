@@ -16,3 +16,5 @@ emacs/ac-html-csswatcher
 # zsh
 zsh/.zcomp*
 zsh/.zhistory
+# ctags
+**/TAGS
