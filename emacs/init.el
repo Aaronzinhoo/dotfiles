@@ -1598,6 +1598,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
 ;;   )
 
+;; Environment
+(use-package exec-path-from-shell
+  :if (string-equal system-type "gnu/linux")
+  :custom
+  (exec-path-from-shell-arguments nil)
+  (exec-path-from-shell-check-startup-files nil)
+  :config
+  (exec-path-from-shell-initialize))
+(use-package list-environment
+  :commands (list-environment))
+
 ;; Terminal
 (use-package eshell-up
   :straight (:type git :host github :repo "peterwvj/eshell-up" :branch "master"))
@@ -1995,13 +2006,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq js2-mode-show-strict-warnings nil)
   (setq js-indent-level 2)
   (add-hook 'js2-mode-hook #'prettier-js-mode))
-(use-package exec-path-from-shell
-  :if (string-equal system-type "gnu/linux")
-  :custom
-  (exec-path-from-shell-arguments nil)
-  (exec-path-from-shell-check-startup-files nil)
-  :config
-  (exec-path-from-shell-initialize))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; PYTHON CONFIG
