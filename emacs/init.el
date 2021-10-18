@@ -192,9 +192,17 @@
   :config
   (dolist (mode (cons 'beginend-global-mode (mapcar #'cdr beginend-modes)))
     (diminish mode)))
-;; only use agency when windows detected
+
+;; SSH Config
 (use-package ssh-agency
   :if (string-equal system-type "windows-nt"))
+(use-package ssh-config-mode
+  :hook ((ssh-config-mode . aaronzinhoo-ssh-config-mode-hook)
+         (ssh-config-mode . er/add-ssh-config-mode-expansions))
+  :preface
+  (defun aaronzinhoo-ssh-config-mode-hook ()
+    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package xclip
   :straight t
   :init
@@ -1879,13 +1887,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (grip-preview-use-webkit t))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; JS/react config
+;; JS/react/angular config
 ;; completetion: tide+company
 ;; refactor: js-prettier
 ;; syntax: flycheck
 ;; linter: flycheck
 ;; for React development use (setq create-lockfiles nil) to avoid crashes
 ;; packages needed:
+;;     npm i @angular-eslint/eslint-plugin (angular only)
 ;;     npm install prettier
 ;;     npm install eslint --save-dev
 ;;     npx eslint --init
@@ -2107,12 +2116,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((c-mode c++-mode objc-mode) .
          (lambda () (require 'ccls) (lsp))))
 (use-package cmake-mode
-  :init
-  (setq auto-mode-alist
-        (append
-         '(("CMakeLists\\.txt\\'" . cmake-mode))
-         '(("\\.cmake\\'" . cmake-mode))
-         auto-mode-alist)))
+  :mode (("CMakeLists\\.txt\\'" . cmake-mode)
+         ("\\.cmake\\'" . cmake-mode)))
 
 ;;; Rust
 (use-package toml-mode)
