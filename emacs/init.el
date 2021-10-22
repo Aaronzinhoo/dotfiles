@@ -337,7 +337,7 @@
       ("i" org-insert-link "insert link")
       ("s" org-store-link "store link"))
      "Outline"
-     (("N" org-toggle-narrow-to-subtree "narrow/unarrow" :color blue)
+     (("N" org-toggle-narrow-to-subtree "narrow/unarrow")
       ("r" org-refile "refile")
       ("v" org-overview "overview" :color blue)
       ("a" outline-show-all "show-all" :color blue))
