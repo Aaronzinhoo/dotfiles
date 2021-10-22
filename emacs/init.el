@@ -1736,6 +1736,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after lsp-mode
   :config
   (require 'dap-java)
+  (add-hook 'dap-stopped-hook
+            (lambda (arg) (call-interactively #'dap-hydra)))
   (dap-auto-configure-mode))
 (use-package realgud
   :defer t)
