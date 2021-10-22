@@ -3,7 +3,7 @@
 # get all utility functions
 . "$( pwd )/utils.sh"
 
-PROMPT='[ AptInstaller ]: '
+export PROMPT='[ AptInstaller ]: '
 
 # check user is running as root
 if [ "$(whoami)" != "root" ]; then
@@ -46,6 +46,7 @@ apt-get install ctags
 #--------------------
 echo_with_prompt "installing zsh\n"
 apt install zsh -y
+apt install shellcheck -y
 #--------------------
 
 #--------------------
