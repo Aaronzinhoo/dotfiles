@@ -738,6 +738,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :commands flycheck-mode
   :hook (prog-mode . flycheck-mode)
+  :preface
+  (defvar-local flycheck-local-checkers nil)
+  (defun +flycheck-checker-get(fn checker property)
+    (or (alist-get property (alist-get checker flycheck-local-checkers))
+        (funcall fn checker property)))
+  (advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
   :custom
   (flycheck-stylelintrc "~/.stylelintrc")
   (flycheck-css-stylelint-executable "stylelint")
@@ -756,6 +762,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
   (flycheck-add-mode 'css-stylelint 'css-mode)
   (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-mode)
+  (flycheck-add-mode 'sh-shellcheck 'sh-mode)
   )
 (use-package aggressive-indent
   :straight t
@@ -1629,9 +1636,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package list-environment
   :commands (list-environment))
 ;; depends on ctags install
+;; update based on discussions from https://github.com/flycheck/flycheck/issues/1762
 (use-package modern-sh
   :hook ((sh-mode . modern-sh-mode)
-         (sh-mode . aaronzinhoo-sh-mode-setup))
+         (sh-mode . aaronzinhoo-sh-mode-setup)
+         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck)))))))))
   :preface
   (defun aaronzinhoo-sh-mode-setup ()
     (set (make-local-variable 'company-backends) '((company-files company-capf company-dabbrev-code)))))
