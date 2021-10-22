@@ -1680,6 +1680,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Programming/Project Management
 ;; commenting
+(use-package turbo-log
+  :straight (:type git :host github :repo "artawower/turbo-log.el")
+  :config
+  (setq turbo-console--prefix "LOG"))
 (use-package evil-nerd-commenter
   :bind ("M-;" . evilnc-comment-or-uncomment-lines))
 ;; Window|buffer Managers
