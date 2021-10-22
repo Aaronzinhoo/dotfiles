@@ -882,7 +882,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("C-c h" . hydra-java-mode/body))
   :preface
   (pretty-hydra-define hydra-java-mode
-    (:hint nil :color amaranth :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
     ("Class"
      (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
       ("co" lsp-java-generate-overrides "Generate Overides")
@@ -897,7 +897,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
       ("pd" lsp-dependency-list "List Dependencies"))
      "Test"
-     (("tb" lsp-jt-browser "Test Browser"))))
+     (("tb" lsp-jt-browser "Test Browser" :color blue)
+      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   :config
   (require 'lsp-java-boot)
   (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
