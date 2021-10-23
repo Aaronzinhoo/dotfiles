@@ -291,10 +291,14 @@
       ("i" projectile-invalidate-cache "reset cache")
       ("c" projectile-compile-project "compile")
       ("v" projectile-run-vterm "run vterm"))
-     "Search"
+     "Search & Replace"
      (("r" projectile-replace "replace")
       ("R" projectile-replace-regexp "regexp replace")
-      ("s" counsel-projectile-rg "search"))))
+      ("s" counsel-projectile-rg "search"))
+     "Tests"
+     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
+      ("tt" projectile-test-project "run tests")
+      ("tf" projectile-find-test-file "find test file"))))
   (pretty-hydra-define hydra-flycheck
     (:hint nil :color teal :quit-key "SPC" :title (with-faicon "plane" "Flycheck" 1 -0.05))
     ("Checker"
