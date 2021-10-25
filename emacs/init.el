@@ -1804,10 +1804,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (docker-compose-mode . aaronzinhoo-docker-compose-mode-setup)
   :preface
   (defun aaronzinhoo-docker-compose-mode-setup ()
-    (message "start hoook")
+    (message "start hook")
     (flycheck-mode)
     (lsp)
-    (message "middle hoook")
+    (message "middle hook")
     (hungry-delete-mode)
     (highlight-indentation-mode)
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
@@ -1866,10 +1866,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (web-mode . html-check-frag-mode))
 (use-package css-mode
   :straight nil
-  :hook (css-mode . aaronzinhoo-company-css-mode-hook)
+  :hook ((css-mode . aaronzinhoo-company-css-mode-hook)
+         (scss-mode . aaronzinhoo-company-css-mode-hook))
   :preface
   (defun aaronzinhoo-company-css-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-bootstrap company-css company-files)))))
+    (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-ispell company-dabbrev))))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo-company-web-mode-hook)
