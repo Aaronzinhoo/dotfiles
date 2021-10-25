@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 import_package(){
-    if [ -f $1 ]; then
+    if [ -f "$1" ]; then
         . "$( pwd )/${1}"
     fi
 }
@@ -13,7 +13,7 @@ check_and_mkdir(){
 }
 
 get_symlink_files(){
-    echo "$(find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|windows')"
+    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|windows'
 }
 
 apply_bootstrap_extension(){
@@ -45,9 +45,10 @@ execute_func_with_prompt() {
 
 	echo_with_prompt "This utility will $2"
 	echo_with_prompt "Proceed? (y/n)"
-	read resp
+	read -r resp
+    resp=$(echo "$resp" | tr '[:upper:]' '[:lower:]')
 	# TODO - regex here?
-	if [ "$resp" = 'y' -o "$resp" = 'Y' ] ; then
+	if [ "$resp" == 'y' ] ; then
         # This thing here "calls" the function
         $1 || return 2
 		echo_with_prompt "$2 complete"
@@ -59,9 +60,9 @@ execute_func_with_prompt() {
 
 get_os() {
     local os=''
-	if [ $( echo "$OSTYPE" | grep 'darwin' ) ] ; then
+	if echo "$OSTYPE" | grep 'darwin'; then
         os='darwin'
-    elif [ $( echo "$OSTYPE" | grep 'linux-gnu' ) ] ; then
+    elif echo "$OSTYPE" | grep 'linux-gnu'; then
         # This file contains all the details you need!
         source /etc/os-release
         # Set os to ID_LIKE if this field exists
