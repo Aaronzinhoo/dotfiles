@@ -1158,6 +1158,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind* ("M-SPC" . avy-goto-char-timer)
   :custom
   (avy-all-windows nil))
+;; TODO add fix for mark outer-tag
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
   :bind (("M-m" . hydra-multiple-cursors/body))
