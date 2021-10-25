@@ -17,10 +17,10 @@ export ZSH="${HOME}/.oh-my-zsh"
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 # Disable some plugins while running in Emacs
 if [[ -n "$INSIDE_EMACS" ]]; then
-  plugins=(git)
-  ZSH_THEME="simple"
+    plugins=(git)
+    ZSH_THEME="simple"
 else
-  ZSH_THEME="powerlevel10k/powerlevel10k"
+    ZSH_THEME="powerlevel10k/powerlevel10k"
 fi
 
 
