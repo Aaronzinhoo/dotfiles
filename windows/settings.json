@@ -64,7 +64,7 @@
 		    "padding" : "0, 0, 0, 0",
 		    "snapOnInput" : true,
 		    "source": "Windows.Terminal.Wsl",
-		    "startingDirectory": "//wsl$/Ubuntu-20.04/home/aaronzinho",
+		    "startingDirectory": "/home/aaronzinho",
     		"useAcrylic" : false,
           },
           {
@@ -80,7 +80,7 @@
 		    "padding" : "0, 0, 0, 0",
 		    "snapOnInput" : true,
 		    "source": "Windows.Terminal.Wsl",
-		    "startingDirectory": "//wsl$/Ubuntu-18.04/home/aaronzinho",
+		    "startingDirectory": "/home/aaronzinho",
     		"useAcrylic" : false,
           }
         ]

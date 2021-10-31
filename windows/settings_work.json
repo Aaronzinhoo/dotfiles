@@ -63,7 +63,7 @@
 		    "padding" : "0, 0, 0, 0",
 		    "snapOnInput" : true,
 		    "source": "Windows.Terminal.Wsl",
-		    "startingDirectory": "//wsl$/Ubuntu-20.04/home/aaron-gonzales",
+		    "startingDirectory": "/home/aaron-gonzales",
     		"useAcrylic" : false,
           },
           {
@@ -78,7 +78,7 @@
 		    "padding" : "0, 0, 0, 0",
 		    "snapOnInput" : true,
 		    "source": "Windows.Terminal.Wsl",
-		    "startingDirectory": "//wsl$/Ubuntu-18.04/home/aaron-gonzales",
+		    "startingDirectory": "/home/aaron-gonzales",
     		"useAcrylic" : false,
           }
         ]
