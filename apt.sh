@@ -84,6 +84,16 @@ apt install docker-compose -y
 #---------------------
 
 #---------------------
+# minikube
+#---------------------
+echo_with_prompt "installing minikube\n"
+wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+mv minikube-linux-amd64 /usr/local/bin/minikube
+chmod 755 /usr/local/bin/minikube
+#---------------------
+
+
+#---------------------
 # kubectl
 #---------------------
 echo_with_prompt "installing kubectl\n"
