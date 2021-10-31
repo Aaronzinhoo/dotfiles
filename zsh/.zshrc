@@ -84,7 +84,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-pyenv zsh-nvm git z zsh-autosuggestions colored-man-pages pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust rustup cargo spring )
+plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust rustup cargo spring )
 
 source $ZSH/oh-my-zsh.sh
 
@@ -119,9 +119,6 @@ bindkey '^ ' autosuggest-accept
 # custom exports for zsh-z
 export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
 export ZSHZ_CASE=smart
-
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
 
 # kubernetes completion
 source <(minikube completion zsh) # for zsh users
