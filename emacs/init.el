@@ -349,15 +349,16 @@
      (("RET" nil :color blue))))
   (pretty-hydra-define hydra-ivy
     (:hint nil :color teal :quit-key "SPC" :title (with-faicon "tree" "Ivy" 1 -0.05))
-    ("Action"
+    ("Counsel Functions"
      (("f" counsel-recentf "recent-file")
       ("t" counsel-faces "faces")
-      ("i" counsel-imenu "imenu")
-      ("l" counsel-find-library "library")
+      ("m" counsel-imenu "imenu")
+      ("l" counsel-find-library "library"))
+     "Ivy Actions"
+     (("e" ivy-call "execute command")
       ("r" ivy-resume "resume"))
      "Text"
-     (("c" ivy-insert-current "current cand." :color red)
-      ("w" ivy-yank-word "yank subword" :color red))
+     (("i" ivy-insert-current "insert current cand." :color red))
      "Other"
      (("s" counsel-info-lookup-symbol "symbol")
       ("u" counsel-unicode-char "unicode"))))
