@@ -1303,12 +1303,24 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (org-directory (concat (getenv "HOME") "/org"))
   (org-publish-project-alist
-   `(("blog"
-      :base-directory ,(concat org-directory "/personal/")
+   `(("blog-pages"
+      :base-directory ,(concat org-directory "/personal/blog/src")
       :base-extension "org"
-      :publishing-directory ,(concat org-directory "/personal/blog/public/")
+      :publishing-directory ,(concat org-directory "/personal/blog/public")
       :publishing-function org-html-publish-to-html
-      :recursive t)))
+      :recursive t
+      :auto-sitemap t
+      :sitemap-title "Blog Posts"
+      :sitemap-filename "index.org"
+      :sitemap-sort-files anti-chronologically)
+     ("blog-static"
+      :base-directory ,(concat org-directory "/personal/blog/src/assets/")
+      :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
+      :publishing-directory ,(concat org-directory "/personal/blog/public/assets/")
+      :recursive t
+      :publishing-function org-publish-attachment)
+     ("blog"
+      :components ("blog-pages" "blog-static"))))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
   (org-agenda-files (list org-directory))
   ;; TODO: look to make refile easier to use (refile and delete)
