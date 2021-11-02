@@ -844,6 +844,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            rustic-mode
            dockerfile-mode
            sh-mode
+           python-mode
            ) . lsp)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -878,6 +879,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+(use-package lsp-ivy
+  :after (lsp-mode ivy))
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :bind (:map lsp-ui-mode-map
+              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+              ([remap xref-find-references] . lsp-ui-peek-find-references))
+  :custom
+  (lsp-ui-sideline-show-code-actions nil)
+  (lsp-ui-peek-enable t)
+  (lsp-ui-doc-enable nil))
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-mode . lsp)
@@ -913,17 +925,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 "-XX:+UseG1GC"
                 "-XX:+UseStringDeduplication"
                 (concat "-javaagent:" lombok-file)))))
-(use-package lsp-ui
-  :commands lsp-ui-mode
-  :bind (:map lsp-ui-mode-map
-              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-              ([remap xref-find-references] . lsp-ui-peek-find-references))
+(use-package lsp-pyright
+  :hook
+  (python-mode . (lambda ()
+                   (require 'lsp-pyright)
+                   (lsp-deferred)))
   :custom
-  (lsp-ui-sideline-show-code-actions nil)
-  (lsp-ui-peek-enable t)
-  (lsp-ui-doc-enable nil))
-(use-package lsp-ivy
-  :after (lsp-mode ivy))
+  (lsp-pyright-venv-path "/home/aaronzinho/.pyenv/versions/")
+  :init
+  (when (executable-find "python3")
+    (setq lsp-pyright-python-executable-cmd "python3")))
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
