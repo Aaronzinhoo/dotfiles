@@ -1245,7 +1245,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("C-M-<return>" . org-insert-subheading)
         ("C-c h". hydra-org-nav/body)
         ("C-c /" . undo-and-activate-hydra-undo))
-  :config (define-key org-mode-map (kbd "C-c v") verb-command-map)
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -1376,12 +1375,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
   (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
   :config
+  (define-key org-mode-map (kbd "C-c v") verb-command-map)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
      (python     . t)
      (C          . t)
-     (C++        . nil)
      (typescript . t)
      (plantuml   . t)
      (js         . t)
