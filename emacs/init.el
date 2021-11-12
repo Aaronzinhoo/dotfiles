@@ -1772,7 +1772,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package realgud-trepan-ni
   :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master")
   :defer t)
-(use-package realgud-jdb)
+(use-package realgud-jdb
+  :after (realgud))
 
 ;; Code Coverage
 (use-package cov
@@ -1795,7 +1796,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (lsp)
     (hungry-delete-mode)
     (aaronzinhoo-company-yaml-mode-hook)
-    (highlight-indentation-mode)
     (when (flycheck-may-enable-checker 'yaml-yamllint)
       (flycheck-select-checker 'yaml-yamllint))))
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
@@ -1833,7 +1833,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (lsp)
     (message "middle hook")
     (hungry-delete-mode)
-    (highlight-indentation-mode)
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
@@ -2093,61 +2092,59 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package python
   :delight " Py"
   :mode ("\\.py" . python-mode)
+  :hook ((python-mode . pyvenv-mode)
+         (python-mode . blacken-mode)
+         (python-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
-  (defun aaronzinho-python-buffer-setup ()
+  (defun aaronzinhoo--python-buffer-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
+  (defun aaronzinhoo--activate-python-shell-complettion ()
+    "Return non-nil if can trigger native completion."
+    (let ((python-shell-completion-native-enable t)
+          (python-shell-completion-native-output-timeout
+           python-shell-completion-native-try-output-timeout))
+      (python-shell-completion-native-get-completions
+       (get-buffer-process (current-buffer))
+       nil "_")))
+  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
+  ;; used to help pyright find venv folders
+  (defun aaronzinhoo--pyvenv-workon ()
+    (when (buffer-file-name)
+      (let* ((python-version ".python-version")
+             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
+        (when project-dir
+	      (progn
+	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
+	        (lsp-workspace-folders-add project-dir)
+	        (pyvenv-workon
+             (with-temp-buffer
+               (insert-file-contents (expand-file-name python-version project-dir))
+               (car (split-string (buffer-string))))))))))
+  (defun aaronzinhoo--python-setup ()
+    (aaronzinhoo--python-buffer-setup)
+    (aaronzinhoo--pyvenv-workon))
   :custom
-  (python-shell-interpreter "ipython")
-  (python-shell-interpreter-args "--simple-prompt")
   (python-check-command "flake8")
   :init
-  (eval-after-load 'python
-    (lambda ()
-      (defun python-shell-completion-native-try ()
-        "Return non-nil if can trigger native completion."
-        (let ((python-shell-completion-native-enable t)
-              (python-shell-completion-native-output-timeout
-               python-shell-completion-native-try-output-timeout))
-          (python-shell-completion-native-get-completions
-           (get-buffer-process (current-buffer))
-           nil "_")))))
-  :config
-  (add-hook 'python-mode-hook 'aaronzinho-python-buffer-setup)
-  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8))))
-
-;; MAY HAVE TO CHANGE PYTHON PATH
-;; TODO replace with lsp-pyright
-(use-package elpy
-  :diminish ""
-  :init (with-eval-after-load 'python (elpy-enable))
-  :hook (elpy-mode . flycheck-mode)
-  :preface
-  (defun aaronzinhoo-company-elpy-setup ()
-    (add-to-list 'company-backends 'elpy-company-backend))
+  (setenv "WORKON_HOME" "~/.pyenv/versions")
+  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
+  (with-eval-after-load 'python (defun temp () (aaronzinhoo--activate-python-shell-complettion))))
+(use-package pyvenv
   :custom
-  (elpy-shell-echo-output nil)
-  (elpy-rpc-virtualenv-path "~/.config/emacs/elpy/rpc-venv")
-  (elpy-rpc-backend "jedi")
-  (elpy-shell-starting-directory 'current-directory)
-  (elpy-syntax-check-command "~/.config/emacs/elpy/rpc-venv/bin/flake8")
-  :config
-  (add-hook 'python-mode-hook 'aaronzinhoo-company-elpy-setup)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-to-list 'process-coding-system-alist '("elpy" . (utf-8 . utf-8))))
-(use-package pyenv-mode
-  :hook (elpy-mode . pyenv-mode)
-  :bind
-  ("C-x p e" . pyenv-activate-current-project)
-  :init
-  (add-to-list 'exec-path "~/.pyenv/shims")
-  (setenv "WORKON_HOME" "~/.pyenv/versions/"))
-(use-package pyenv-mode-auto
-  :straight (:type git :host github :repo "ssbb/pyenv-mode-auto" :branch "master"))
+  (pyvenv-post-activate-hooks
+   (list (lambda ()
+           (when (executable-find "ipython3")
+             (setq python-shell-interpreter "ipython3"
+                   python-shell-interpreter-args "-i --matplotlib=inline --automagic --simple-prompt --pprint"
+                   ;; https://gitlab.com/python-mode-devs/python-mode/-/issues/112#note_699461188
+                   py-ipython-command "ipython3"
+                   py-ipython-command-args '("-i" "--matplotlib=inline" "--automagic" "--simple-prompt" "--pprint"))))))
+  (pyvenv-post-deactivate-hooks
+   (list (lambda ()
+           (setq python-shell-interpreter "python3")))))
 (use-package blacken
-  :after elpy
-  :delight " Bl"
-  :hook (python-mode . blacken-mode)
+  :diminish ""
   :custom
   (blacken-skip-string-normalization t)
   (blacken-line-length 120))
