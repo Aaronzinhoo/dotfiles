@@ -1746,6 +1746,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;;; Languages Support
 
+;; Indent Guides
+(use-package highlight-indent-guides)
 ;; Syntax Highlighting
 (use-package tree-sitter-langs)
 (use-package tree-sitter
@@ -2206,8 +2208,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package cc-mode
   :straight nil
   :hook (java-mode . (lambda ()
-                       (setq c-basic-offset 2
-                             tab-width 2))))
+                       (setq c-basic-offset 4
+                             tab-width 4))))
 ;; ----------------------------------------------------------------
 
 ;;; Theme
