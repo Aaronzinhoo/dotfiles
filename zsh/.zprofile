@@ -17,3 +17,6 @@ fi
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+# golang
+export PATH="/usr/local/go/bin:$PATH"

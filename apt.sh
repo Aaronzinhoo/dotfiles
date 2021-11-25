@@ -11,6 +11,7 @@ if [ "$(whoami)" != "root" ]; then
     return 1;
 fi
 
+GO_VERSION=1.17.3
 
 # mandatory setup for installing other packages
 apt update -y
@@ -197,11 +198,9 @@ apt-get install --no-install-recommends make \
 
 ## golang
 echo_with_prompt "installing golang"
-if [ "${DISTRO_VERSION}" != "20.04" ]; then
-    echo_with_prompt "adding more UTD version of GoLang"
-    add-apt-repository ppa:longsleep/golang-backports
-fi
-apt install golang -y
+wget -q -O - "https://dl.google.com/go/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz"
+rm -rf /usr/local/go && tar -C /usr/local -xzf "go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz"
+rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
 ## C++
 echo_with_prompt "installing C++ dependencies"
