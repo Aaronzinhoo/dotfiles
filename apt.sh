@@ -145,6 +145,14 @@ apt install libtool-bin -y
 apt install qutebrowser -y
 #---------------------
 
+#---------------------
+# install chrome for web development
+#---------------------
+wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+apt update && apt install google-chrome-stable -y
+#---------------------
+
 
 #---------------------
 # misc
@@ -161,11 +169,6 @@ export VER="0.17.1"
 wget "https://github.com/sharkdp/bat/releases/download/v${VER}/bat_${VER}_amd64.deb"
 dpkg -i bat_${VER}_amd64.deb
 rm bat_${VER}_amd64.deb
-# install chrome for web development
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-apt update
-apt install google-chrome-stable -y
 apt install yamllint -y
 #---------------------
 
