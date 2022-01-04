@@ -203,6 +203,8 @@ wget -q -O - "https://dl.google.com/go/go${GO_VERSION}.linux-$(dpkg --print-arch
 rm -rf /usr/local/go && tar -C /usr/local -xzf "go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz"
 rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
+ENV PATH="${PATH}:/usr/local/go/bin"
+
 ## C++
 echo_with_prompt "installing C++ dependencies"
 apt install ccls -y
