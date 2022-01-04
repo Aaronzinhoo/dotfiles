@@ -40,6 +40,7 @@ rm ripgrep*.deb
 apt install xclip -y
 apt-get install software-properties-common
 apt-get install ctags
+apt install pandoc
 #--------------------
 
 #--------------------

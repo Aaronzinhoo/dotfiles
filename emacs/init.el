@@ -918,7 +918,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   :config
   (require 'lsp-java-boot)
-  (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/lombok-1.18.12.jar"))
+  (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/deps/lombok-1.18.12.jar"))
     (setq lsp-java-vmargs
           (list "-noverify"
                 "-Xmx4G"
@@ -1379,6 +1379,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (ltoc . "0")
      (up . :html-link-up)
      (home . :html-link-home)))
+  (org-plantuml-exec-mode "plantuml")
   :init
   ;; view items using emacs browser
   (if my/wsl
