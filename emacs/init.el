@@ -1967,21 +1967,24 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (web-mode-enable-current-column-highlight t)
   (web-mode-enable-current-element-highlight t)
   (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word hydra-multiple-cursors/nil hydra-web/body hydra-multiple-cursors/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
+
+;;; Markdown Support
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
-(use-package grip-mode
-  :custom
-  ;; Use embedded webkit to previe
-  ;; This requires GNU/Emacs version >= 26 and built with the `--with-xwidgets`
-  ;; option.
-  (grip-preview-use-webkit t))
+;; prview for markdown profiles
+(use-package ox-gfm
+  :defer t)
+;; markdown visualization
+(use-package vmd-mode
+  :bind (:map markdown-mode-command-map
+              ("g" . vmd-mode)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; JS/react/angular config
-;; completetion: tide+company
+;; completetion: lsp+company
 ;; refactor: js-prettier
 ;; syntax: flycheck
 ;; linter: flycheck
