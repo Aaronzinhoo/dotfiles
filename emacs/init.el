@@ -97,7 +97,8 @@
 (use-package elec-pair
   :straight nil
   :hook ((git-commit-mode . git-commit-add-electric-pairs)
-         (org-mode . org-add-electric-pairs))
+         (org-mode . org-add-electric-pairs)
+         (markdown-mode . markdown-add-electric-pairs))
   :preface
   (defun git-commit-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
@@ -105,6 +106,9 @@
   ;; setup electric-pairs mode for org-mode
   (defun org-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun markdown-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   :init
   ;; disable <> auto pairing in electric-pair-mode for org-mode
