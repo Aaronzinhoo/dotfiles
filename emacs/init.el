@@ -590,6 +590,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (dired-mode . all-the-icons-dired-mode))
   :custom
   (dired-dwim-target t)
+  (delete-by-moving-to-trash t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
   ;; revert dired buffers but dont state it
@@ -1995,50 +1996,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;     tsc --init
 (use-package ts-comint
   :commands (run-ts))
-;; (use-package tide
-;;   :straight (:type git :host github :repo "ananthakumaran/tide" :branch "master")
-;;   :after (typescript-mode company flycheck)
-;;   :bind (:map typescript-mode-map
-;;               ("C-c h" . hydra-tide/body)
-;;               ("C-c '" . nil))
-;;   :hook (
-;;          (tide-mode . eslintd-fix-mode)
-;;          (rjsx-mode . aaronzinhoo-tide-rjsx-mode-hook))
-;;   :preface
-;;   (defun aaronzinhoo-tide-rjsx-mode-hook ()
-;;     (aaronzinhoo-tide-mode-hook)
-;;     (flycheck-select-checker 'javascript-tide))
-;;   (defun aaronzinhoo-tide-mode-hook ()
-;;     (tide-setup)
-;;     (tide-hl-identifier-mode)
-;;     (set (make-local-variable 'company-backends) '((company-tide company-files))))
-;;   :custom
-;;   (typescript-indent-line 2)
-;;   :init
-;;   (pretty-hydra-define hydra-tide
-;;     (:hint nil :title (with-fileicon "typescript" "Tide Control" 1 -0.05) :quit-key "q" :color pink)
-;;     ("Navigation"
-;;      (("j" tide-jump-to-definition "goto def")
-;;       ("J" tide-jump-back "jump back")
-;;       ("r" tide-references "get refs" :color blue))
-;;      "Edit"
-;;      (("f" tide-rename-file "rename current file"))
-;;      "Imports"
-;;      (("i" import-js-fix "fix")
-;;       ("o" tide-organize-imports "organize"))
-;;      "Error"
-;;      (("e" tide-find-next-error "next error"))
-;;      "Action"
-;;      (("d" tide-documentation-at-point "documentation")
-;;       ("R" run-ts "run TS REPL" :color blue))
-;;      "Other"
-;;      (("RET" nil "Quit" :color blue))))
-;;   :config
-;;   (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
-;;   (flycheck-add-next-checker 'typescript-tide '(warning . javascript-eslint) 'append)
-;;   ;; (flycheck-add-next-checker 'javascript-tide '(warning . javascript-eslint) 'append)
-;;   (if (file-exists-p (concat tide-project-root "node_modules/typescript/bin/tsserver"))
-;;       (setq tide-tsserver-executable "node_modules/typescript/bin/tsserver")))
 (use-package eslintd-fix
   ;;; why is this not being used with ng2-mode? Really need refactoring tool control....
   :defer t
@@ -2071,7 +2028,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               (local-set-key (kbd "C-x C-e") 'js-send-last-sexp)
               (local-set-key (kbd "C-c b") 'js-send-buffer)
               (local-set-key (kbd "C-c C-b") 'js-send-buffer-and-go)))
-  ;;(setq inferior-js-program-command "node")
   )
 ;;angular setup
 (use-package typescript-mode
