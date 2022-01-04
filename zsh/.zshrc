@@ -5,7 +5,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -84,7 +83,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust rustup cargo spring )
+plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring )
 
 source $ZSH/oh-my-zsh.sh
 
