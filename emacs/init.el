@@ -934,12 +934,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 "-XX:+UseStringDeduplication"
                 (concat "-javaagent:" lombok-file)))))
 (use-package lsp-pyright
+  :if (executable-find "pyright")
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright)
                    (lsp-deferred)))
-  :custom
-  (lsp-pyright-venv-path "/home/aaronzinho/.pyenv/versions/")
   :init
   (when (executable-find "python3")
     (setq lsp-pyright-python-executable-cmd "python3")))
