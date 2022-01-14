@@ -1857,6 +1857,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 (use-package kubernetes
   :commands (kubernetes-overview))
+(use-package kubel
+  :commands (kubel))
 ;; WEB-DEV CONFIG
 
 ;; formatting
