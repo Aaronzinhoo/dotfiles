@@ -705,8 +705,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-banner-logo-title "Welcome to your Emacs Dashboard")
   (dashboard-items '((recents  . 5)
                      (projects . 5)
-                     (bookmarks . 5)
-                     (agenda . 5)))
+                     (bookmarks . 5)))
   ;; Set the banner
   ;; Value can be
   ;; 'official which displays the official emacs logo
