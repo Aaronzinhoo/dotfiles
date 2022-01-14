@@ -98,7 +98,8 @@
   :straight nil
   :hook ((git-commit-mode . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
-         (markdown-mode . markdown-add-electric-pairs))
+         (markdown-mode . markdown-add-electric-pairs)
+         (yaml-mode . yaml-add-electric-pairs))
   :preface
   (defun git-commit-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
@@ -109,6 +110,9 @@
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   (defun markdown-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun yaml-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?( . ?)))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   :init
   ;; disable <> auto pairing in electric-pair-mode for org-mode
@@ -2178,7 +2182,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;;; Theme
 (use-package moe-theme
-  :straight (moe-theme-switcher :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
+  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :config
   (require 'moe-theme-switcher)
   (setq moe-theme-highlight-buffer-id t)
