@@ -15,6 +15,7 @@
 (defconst user-full-name "Aaron Gonzales")
 (defconst user-init-dir "~/.emacs.d/")
 (defconst user-init-file "~/.emacs.d/init.el")
+(defconst user-home-directory (expand-file-name "~/"))
 (defconst user-mail-address "aaronzinho@g.ucla.edu")
 (defconst user-emacs-directory "~/.config/emacs") ;; where the trash files go
 (defconst home-directory (expand-file-name "~/.config/emacs"))

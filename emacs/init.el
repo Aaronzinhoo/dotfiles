@@ -935,6 +935,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (concat "-javaagent:" lombok-file)))))
 (use-package lsp-pyright
   :if (executable-find "pyright")
+  :custom
+  (lsp-pyright-venv-path (concat user-home-directory ".pyenv/versions"))
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright)
@@ -2178,6 +2180,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (java-mode . (lambda ()
                        (setq c-basic-offset 4
                              tab-width 4))))
+(use-package protobuf-mode
+  :mode (("\\.proto\\'" . protobuf-mode)))
 ;; ----------------------------------------------------------------
 
 ;;; Theme
