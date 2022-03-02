@@ -1076,6 +1076,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           ("C-c o" . ivy-occur)
           ("M-j" . nil)
           ("C-j" . ivy-immediate-done)
+          ("DEL" . ivy-backward-delete-char)
           :map ivy-occur-grep-mode-map
           ("C-c h" . hydra-ivy-occur/body)
           :map swiper-map
