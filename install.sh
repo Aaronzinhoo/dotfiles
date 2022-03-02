@@ -4,18 +4,14 @@
 
 echo_with_prompt "Initializing..."
 
-export DISTRO_VERSION=$( echo $WSL_DISTRO_NAME | sed -s 's/Ubuntu-//')
 export PYENV_ROOT="${HOME}/.pyenv"
-PATH_TO_ORG="${HOME}/org"
+PATH_TO_ORG="${HOME}/development/org"
 PATH_TO_DEVELOPMENT="${HOME}/development"
 
-# zsh custom plugin folder
-CUSTOM_PLUGINS=$HOME/.oh-my-zsh/custom/plugins
-
 if [ -z "$1" ]; then
-	export INSTALL_ENVIRONMENT="personal"
+    export INSTALL_ENVIRONMENT="personal"
 else
-	export INSTALL_ENVIRONMENT="work"
+    export INSTALL_ENVIRONMENT="work"
 fi
 
 export XDG_CONFIG_HOME="${HOME}/.config"
@@ -27,8 +23,6 @@ EDITOR="emacs"
 export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
 export GOPATH="${XDG_CONFIG_HOME}/go"
 export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
-
-PYTHON_VERSION="3.8.6"
 
 echo_with_prompt "Making needed folders"
 

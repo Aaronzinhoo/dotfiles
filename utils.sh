@@ -13,7 +13,7 @@ check_and_mkdir(){
 }
 
 get_symlink_files(){
-    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|.*.md|*\.sh|*.emacs/|windows'
+    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|os|.*.md|.*\.sh|.*.emacs/|windows'
 }
 
 apply_bootstrap_extension(){
@@ -57,7 +57,7 @@ execute_func_with_prompt() {
         return 1
 	fi
 }
-
+# TODO determine if can delete
 get_os() {
     local os=''
 	if echo "$OSTYPE" | grep 'darwin'; then
@@ -73,7 +73,5 @@ get_os() {
         os='unknown'
     fi
     # Also set an env var based on this
-    export DETECTED_OS="$os"
-    # This is how you "return" a value when using function apparently :3
     echo "$os"
 }

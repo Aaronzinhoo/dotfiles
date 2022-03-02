@@ -5,7 +5,7 @@ PROMPT="[ WindowsExtensionLoader ]:"
 
 if [ -z "$WSL_DISTRO_NAME" ]; then
 	echo_with_prompt "Not using WSL, exiting..."
-	return 1
+	exit 0
 fi
 
 WINDOWS_USERNAME=$(cmd.exe /c echo %username% | tr -d '\r')
