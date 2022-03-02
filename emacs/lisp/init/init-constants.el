@@ -17,10 +17,10 @@
 (defconst user-init-file "~/.emacs.d/init.el")
 (defconst user-home-directory (expand-file-name "~/"))
 (defconst user-mail-address "aaronzinho@g.ucla.edu")
-(defconst user-emacs-directory "~/.config/emacs") ;; where the trash files go
-(defconst home-directory (expand-file-name "~/.config/emacs"))
-(defconst backup-dir (concat home-directory "/backups"))
-(defconst autosave-dir (concat home-directory "/autosave"))
+(defconst user-emacs-directory (expand-file-name "~/.config/emacs")) ;; where the trash files go
+(defconst user-init-dir-fullpath (file-truename user-init-dir))
+(defconst backup-dir (concat user-emacs-directory "/backups"))
+(defconst autosave-dir (concat user-emacs-directory "/autosave"))
 (defconst calendar-latitude 33.916403)
 (defconst calendar-longitude -118.352575)
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))

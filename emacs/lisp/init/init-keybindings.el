@@ -31,6 +31,13 @@
 ;; need this otherwise on windows M-<tab> (changing windows)
 ;; will activate scroll-lock
 (global-set-key (kbd "<Scroll_Lock>") 'ignore)
+
+(when (memq window-system '(mac ns))
+  (setq mac-option-modifier 'meta)
+  (setq mac-right-option-modifier 'control))
+
+
+
 (message "Done loading keybindings")
 
 (provide 'init-keybindings)
