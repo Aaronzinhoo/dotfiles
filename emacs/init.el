@@ -887,6 +887,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
    `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
      (,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
      (kubernetes . ["/proj_template.yaml"])))
+  (lsp-clients-angular-language-server-command
+   `("node"     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules/@angular/language-server")
+     "--ngProbeLocations"
+     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules")
+     "--tsProbeLocations"
+     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules")
+     "--stdio"))
   :config
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
