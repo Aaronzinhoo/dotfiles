@@ -241,6 +241,7 @@
   :config
   (global-set-key [remap goto-line] 'goto-line-preview))
 (use-package benchmark-init
+  :straight (:type git :host github :repo "dholm/benchmark-init-el")
   :config
   ;; To disable collection of benchmark data after init is done.
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
@@ -576,6 +577,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands (rg rg-dwim rg-menu)
   :bind* ("C-c r" . rg-menu)
   :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer))))
+  :custom
+  (rg-executable "rg")
   :config
   (rg-enable-menu))
 (use-package hungry-delete
@@ -601,6 +604,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
   (dired-auto-revert-buffer t)
+  :init
+  (when (memq window-system '(mac ns))
+    (insert-directory-program "gls" dired-use-ls-dired t))
   (dired-listing-switches "-lAXGh --group-directories-first"))
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
@@ -761,7 +767,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-stylelintrc "~/.stylelintrc")
   (flycheck-css-stylelint-executable "stylelint")
   (flycheck-yamllintrc "~/.yamllintrc")
-  (flycheck-rust-cargo-executable "/home/aaron-gonzales/.cargo/bin/cargo")
+  (flycheck-rust-cargo-executable (concat user-home-directory "/.cargo/bin/cargo"))
   :config
   (setq-default flycheck-disabled-checkers
                 (append flycheck-disabled-checkers
@@ -926,7 +932,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   :config
   (require 'lsp-java-boot)
-  (let ((lombok-file "/home/aaron-gonzales/dotfiles/emacs/deps/lombok-1.18.12.jar"))
+  (let ((lombok-file (concat user-init-dir-fullpath "/deps/lombok-1.18.12.jar")))
     (setq lsp-java-vmargs
           (list "-noverify"
                 "-Xmx4G"
@@ -1632,7 +1638,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;                    :host github
 ;;                    :repo "manateelazycat/emacs-application-framework"
 ;;                    :files ("*"))
-;;   ;; :load-path (concat home-directory "/eaf/git/emacs-application-framework")
+;;   ;; :load-path (concat user-emacs-directory "/eaf/git/emacs-application-framework")
 ;;   :custom
 ;;   (browse-url-browser-function 'eaf-open-browser) ;; Make EAF Browser my default browser
 ;;   (eaf-browser-continue-where-left-off t)
@@ -1666,7 +1672,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Environment | Shell
 (use-package exec-path-from-shell
-  :if (string-equal system-type "gnu/linux")
+  :if (or (memq window-system '(mac ns x)) (string-equal system-type "gnu/linux"))
   :custom
   (exec-path-from-shell-arguments nil)
   (exec-path-from-shell-check-startup-files nil)
@@ -1742,7 +1748,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (editorconfig-mode 1))
 (use-package bookmark+
   :custom
-  (bookmark-default-file (concat home-directory "/bookmarks")) ;;define file to use.
+  (bookmark-default-file (concat user-emacs-directory "/bookmarks")) ;;define file to use.
   (bookmark-save-flag t) ;;save bookmarks to .emacs.bmk after each entry
   )
 (use-package projectile
