@@ -70,7 +70,7 @@ apt install texlive-latex-base -y
 apt install texlive-latex-recommended -y
 apt install texlive-fonts-extra -y
 apt install texlive-latex-extra -y
-apt install libpng-dev zlib1g-dev -y
+apt install libpng-dev zlib1g-dev libpq-dev -y
 apt install libpoppler-glib-dev -y
 apt install libpoppler-private-dev -y
 apt install imagemagick -y
