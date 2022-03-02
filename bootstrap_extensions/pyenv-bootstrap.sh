@@ -8,10 +8,11 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
-pyenv install 3.8.6
-pyenv global 3.8.6
+pyenv install 3.9.10
+pyenv global 3.9.10
+
+eval "$(pyenv init --path)"
 
 echo_with_prompt "install grip for markdown preview"
-pip install grip
 pip install virtualenvwrapper
 pip install ipython
