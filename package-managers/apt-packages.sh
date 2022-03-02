@@ -93,7 +93,7 @@ apt install gh -y
 #---------------------
 echo_with_prompt "installing docker\n"
 apt install apt-transport-https ca-certificates software-properties-common -y
-apt install docker-compose -y
+apt install docker-compose lazydocker -y
 #---------------------
 
 #---------------------

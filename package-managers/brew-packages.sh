@@ -69,6 +69,7 @@ echo_with_prompt "installing docker\n"
 brew install ca-certificates
 brew install docker
 brew install docker-compose
+brew install lazydocker
 #---------------------
 
 #---------------------
