@@ -110,6 +110,12 @@ brew install awscli
 brew install aws-iam-authenticator
 #----------------------
 
+#----------------------
+# postgres
+#----------------------
+brew install postgresql
+#----------------------
+
 
 #---------------------
 # qutebrowser

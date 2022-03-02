@@ -16,3 +16,5 @@ eval "$(pyenv init --path)"
 echo_with_prompt "install grip for markdown preview"
 pip install virtualenvwrapper
 pip install ipython
+pip install psycopg2-binary
+pip install pg_activity
