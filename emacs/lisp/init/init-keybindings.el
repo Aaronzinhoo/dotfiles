@@ -31,6 +31,7 @@
 ;; need this otherwise on windows M-<tab> (changing windows)
 ;; will activate scroll-lock
 (global-set-key (kbd "<Scroll_Lock>") 'ignore)
+(global-set-key (kbd "C-S-<tab>") 'iflipb-previous-buffer)
 
 (when (memq window-system '(mac ns))
   (setq mac-option-modifier 'meta)

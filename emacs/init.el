@@ -604,10 +604,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
   (dired-auto-revert-buffer t)
+  (dired-listing-switches "-lAXGh --group-directories-first")
   :init
   (when (memq window-system '(mac ns))
-    (insert-directory-program "gls" dired-use-ls-dired t))
-  (dired-listing-switches "-lAXGh --group-directories-first"))
+    (setq dired-use-ls-dired t
+          insert-directory-program "gls")))
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)
@@ -1765,6 +1766,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (projectile-switch-project-action #'projectile-find-dir)
   ;; use .gitignore to exclude files from search
   (projectile-indexing-method 'alien)
+  (projectile-enable-caching t)
   (projectile-sort-order 'recentf)
   (projectile-completion-system 'ivy))
 
