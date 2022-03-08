@@ -2081,7 +2081,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :delight " Py"
   :mode ("\\.py" . python-mode)
   :hook ((python-mode . pyvenv-mode)
-         (python-mode . blacken-mode)
+         ;; (python-mode . blacken-mode)
          (python-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
   (defun aaronzinhoo--python-buffer-setup ()
@@ -2131,11 +2131,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (pyvenv-post-deactivate-hooks
    (list (lambda ()
            (setq python-shell-interpreter "python3")))))
-(use-package blacken
-  :diminish ""
-  :custom
-  (blacken-skip-string-normalization t)
-  (blacken-line-length 120))
+;; (use-package blacken
+;;   :diminish ""
+;;   :custom
+;;   (blacken-skip-string-normalization t)
+;;   (blacken-line-length 120))
 
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
@@ -2210,3 +2210,30 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (message "Done loading packages")
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(bmkp-last-as-first-bookmark-file
+   "/Users/aaron.gonzales/.config/emacs/var/bmkp/current-bookmark.el")
+ '(company-dabbrev-ignore-case nil)
+ '(package-selected-packages
+   '(keychain-environment company company-eclim go-mode lsp-ui frame-local pyenv-mode-auto pyenv-mode rg delight blacken powerline powermo company-posframe company-postframe company-box simpleclip all-the-icons-ivy-rich tide flycheck exec-path-from-shell company-web skewer-mode simple-httpd js2 prettier-js rjsx json-snatcher json-reformat js-comint web-mode emmet-mode add-node-modules-path yaml-mode lsp-mode dired-recent diredfl ivy-rich all-the-icons beginend default-text-scale company-prescient ivy-prescient prescient benchmark-init flx company-quickhelp-terminal crux company-quickhelp counsel ace-jump ace-jump-mode diminish auto-package-update electric-pair-mode moe-theme-switcher electric-pair ssh-agency jedi moe-theme bind-map rjsx-mode ag company-tern impatient-mode company-jedi smex idle-highlight-in-visible-buffers-mode idle-highlight-mode magit async git-commit list-packages-ext use-package image+ gnu-elpa-keyring-update magithub pylint python-black multiple-cursors material-theme elpy better-defaults python)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(dired-subtree-depth-1-face ((t nil)))
+ '(dired-subtree-depth-2-face ((t nil)))
+ '(dired-subtree-depth-3-face ((t nil)))
+ '(git-gutter:added ((t (:background nil :foreground "limegreen"))))
+ '(git-gutter:deleted ((t (:background nil))))
+ '(git-gutter:modified ((t (:background nil :foreground "dodgerblue" :weight bold))))
+ '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
+ '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
+ '(markdown-table-face ((t (:inherit markdown-code-face :foreground "white smoke"))))
+ '(swiper-background-match-face-2 ((t (:background "steel blue" :foreground "gainsboro"))))
+ '(swiper-match-face-1 ((t (:background "light cyan" :foreground "dim gray" :weight bold))))
+ '(swiper-match-face-2 ((t (:background "light coral" :foreground "white smoke" :weight bold)))))

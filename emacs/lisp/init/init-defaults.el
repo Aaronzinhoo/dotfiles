@@ -30,7 +30,9 @@
       kept-new-versions 10
       auto-save-default t
       blink-cursor-blinks -1
-      ring-bell-function 'ignore)
+      ring-bell-function 'ignore
+      native-comp-deferred-compilation t
+      native-comp-async-report-warnings-errors nil)
 ;; setq will only set for local-buffer so must use setq-default
 ;; for variables that are not buffer specific
 (setq-default
