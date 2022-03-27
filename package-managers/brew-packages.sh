@@ -85,6 +85,7 @@ brew install minikube
 #---------------------
 echo_with_prompt "installing kubectl\n"
 brew install kubernetes-cli
+brew install kubeseal
 
 #---------------------
 

@@ -17,7 +17,6 @@
 (defconst user-init-file "~/.emacs.d/init.el")
 (defconst user-home-directory (getenv "HOME"))
 (defconst user-mail-address "aaronzinho@g.ucla.edu")
-(defconst user-emacs-directory (expand-file-name "~/.config/emacs")) ;; where the trash files go
 (defconst user-init-dir-fullpath (file-truename user-init-dir))
 (defconst backup-dir (concat user-emacs-directory "/backups"))
 (defconst autosave-dir (concat user-emacs-directory "/autosave"))

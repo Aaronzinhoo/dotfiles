@@ -54,8 +54,12 @@
             (setq file-name-handler-alist file-name-handler-alist-orginal)
             ))
 ;; -AfterInitHook
-
 (defalias 'yes-or-no-p 'y-or-n-p)
+
+(defconst user-emacs-directory (expand-file-name "~/.config/emacs"))
+;; Set eln-cache dir
+(when (fboundp 'startup-redirect-eln-cache)
+  (startup-redirect-eln-cache (convert-standard-filename (expand-file-name ".local/temp/cache/eln-cache/" user-emacs-directory))))
 
 (provide 'early-init)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
