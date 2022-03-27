@@ -7,3 +7,6 @@ alias chrome='/mnt/c/Program\ Files\ \(x86\)/Google/Chrome/Application/chrome.ex
 alias k=kubectl
 alias kube-kahless='kubectl config use-context kahless'
 alias kube-rancher='kubectl config use-context bigtimber-dev'
+
+# python
+alias pip="python -m pip "
