@@ -83,7 +83,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring )
+plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions zsh-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring gradle-completion )
 
 source $ZSH/oh-my-zsh.sh
 
@@ -125,6 +125,8 @@ complete -F __start_kubectl k
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
