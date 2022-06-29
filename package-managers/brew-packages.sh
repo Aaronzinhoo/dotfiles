@@ -88,6 +88,7 @@ brew install kubernetes-cli
 brew install kubeseal
 brew install kubetail
 brew install kubespy
+brew install fzf # needed for tools
 #---------------------
 
 
