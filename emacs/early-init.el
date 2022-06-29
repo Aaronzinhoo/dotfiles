@@ -59,7 +59,9 @@
 (defconst user-emacs-directory (expand-file-name "~/.config/emacs"))
 ;; Set eln-cache dir
 (when (fboundp 'startup-redirect-eln-cache)
-  (startup-redirect-eln-cache (convert-standard-filename (expand-file-name ".local/temp/cache/eln-cache/" user-emacs-directory))))
+  (startup-redirect-eln-cache (expand-file-name "eln-cache" user-emacs-directory)))
+(setq native-comp-deferred-compilation t)
+(setq native-comp-async-report-warnings-errors nil)
 
 (provide 'early-init)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
