@@ -11,7 +11,7 @@ if [ "$(whoami)" != "root" ]; then
     return 1;
 fi
 
-GO_VERSION=1.17.3
+GO_VERSION=1.18.1
 
 # mandatory setup for installing other packages
 apt update -y

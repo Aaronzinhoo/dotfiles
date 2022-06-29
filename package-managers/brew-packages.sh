@@ -86,7 +86,8 @@ brew install minikube
 echo_with_prompt "installing kubectl\n"
 brew install kubernetes-cli
 brew install kubeseal
-
+brew install kubetail
+brew install kubespy
 #---------------------
 
 
@@ -143,6 +144,9 @@ brew install tree
 brew install tmux
 brew tap homebrew/cask-fonts
 brew install --cask font-hack-nerd-font
+# psycopg2 M1 support
+brew install libpq --build-from-source
+
 
 ## Htop
 brew install htop
@@ -180,6 +184,7 @@ brew install rustup
 echo_with_prompt "installing Java dependencies";
 brew tap spring-io/tap
 brew install maven
+brew install gradle
 
 # ------------------
 ## Dockerfile
