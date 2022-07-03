@@ -919,6 +919,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (lsp-ui-sideline-show-code-actions nil)
   (lsp-ui-peek-enable t)
+  (lsp-ui-doc-use-webkit t)
   (lsp-ui-doc-enable nil))
 (use-package lsp-java
   :after (treemacs)
