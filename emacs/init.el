@@ -1046,15 +1046,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after (company)
   :init
   (require 'company-web-html))
-(use-package company-quickhelp
-  :after company
-  :straight (:type git :host github :repo "company-mode/company-quickhelp" :branch "master")
-  :custom
-  (company-quickhelp-delay 0.1))
-;; use if only on terminal
-(use-package company-quickhelp-terminal
-  :if (not (display-graphic-p))
-  :straight t)
 (use-package company-jedi
   :commands (jedi:goto-definition jedi-mode company-jedi)
   :bind (:map jedi-mode-map
