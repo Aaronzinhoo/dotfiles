@@ -79,6 +79,13 @@
   (show-paren-when-point-in-periphery t)
   :config
   (show-paren-mode t))
+(use-package system-packages
+  :straight t
+  :custom
+  (system-packages-use-sudo nil)
+  :init
+  (when (eq system-type 'darwin)
+    (setq system-packages-package-manager 'brew)))
 (use-package display-line-numbers
   :straight nil
   :hook ((conf-mode . display-line-numbers-mode)
