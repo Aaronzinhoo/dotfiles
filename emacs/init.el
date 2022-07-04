@@ -970,13 +970,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :if (executable-find "pyright")
   :custom
   (lsp-pyright-venv-path (concat user-home-directory ".pyenv/versions"))
+  (lsp-pyright-python-executable-cmd "python3")
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright)
-                   (lsp-deferred)))
-  :init
-  (when (executable-find "python3")
-    (setq lsp-pyright-python-executable-cmd "python3")))
+                   (lsp-deferred))))
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
@@ -2112,6 +2110,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (python-check-command "flake8")
   :init
   (setenv "WORKON_HOME" "~/.pyenv/versions")
+  (setenv "VIRTUALENVWRAPPER_PYTHON" "~/.pyenv/shims/python")
+  (setenv "VIRTUALENVWRAPPER_VIRTUALENV" "~/.pyenv/shims/python")
   (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
   (with-eval-after-load 'python (defun temp () (aaronzinhoo--activate-python-shell-complettion))))
 (use-package pyvenv
@@ -2127,6 +2127,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (pyvenv-post-deactivate-hooks
    (list (lambda ()
            (setq python-shell-interpreter "python3")))))
+(use-package py-autopep8
+  :custom
+  (py-autopep8-options '("--max-line-length=120"))
+  :init
+  (add-hook 'python-mode-hook 'py-autopep8-mode))
 ;; (use-package blacken
 ;;   :diminish ""
 ;;   :custom
