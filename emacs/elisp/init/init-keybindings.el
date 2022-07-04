@@ -18,6 +18,7 @@
 (global-set-key (kbd "M-q") 'yank)
 (global-set-key (kbd "M-4") 'pop-local-mark-ring)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
+(global-set-key (kbd "C-x C-k") 'kill-buffer-and-window)
 (global-set-key (kbd "C-x 2") 'split-and-follow-horizontally)
 (global-set-key (kbd "C-x 3") 'split-and-follow-vertically)
 (global-set-key (kbd "C-<") 'previous-buffer)

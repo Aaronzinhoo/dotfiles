@@ -8,9 +8,9 @@
   (load (concat user-emacs-directory "early-init.el")))
 ;; load init packages
 (let ((dir (file-name-directory (or load-file-name buffer-file-name))))
-  (add-to-list 'load-path (expand-file-name (concat dir "lisp/init"))))
+  (add-to-list 'load-path (expand-file-name (concat dir "elisp/init"))))
 (let ((dir (file-name-directory (or load-file-name buffer-file-name))))
-  (add-to-list 'load-path (expand-file-name (concat dir "lisp/pair-navigation"))))
+  (add-to-list 'load-path (expand-file-name (concat dir "elisp/pair-navigation"))))
 ;; load the utils for some helper functions
 (require 'init-constants)
 (require 'init-defaults)
