@@ -318,8 +318,8 @@
       ("m" flycheck-mode "mode")
       ("s" flycheck-select-checker "select"))
      "Errors"
-     (("<" flycheck-previous-error "previous" :color pink)
-      (">" flycheck-next-error "next" :color pink)
+     (("p" flycheck-previous-error "previous" :color pink)
+      ("n" flycheck-next-error "next" :color pink)
       ("l" flycheck-list-errors "list errors"))
      "Other"
      (("r" recenter-top-bottom "recenter" :color pink)
@@ -978,6 +978,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (:map company-active-map
         ("<tab>" . company-complete-common-or-cycle)
         ("<backtab>" . company-select-previous))
+  :custom
+  (company-tooltip-idle-delay 0.1)
+  (company-tooltip-minimum-width 40)
+  (company-tooltip-maximum-width 80)
   :preface
   (defun company-yasnippet/disable-after-slash (fun command &optional arg &rest _ignore)
     (if (eq command 'prefix)
