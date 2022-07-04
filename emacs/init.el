@@ -1634,9 +1634,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package pdf-tools
   :custom
   (pdf-view-display-size 'fit-width))
-(use-package pdf-continuous-scroll-mode
-  :straight (pdf-continuous-scroll-mode :type git :host github :repo "dalanicolai/pdf-continuous-scroll-mode.el" :branch "master")
-  :hook (pdf-view-mode . pdf-continuous-scroll-mode))
 
 ;;; Application Framework
 ;; (use-package eaf
