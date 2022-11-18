@@ -2078,6 +2078,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ;; (python-mode . blacken-mode)
          (python-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
+  (pretty-hydra-define hydra-python-mode
+    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
+    ("Run"
+     (("a" lsp-java-add-import "Add")
+      ("o" lsp-java-organize-imports "Organize"))
+     "Notifications"
+     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
+     "Project Management"
+     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
+      ("pd" lsp-dependency-list "List Dependencies"))
+     "Test"
+     (("tb" lsp-jt-browser "Test Browser" :color blue)
+      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   (defun aaronzinhoo--python-buffer-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
@@ -2112,26 +2125,27 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setenv "WORKON_HOME" "~/.pyenv/versions")
   (setenv "VIRTUALENVWRAPPER_PYTHON" "~/.pyenv/shims/python")
   (setenv "VIRTUALENVWRAPPER_VIRTUALENV" "~/.pyenv/shims/python")
+  (setenv "PIPENV_PYTHON" "~/.pyenv/shims/python")
   (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
   (with-eval-after-load 'python (defun temp () (aaronzinhoo--activate-python-shell-complettion))))
 (use-package pyvenv
-  :custom
-  (pyvenv-post-activate-hooks
-   (list (lambda ()
-           (when (executable-find "ipython3")
-             (setq python-shell-interpreter "ipython3"
-                   python-shell-interpreter-args "-i --matplotlib=inline --automagic --simple-prompt --pprint"
-                   ;; https://gitlab.com/python-mode-devs/python-mode/-/issues/112#note_699461188
-                   py-ipython-command "ipython3"
-                   py-ipython-command-args '("-i" "--matplotlib=inline" "--automagic" "--simple-prompt" "--pprint"))))))
-  (pyvenv-post-deactivate-hooks
-   (list (lambda ()
-           (setq python-shell-interpreter "python3")))))
-(use-package py-autopep8
-  :custom
-  (py-autopep8-options '("--max-line-length=120"))
+  :straight t
   :init
-  (add-hook 'python-mode-hook 'py-autopep8-mode))
+  (setq pyvenv-post-activate-hooks
+        (list (lambda ()
+                (when (executable-find "ipython3")
+                  (setq python-shell-interpreter "ipython3"
+                        python-shell-interpreter-args "-i --matplotlib=inline --automagic --simple-prompt --pprint"
+                        ;; https://gitlab.com/python-mode-devs/python-mode/-/issues/112#note_699461188
+                        py-ipython-command "ipython3"
+                        py-ipython-command-args '("-i" "--matplotlib=inline" "--automagic" "--simple-prompt" "--pprint"))))))
+  (setq pyvenv-post-deactivate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter "python3")))))
+;; (use-package py-autopep8
+;;   :hook (python-mode . py-autopep8-mode)
+;;   :custom
+;;   (py-autopep8-options '("--max-line-length=140")))
 ;; (use-package blacken
 ;;   :diminish ""
 ;;   :custom
