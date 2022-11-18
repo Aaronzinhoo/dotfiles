@@ -1,9 +1,10 @@
-;;; package --- Summary --- -*- lexical-binding: t -*-
+;; package --- Summary --- -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;;init.el --- Emacs configuration
 
 ;;; Code:
 ;; load the early init file if this is not a recent emacs
+(message "Initializing settings...")
 (when (version< emacs-version "27")
   (load (concat user-emacs-directory "early-init.el")))
 ;; load init packages
@@ -264,13 +265,13 @@
 
 (use-package hydra
   :bind
-  ("C-c SPC" . hydra-nav/body)
-  ("C-c f" . hydra-flycheck/body)
-  ("C-c o" . hydra-org/body)
-  ("C-c p" . hydra-projectile/body)
-  ("C-c i" . hydra-ivy/body)
-  ("C-c /" . undo-and-activate-hydra-undo)
-  ("C-c B" . hydra-bookmark/body)
+  ("s-SPC" . hydra-nav/body)
+  ("s-f" . hydra-flycheck/body)
+  ("s-o" . hydra-org/body)
+  ("s-p" . hydra-projectile/body)
+  ("s-i" . hydra-ivy/body)
+  ("s-/" . undo-and-activate-hydra-undo)
+  ("s-B" . hydra-bookmark/body)
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -459,7 +460,7 @@
   :after (all-the-icons)
   :straight (:type git :host github :repo "emacsorphanage/git-gutter" :branch "master")
   :hook (prog-mode . git-gutter-mode)
-  :bind ("C-c g" . hydra-git-gutter/body)
+  :bind ("s-g" . hydra-git-gutter/body)
   :commands (git-gutter-mode)
   :diminish git-gutter-mode
   :preface
@@ -585,7 +586,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package rg
   :straight (:type git :host github :repo "dajva/rg.el" :branch "master")
   :commands (rg rg-dwim rg-menu)
-  :bind* ("C-c r" . rg-menu)
+  :bind* ("s-r" . rg-menu)
   :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer))))
   :custom
   (rg-executable "rg")
@@ -695,14 +696,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; WINDOW CONTROL
 (use-package resize-window
   :straight (:type git :host github :repo "dpsutton/resize-window" :branch "master")
-  :bind ("C-c w" . resize-window))
+  :bind ("s-w" . resize-window))
 (use-package winner
   :straight nil
   :config
   (winner-mode 1))
 (use-package ace-window
   :commands ace-window
-  :bind* ("C-c b" . ace-window)
+  :bind* ("s-b" . ace-window)
   :custom
   (aw-ignore-current t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
@@ -842,9 +843,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions))
 (use-package all-the-icons
   :straight t)
-(use-package all-the-icons-dired
-  :defer t
-  :diminish)
 (use-package emojify
   :if (display-graphic-p)
   :hook (prog-mode . (lambda () (emojify-mode 0)))
@@ -879,7 +877,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (lsp-mode . yas-minor-mode))
   :bind
   (:map lsp-mode-map
-        ("C-c l" . hydra-lsp/body))
+        ("s-l" . hydra-lsp/body))
   :preface
   (defun lsp-go-install-save-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer)
@@ -902,7 +900,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-yaml-schemas
    `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
      (,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
-     (kubernetes . ["/proj_template.yaml"])))
+     (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
+     (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
    `("node"     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules/@angular/language-server")
      "--ngProbeLocations"
@@ -913,6 +912,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
+  (push '(yaml-mode . "yaml") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
@@ -935,7 +935,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (java-mode . lsp-lens-mode)
          (java-mode . lsp-java-boot-lens-mode))
   :bind (:map java-mode-map
-              ("C-c h" . hydra-java-mode/body))
+              ("s-h" . hydra-java-mode/body))
   :preface
   (pretty-hydra-define hydra-java-mode
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
@@ -1059,7 +1059,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company-org-block
   :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
 (use-package imenu-list
-  :bind (("C-c m" . imenu-list-smart-toggle))
+  :bind (("s-m" . imenu-list-smart-toggle))
   :custom
   (imenu-list-focus-after-activation t)
   (imenu-list-auto-resize t))
@@ -1277,7 +1277,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
-        ("C-c h". hydra-org-nav/body)
+        ("s-h". hydra-org-nav/body)
         ("C-c /" . undo-and-activate-hydra-undo))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
@@ -1410,7 +1410,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
   (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
   :config
-  (define-key org-mode-map (kbd "C-c v") verb-command-map)
+  (define-key org-mode-map (kbd "s-v") verb-command-map)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
@@ -1784,7 +1784,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Debugging
 (use-package dap-mode
-  :after (lsp-mode treemacs)
+  :after (lsp-mode)
   :config
   (require 'dap-java)
   (add-hook 'dap-stopped-hook
@@ -1842,7 +1842,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; DEVOPS CONFIG
 (use-package docker
   :commands (docker)
-  :bind ("C-c d" . docker))
+  :bind ("s-d" . docker))
 (use-package docker-tramp
   :after (counsel-tramp))
 (use-package docker-compose-mode
@@ -1858,7 +1858,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
   :bind (:map dockerfile-mode-map
-              ("C-c h" . hydra-dockerfile-mode/body))
+              ("s-h" . hydra-dockerfile-mode/body))
   :preface
   (pretty-hydra-define hydra-dockerfile-mode
     (:hint nil :title (with-fileicon "dockerfile" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
@@ -1899,7 +1899,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package nxml-mode
   :straight nil
   :bind ((:map nxml-mode-map
-               ("C-c h" . hydra-web/body)))
+               ("s-h" . hydra-web/body)))
   :config
   (add-to-list 'auto-mode-alist
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
@@ -1924,7 +1924,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode (("\\.html\\$" . web-mode)
          ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
-               ("C-c h" . hydra-web/body)))
+               ("s-h" . hydra-web/body)))
   :preface
   (defun aaronzinhoo-sgml-prettify-html ()
     """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
