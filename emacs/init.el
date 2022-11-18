@@ -1692,28 +1692,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :preface
   (defun aaronzinhoo-sh-mode-setup ()
     (set (make-local-variable 'company-backends) '((company-files company-capf company-dabbrev-code)))))
-;; Terminal
-(use-package eshell-up
-  :straight (:type git :host github :repo "peterwvj/eshell-up" :branch "master"))
-(use-package aweshell
-  :straight (:type git :host github :repo "manateelazycat/aweshell" :branch "master")
-  :bind ("C-c a" . hydra-aweshell/body)
-  :preface
-  (pretty-hydra-define hydra-aweshell
-    (:hint nil :title (with-fileicon "terminal" "Aweshell Commands" 1 -0.05) :quit-key "SPC" :color pink)
-    ("Create"
-     (("a" aweshell-new "New Aweshell"))
-     "Switch"
-     (("n" aweshell-next "Next Aweshell")
-      ("p" aweshell-prev "Prev Aweshell")
-      ("b" aweshell-switch-buffer "Switch Aweshell Buffer"))
-     "Clear"
-     (("l" aweshell-clear-buffer "Clear Buffer"))
-     "History"
-     (("h" aweshell-search-history "Command History" ));end action
-     )))
 (use-package vterm
   :commands vterm)
+(use-package multi-vterm
+  :commands multi-vterm)
 (use-package ansi-color
   :hook (compilation-filter . colorize-compilation-buffer)
   :preface
