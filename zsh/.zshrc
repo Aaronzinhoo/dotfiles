@@ -106,6 +106,9 @@ bindkey '^ ' autosuggest-accept
 # Load environment aliases
 . "${HOME}/.alias"
 
+# pyenv setup
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -131,3 +134,7 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)

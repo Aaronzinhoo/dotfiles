@@ -190,7 +190,7 @@ brew install gradle
 # ------------------
 ## Dockerfile
 # ------------------
-echo_with_prompt "installing Docker dependencies";
+echo_with_prompt "Installing Docker dependencies";
 brew install hadolint
 # ------------------
 
@@ -200,4 +200,13 @@ brew install hadolint
 brew install mtr
 brew install dnsmap
 brew install nmap
+# ------------------
+
+
+# ------------------
+# kafka
+# ------------------
+brew install openssl
+brew install librdkafka
+brew install pkg-config
 # ------------------
