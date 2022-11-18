@@ -16,6 +16,7 @@
 (setq message-log-max 16384
       auto-window-vscroll nil
       scroll-margin 4
+      delete-pair-blink-delay 0
       ad-redefinition-action 'accept
       create-lockfiles nil
       select-enable-clipboard t

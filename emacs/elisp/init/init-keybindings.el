@@ -26,19 +26,19 @@
 (global-set-key (kbd "M-[") 'backward-up-list)
 (global-set-key (kbd "M-]") 'up-list)
 ;; delete pair of items
-(global-set-key (kbd "C-c C-p") 'delete-pair)
+(global-set-key (kbd "s-p") 'delete-pair)
 ;; this is your old m-x.
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 ;; need this otherwise on windows M-<tab> (changing windows)
 ;; will activate scroll-lock
 (global-set-key (kbd "<Scroll_Lock>") 'ignore)
-(global-set-key (kbd "C-S-<tab>") 'iflipb-previous-buffer)
+(global-set-key (kbd "s-<tab>") 'iflipb-next-buffer)
+(global-set-key (kbd "s-S-<tab>") 'iflipb-previous-buffer)
 
 (when (memq window-system '(mac ns))
-  (setq mac-option-modifier 'meta)
-  (setq mac-right-option-modifier 'control))
-
-
+  (setq mac-command-modifier 'meta)
+  (setq mac-right-command-modifier 'control)
+  (setq mac-option-modifier 'super))
 
 (message "Done loading keybindings")
 
