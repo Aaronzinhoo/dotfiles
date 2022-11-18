@@ -1792,22 +1792,28 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package yaml-mode
   :mode (("\\.ya?ml$" . yaml-mode)
          ("\\.tpl$" . yaml-mode))
-  :hook ((yaml-mode . aaronzinhoo-yaml-mode-hook))
+  :hook ((yaml-mode . aaronzinhoo-yaml-mode-hook)
+         (yaml-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (yaml-ruby)))))))))
   :preface
   (defun aaronzinhoo-company-yaml-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files))))
   (defun aaronzinhoo-yaml-mode-hook ()
     (flycheck-mode)
+    (setq-local lsp-java-boot-enabled nil)
     (lsp)
+    (setq-local flycheck-disabled-checkers
+                (append flycheck-disabled-checkers
+                        '(lsp)))
     (hungry-delete-mode)
-    (aaronzinhoo-company-yaml-mode-hook)
-    (when (flycheck-may-enable-checker 'yaml-yamllint)
-      (flycheck-select-checker 'yaml-yamllint))))
+    (aaronzinhoo-company-yaml-mode-hook)))
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
-(use-package json-mode
-  :mode ("\\.json" . json-mode)
+(use-package jsonian
+  :straight (:type git :host github :repo "iwahbe/jsonian" :branch "main")
+  :after (so-long flycheck)
   :config
-  (setq js-indent-level 2))
+  (jsonian-no-so-long-mode)
+  (jsonian-enable-flycheck)
+  (setq-local js-indent-level 2))
 (use-package dotenv-mode
   :mode ("\\.env\\'" . dotenv-mode))
 (use-package groovy-mode
