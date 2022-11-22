@@ -1809,6 +1809,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
 (use-package jsonian
   :straight (:type git :host github :repo "iwahbe/jsonian" :branch "main")
+  :hook (jsonian-mode . prettier-mode)
   :after (so-long flycheck)
   :config
   (jsonian-no-so-long-mode)
