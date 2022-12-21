@@ -2061,23 +2061,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package python
   :delight " Py"
   :mode ("\\.py" . python-mode)
+  :bind (:map python-mode-map
+              ("C-c h" . hydra-python-mode/body))
   :hook ((python-mode . pyvenv-mode)
-         ;; (python-mode . blacken-mode)
          (python-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
   (pretty-hydra-define hydra-python-mode
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
     ("Run"
-     (("a" lsp-java-add-import "Add")
-      ("o" lsp-java-organize-imports "Organize"))
-     "Notifications"
-     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
-     "Project Management"
-     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
-      ("pd" lsp-dependency-list "List Dependencies"))
-     "Test"
-     (("tb" lsp-jt-browser "Test Browser" :color blue)
-      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
+     (("r" run-python "Python Shell")
+      ("d" realgud:pdb "PDB" :color blue))
+     "Eval"
+     (("eb" python-shell-send-buffer "Run Buffer in Shell")
+      ("er" python-shell-send-region "Run Region in Shell"))
+     "Formatting"
+     (("f" py-autopep8-mode "Autopep8 Mode" :toggle t))))
   (defun aaronzinhoo--python-buffer-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
@@ -2129,15 +2127,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq pyvenv-post-deactivate-hooks
         (list (lambda ()
                 (setq python-shell-interpreter "python3")))))
-;; (use-package py-autopep8
-;;   :hook (python-mode . py-autopep8-mode)
-;;   :custom
-;;   (py-autopep8-options '("--max-line-length=140")))
-;; (use-package blacken
-;;   :diminish ""
-;;   :custom
-;;   (blacken-skip-string-normalization t)
-;;   (blacken-line-length 120))
+(use-package py-autopep8
+  :commands (py-autopep8-mode)
+  :custom
+  (py-autopep8-options '("--max-line-length=140")))
 
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
