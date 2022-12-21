@@ -24,12 +24,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(git-gutter:modified ((t (:background nil :foreground "dodgerblue" :weight bold))))
- '(git-gutter:added ((t (:background nil :foreground "limegreen"))))
- '(git-gutter:deleted ((t (:background nil))))
- '(dired-subtree-depth-1-face ((t nil)))
- '(dired-subtree-depth-2-face ((t nil)))
- '(dired-subtree-depth-3-face ((t nil)))
+ '(git-gutter:modified ((t (:background unspecified :foreground "dodgerblue" :weight bold))))
+ '(git-gutter:added ((t (:background unspecified :foreground "limegreen"))))
+ '(git-gutter:deleted ((t (:background unspecified))))
+ '(dired-subtree-depth-1-face ((t unspecified)))
+ '(dired-subtree-depth-2-face ((t unspecified)))
+ '(dired-subtree-depth-3-face ((t unspecified)))
  '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
  '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
  '(markdown-table-face ((t (:inherit markdown-code-face :foreground "white smoke"))))
