@@ -1246,9 +1246,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; better way to test APIs (like postman but with org files!)
 ;; must keep here since org uses ob-verb
 (use-package verb
-  ;; C-C C-r C-k to kill buffers
-  ;; C-c C-r C-r to view header
-  )
+  :after (org)
+  :commands (verb-mode)
+  :preface
+  (pretty-hydra-define hydra-verb-mode
+    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "viacoin" "Verb Mode" 1 -0.05))
+    ("Request"
+     (("rs" verb-send-request-on-point-other-window-stay "Other Window (Stay)")
+      ("ro" verb-send-request-on-point-other-window "Other Window")
+      ("rc" verb-send-request-on-point "Current Window"))
+     "Kill"
+     (("k" verb-kill-all-response-buffers "All Response Buffers"))
+     )))
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo-org-setup)
@@ -1259,8 +1268,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
-        ("s-h". hydra-org-nav/body)
-        ("C-c /" . undo-and-activate-hydra-undo))
+        ("C-c h". hydra-org-nav/body)
+        ("s-/" . undo-and-activate-hydra-undo)
+        ("s-v" . hydra-verb-request/body))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -1990,16 +2000,31 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Markdown Support
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
+  :bind (:map markdown-mode-map
+              ("C-c h" . hydra-markdown-mode/body))
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
+  :preface
+  (pretty-hydra-define hydra-markdown-mode
+    (:hint nil :title (with-octicon "markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
+    ("Insert"
+     (("it" markdown-insert-table "table")
+      ("ii" markdown-insert-image "image")
+      ("ib" markdown-insert-uri "uri")
+      ("ic" markdown-insert-code-block "code block")
+      ("id" markdown-insert-gfm-checkbox "checkbox"))
+     "Preview"
+     (("p" vmd-mode "Preview" :toggle t))
+     "Action"
+     (("o" markdown-open "Open" :color blue))
+     ))
   :init (setq markdown-command "pandoc"))
 ;; prview for markdown profiles
 (use-package ox-gfm
-  :defer t)
+  :after org)
 ;; markdown visualization
 (use-package vmd-mode
-  :bind (:map markdown-mode-command-map
-              ("g" . vmd-mode)))
+  :commands (vmd-mode))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; JS/react/angular config
