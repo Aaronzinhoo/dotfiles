@@ -21,7 +21,6 @@
 (require 'init-utils)
 (require 'pair-navigator)
 
-
 (message "Loading packages")
 ;; overlay to help display where other paren is unobtrusively
 ;; ov is enclosed in show-paren--off-screen+
@@ -1266,7 +1265,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; C-C C-r C-k to kill buffers
   ;; C-c C-r C-r to view header
   )
-(use-package org-contrib)
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo-org-setup)
@@ -1467,8 +1465,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            :created t                   ; properties
            )))
   (require 'ox-publish)
-  ;; (org-reload)
   )
+(use-package org-contrib)
 (use-package ivy-bibtex
   :custom
   (ivy-bibtex-bibliography "~/org/references/articles.bib")

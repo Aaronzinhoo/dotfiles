@@ -17,7 +17,7 @@ html {
 body {
   font-size: 1.8rem;
   line-height: 1.618;
-  max-width: 38em;
+  max-width: 55em;
   margin: auto;
   color: #c9c9c9;
   background-color: #222222;
@@ -261,4 +261,48 @@ fieldset {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
+}
+
+.tag span {
+  background-color: #ededed;
+  border: 1px solid #ededed;
+  color: #939393;
+  cursor: pointer;
+  display: block;
+  float: right;
+  font-size: 50%;
+  font-weight: normal;
+  margin: 0 3px;
+  padding: 1px 2px;
+  border-radius: 10px;
+}
+
+.tag span:hover {
+  background: #babdb6;
+}
+
+#right-panel-contents .tag span {
+  font-size: 100%;
+}
+
+.tag .FLAGGED {
+  background-color: #edc6c8;
+  border: 1px solid #edc6c8;
+  color: #c15f4e;
+}
+
+.tag .selected {
+  background-color: #ffebc1;
+  border: 1px solid #fdbf3b;
+  color: #a6750c;
+}
+
+#listOfTodo,
+#listOfDone,
+#listOfTags {
+  /* bottom: 10px; /\* together with this to put the div at the bottom*\/ */
+  /* left: 10px; */
+  /* list-style-type: none; */
+  margin-left: 0px;
+  /* position: fixed; /\* this is the magic *\/ */
 }

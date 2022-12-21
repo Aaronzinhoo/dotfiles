@@ -28,6 +28,7 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 (straight-use-package 'use-package)
+(straight-use-package 'org)
 (setq straight-use-package-by-default t)
 (setq use-package-always-demand t)
 (message "Done loading straight package manager")
