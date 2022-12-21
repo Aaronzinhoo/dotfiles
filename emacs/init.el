@@ -293,30 +293,6 @@
     (undo-fu-only-undo)
     (hydra-undo-fu/body))
   :config
-  (pretty-hydra-define hydra-projectile
-    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "rocket" "Projectile" 1 -0.05))
-    ("Buffers"
-     (("b" counsel-projectile-switch-to-buffer "list")
-      ("k" projectile-kill-buffers "kill all")
-      ("S" projectile-save-project-buffers "save all"))
-     "Find"
-     (("d" counsel-projectile-find-dir "directory")
-      ("D" projectile-dired "root")
-      ("f" counsel-projectile-find-file "file")
-      ("p" counsel-projectile-switch-project "project"))
-     "Other"
-     (("N" projectile-cleanup-known-projects)
-      ("i" projectile-invalidate-cache "reset cache")
-      ("c" projectile-compile-project "compile")
-      ("v" projectile-run-vterm "run vterm"))
-     "Search & Replace"
-     (("r" projectile-replace "replace")
-      ("R" projectile-replace-regexp "regexp replace")
-      ("s" counsel-projectile-rg "search"))
-     "Tests"
-     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
-      ("tt" projectile-test-project "run tests")
-      ("tf" projectile-find-test-file "find test file"))))
   (pretty-hydra-define hydra-flycheck
     (:hint nil :color teal :quit-key "SPC" :title (with-faicon "plane" "Flycheck" 1 -0.05))
     ("Checker"
@@ -1133,6 +1109,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package counsel-tramp
   :commands (counsel-tramp))
 (use-package counsel-projectile
+  :after projectile
   :straight (:type git :host github :repo "ericdanan/counsel-projectile")
   :config
   (counsel-projectile-mode t))
@@ -1144,6 +1121,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind* (:map ivy-minibuffer-map
                ("C-SPC" . ivy-avy)))
 (use-package ivy-rich
+  :after ivy
   :hook (all-the-icons-ivy-rich-mode . ivy-rich-mode)
   :init
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line)
@@ -1258,6 +1236,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Org Support
 ;; for exporting html documents
 (use-package htmlize
+  :after (org)
   :defer t)
 (use-package ob-typescript)
 ;;; sudo apt install phantomjs
@@ -1469,7 +1448,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            )))
   (require 'ox-publish)
   )
-(use-package org-contrib)
+(use-package org-contrib
+  :after org)
 (use-package ivy-bibtex
   :custom
   (ivy-bibtex-bibliography "~/org/references/articles.bib")
@@ -1509,8 +1489,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package doct
   :straight t)
 (use-package asoc
+  :after org
   :straight (asoc :type git :host github :repo "troyp/asoc.el"))
 (use-package org-capture-ref
+  :after asoc
   :straight (org-capture-ref :type git :host github :repo "yantar92/org-capture-ref")
   :init
   ;; create doct group of category Browser link
@@ -1738,6 +1720,34 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (bookmark-save-flag t) ;;save bookmarks to .emacs.bmk after each entry
   )
 (use-package projectile
+  :after major-mode-hydra
+  :bind
+  ("s-p" . hydra-projectile/body)
+  :preface
+  (pretty-hydra-define hydra-projectile
+    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "rocket" "Projectile" 1 -0.05))
+    ("Buffers"
+     (("b" counsel-projectile-switch-to-buffer "list")
+      ("k" projectile-kill-buffers "kill all")
+      ("S" projectile-save-project-buffers "save all"))
+     "Find"
+     (("d" counsel-projectile-find-dir "directory")
+      ("D" projectile-dired "root")
+      ("f" counsel-projectile-find-file "file")
+      ("p" counsel-projectile-switch-project "project"))
+     "Other"
+     (("N" projectile-cleanup-known-projects)
+      ("i" projectile-invalidate-cache "reset cache")
+      ("c" projectile-compile-project "compile")
+      ("v" projectile-run-vterm "run vterm"))
+     "Search & Replace"
+     (("r" projectile-replace "replace")
+      ("R" projectile-replace-regexp "regexp replace")
+      ("s" counsel-projectile-rg "search"))
+     "Tests"
+     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
+      ("tt" projectile-test-project "run tests")
+      ("tf" projectile-find-test-file "find test file"))))
   :custom
   (projectile-find-dir-includes-top-level t)
   (projectile-switch-project-action #'projectile-find-dir)
