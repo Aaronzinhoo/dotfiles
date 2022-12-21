@@ -102,6 +102,7 @@
                   eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package elec-pair
+  :demand t
   :straight nil
   :hook ((git-commit-mode . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
@@ -186,11 +187,8 @@
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
-(use-package server
-  :straight nil
-  :init
-  (server-start))
 (use-package no-littering
+  :demand t
   :config
   (setq auto-save-file-name-transforms
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
@@ -263,6 +261,7 @@
   (block-nav-center-after-scroll t))
 
 (use-package hydra
+  :demand t
   :bind
   ("s-SPC" . hydra-nav/body)
   ("s-f" . hydra-flycheck/body)
@@ -274,6 +273,7 @@
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
+  :demand t
   :after hydra
   :preface
   (defun with-alltheicon (icon str &optional height v-adjust)
@@ -592,6 +592,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (rg-enable-menu))
 (use-package hungry-delete
+  :demand t
   :straight t
   :config
   (global-hungry-delete-mode))
@@ -661,10 +662,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (dired-recent-mode  1))
 (use-package recentf
+  :demand t
   :custom
   (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sudo:" "/sftp:"))
-  (recentf-max-menu-items 50)
-  (recentf-max-saved-items 50)
+  (recentf-max-menu-items 500)
+  (recentf-max-saved-items 500)
   :config
   (recentf-mode 1))
 (use-package crux
@@ -715,6 +717,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package page-break-lines
   :defer t)
 (use-package dashboard
+  :demand t
   :straight t
   :custom
   (dashboard-set-init-info t)
@@ -2197,6 +2200,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;;; Theme
 (use-package moe-theme
+  :demand t
   :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :config
   (require 'moe-theme-switcher)
