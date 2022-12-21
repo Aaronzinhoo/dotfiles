@@ -834,11 +834,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (use-package yasnippet-snippets)
   (yas-reload-all))
-(use-package treemacs
-  :straight (:type git :host github :repo "Alexander-Miller/treemacs" :branch "master"))
 (use-package lsp-mode
-  :after (treemacs)
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
+  :commands (lsp lsp-deferred)
   :hook (((c-mode        ; clangd
            c++-mode  ; clangd
            go-mode
@@ -850,7 +848,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            dockerfile-mode
            sh-mode
            python-mode
-           ) . lsp)
+           ) . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
   :bind
@@ -894,6 +892,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+(use-package lsp-treemacs
+  :commands lsp-treemacs-errors-list)
 (use-package lsp-ivy
   :after (lsp-mode ivy))
 (use-package lsp-ui
@@ -956,6 +956,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
+  :hook ((prog-mode . company-mode)
+         (org-mode . company-mode))
   :bind
   ([remap indent-for-tab-command] . company-indent-or-complete-common)
   (:map company-active-map
@@ -1756,6 +1758,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (projectile-enable-caching t)
   (projectile-sort-order 'recentf)
   (projectile-completion-system 'ivy))
+
 
 ;;; Languages Support
 
