@@ -913,7 +913,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (java-mode . lsp-lens-mode)
          (java-mode . lsp-java-boot-lens-mode))
   :bind (:map java-mode-map
-              ("s-h" . hydra-java-mode/body))
+              ("C-c h" . hydra-java-mode/body))
   :preface
   (pretty-hydra-define hydra-java-mode
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
@@ -1858,7 +1858,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
   :bind (:map dockerfile-mode-map
-              ("s-h" . hydra-dockerfile-mode/body))
+              ("C-c h" . hydra-dockerfile-mode/body))
   :preface
   (pretty-hydra-define hydra-dockerfile-mode
     (:hint nil :title (with-fileicon "dockerfile" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
@@ -1899,7 +1899,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package nxml-mode
   :straight nil
   :bind ((:map nxml-mode-map
-               ("s-h" . hydra-web/body)))
+               ("C-c h" . hydra-web/body)))
   :config
   (add-to-list 'auto-mode-alist
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
@@ -1924,7 +1924,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode (("\\.html\\$" . web-mode)
          ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
-               ("s-h" . hydra-web/body)))
+               ("C-c h" . hydra-web/body)))
   :preface
   (defun aaronzinhoo-sgml-prettify-html ()
     """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
