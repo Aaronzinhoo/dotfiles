@@ -30,7 +30,7 @@
 (straight-use-package 'use-package)
 (straight-use-package 'org)
 (setq straight-use-package-by-default t)
-(setq use-package-always-demand t)
+(setq use-package-always-defer t)
 (message "Done loading straight package manager")
 
 (provide 'init-straight)
