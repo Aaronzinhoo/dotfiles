@@ -79,6 +79,11 @@
   (show-paren-when-point-in-periphery t)
   :config
   (show-paren-mode t))
+(use-package tree-sitter
+  :straight nil
+  :diminish
+  :custom
+  (treesit-extra-load-path `(,(concat user-init-dir-fullpath "deps/tree-sitter"))))
 (use-package system-packages
   :straight t
   :custom
@@ -1774,35 +1779,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Indent Guides
 (use-package highlight-indent-guides)
-;; Syntax Highlighting
-(use-package tree-sitter-langs
-  :straight t)
-(use-package tree-sitter
-  :diminish
-  :hook ((typescript-mode . tree-sitter-mode)
-         (java-mode . tree-sitter-mode)
-         (rustic-mode . tree-sitter-mode)
-         (python-mode . tree-sitter-mode)
-         (js2-mode . tree-sitter-mode)
-         (rjsx-mode . tree-sitter-mode)
-         (go-mode . tree-sitter-mode)
-         (tree-sitter-after-on . tree-sitter-hl-mode)))
 
 ;; Debugging
 (use-package dap-mode
   :after (lsp-mode)
   :config
-  (require 'dap-java)
   (add-hook 'dap-stopped-hook
             (lambda (arg) (call-interactively #'dap-hydra)))
   (dap-auto-configure-mode))
-(use-package realgud
-  :defer t)
-(use-package realgud-trepan-ni
-  :straight (:type git :host github :repo "realgud/realgud-trepan-ni" :branch "master")
-  :defer t)
-(use-package realgud-jdb
-  :after (realgud))
 
 ;; Code Coverage
 (use-package cov
