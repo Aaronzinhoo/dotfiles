@@ -749,7 +749,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (append flycheck-disabled-checkers
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
-  (flycheck-add-mode 'json-jsonlint 'json-mode)
+  (flycheck-add-mode 'json-jsonlint 'jsonian-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   ;; eslint requires you to be careful with the configuration
   ;; ensure to use .json files and setup accordingly
@@ -823,12 +823,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-mode
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook ((c-mode . lsp-deferred)
-         (c++-mode . lsp-deferred)
-         (go-mode . lsp-deferred)
+  :hook ((c-ts-mode . lsp-deferred)
+         (c++-ts-mode . lsp-deferred)
+         (go-ts-mode . lsp-deferred)
          (sql-mode . lsp-deferred)
          (html-mode . lsp-deferred)
-         (typescript-mode . lsp-deferred)
+         (typescript-ts-mode . lsp-deferred)
          (rustic-mode . lsp-deferred)
          (dockerfile-mode . lsp-deferred)
          (sh-mode . lsp-deferred)
@@ -891,8 +891,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
-(use-package dap-mode
+(use-package lsp-docker
   :requires (lsp-mode)
+  :after (lsp-mode)
+  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
+(use-package dap-mode
+  :requires (lsp-mode lsp-docker)
   :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
   :hook ((lsp-mode . dap-auto-configure-mode)
          (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
@@ -910,13 +914,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-ui-peek-enable t)
   (lsp-ui-doc-use-webkit t)
   (lsp-ui-doc-enable nil))
-(use-package lsp-docker
-  :after (lsp)
-  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
-  :hook ((java-mode . lsp-deferred)
-         (java-mode . lsp-java-boot-lens-mode))
+  :hook ((java-ts-mode . lsp-deferred)
+         (java-ts-mode . lsp-java-boot-lens-mode))
   :bind (:map java-ts-mode-map
               ("C-c h" . hydra-lsp-java-mode/body))
   :preface
@@ -2154,6 +2155,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; need a package if not in GOPATH!
 (use-package go-mode
   :mode ("\\.go\\'" . go-mode)
+  :hook (go-mode . go-ts-mode)
   :init
   ;;Smaller compilation buffer
   (setq compilation-window-height 14)
@@ -2197,7 +2199,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("\\.cmake\\'" . cmake-mode)))
 
 ;;; Rust
-(use-package toml-mode)
+(use-package toml-mode
+  :hook (toml-mode . toml-ts-mode))
 (use-package rustic
   :custom
   (rustic-lsp-server 'rls))
@@ -2207,7 +2210,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer t)
 (use-package cc-mode
   :straight nil
-  :hook ((java-mode . java-ts-mode)
+  :hook ((c++-mode . c++-ts-mode)
+         (c-mode . c-ts-mode)
+         (java-mode . java-ts-mode)
          (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))))
 (use-package protobuf-mode
   :mode (("\\.proto\\'" . protobuf-mode)))
