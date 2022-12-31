@@ -227,6 +227,14 @@
   :preface
   (defun aaronzinhoo-ssh-config-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files)))))
+(use-package x509-mode
+  :straight t
+  :commands (x509-mode)
+  :custom
+  (x509-openssl-cmd "openssl")
+  :config
+  (dolist (mode '(x509-mode-hook))
+    (add-hook mode (lambda () (emojify-mode 0)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package xclip
   :straight t
