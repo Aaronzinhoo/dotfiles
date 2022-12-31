@@ -617,46 +617,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands (fd-dired fd-name-dired fd-grep-dired)
   :config
   (setq fd-dired-program "fdfind"))
-(use-package dired-single
-  :preface
-  ;; taken from https://github.com/ianyepan/.macOS-emacs.d/blob/master/init.el#L605
-  (defun aaronzinhoo-dired-single-init ()
-    (define-key dired-mode-map [return] #'dired-single-buffer)
-    (define-key dired-mode-map [remap dired-mouse-find-file-other-window] #'dired-single-buffer-mouse)
-    (define-key dired-mode-map [remap dired-up-directory] #'dired-single-up-directory))
-  :config
-  (if (boundp 'dired-mode-map)
-      (aaronzinhoo-dired-single-init)
-    (add-hook 'dired-load-hook #'aaronzinhoo-dired-single-init)))
-(use-package dired-collapse)
-(use-package dired-narrow
-  :bind (("C-c C-n" . dired-narrow)))
-(use-package dired-subtree
-  :after dired
-  :bind (:map dired-mode-map
-              ("i" . dired-subtree-insert)
-              ("k" . dired-subtree-remove)
-              ("<tab>" . aaronzinhoo-dired-subtree-toggle)
-              ("<backtab>" . aaronzinhoo-dired-subtree-toggle)
-              ("C-n" . dired-subtree-next-sibling)
-              ("C-p" . dired-subtree-previous-sibling))
-  :preface
-  (defun aaronzinhoo-dired-subtree-toggle ()
-    (interactive)
-    (dired-subtree-toggle)
-    (revert-buffer)))
-;; font-locking colors for dired
-(use-package diredfl
-  :after dired
-  :config
-  (diredfl-global-mode 1))
 (use-package dired-recent
   :config
   (dired-recent-mode  1))
 (use-package recentf
   :demand t
   :custom
-  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sudo:" "/sftp:"))
+  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sudo:" "/sftp:" (expand-file-name "~/.config/emacs/eln-cache") (expand-file-name "~/.config/emacs/var") (expand-file-name "~/.config/emacs/straight")))
   (recentf-max-menu-items 500)
   (recentf-max-saved-items 500)
   :config
