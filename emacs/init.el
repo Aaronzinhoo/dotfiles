@@ -886,6 +886,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq lsp-gopls-staticcheck t)
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
+  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
+  ;; used to help pyright find venv folders
+  (defun aaronzinhoo-lsp-python-setup ()
+    (when (buffer-file-name)
+      (let* ((python-version ".python-version")
+             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
+        (when project-dir
+	      (progn
+	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
+	        (lsp-workspace-folders-add project-dir)
+	        (pyvenv-workon
+             (with-temp-buffer
+               (insert-file-contents (expand-file-name python-version project-dir))
+               (car (split-string (buffer-string))))))))))
   :custom
   (lsp-treemacs-sync-mode t)
   (lsp-auto-guess-root t)
@@ -910,6 +924,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      "--tsProbeLocations"
      ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules")
      "--stdio"))
+  :init
+  (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
   :config
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
@@ -980,8 +996,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-pyright-python-executable-cmd "python3")
   :hook
   (python-mode . (lambda ()
-                   (require 'lsp-pyright)
-                   (lsp-deferred))))
+                   (require 'lsp-pyright))))
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
@@ -1834,10 +1849,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (jsonian-no-so-long-mode)
   (jsonian-enable-flycheck)
   (setq-local js-indent-level 2))
+
 (use-package dotenv-mode
   :mode ("\\.env\\'" . dotenv-mode))
-(use-package groovy-mode
-  :defer t)
 (use-package jenkinsfile-mode
   :mode ("\\Jenkinsfile\\'" . jenkinsfile-mode)
   :preface
@@ -2093,18 +2107,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; completion: company
 ;; install black, flake8 ipython, jedi, rope, autopep8, yapf
 (use-package python
+  :straight nil
   :delight " Py"
-  :mode ("\\.py" . python-mode)
-  :bind (:map python-mode-map
+  :mode ("\\.py" . python-ts-mode)
+  :bind (:map python-ts-mode-map
               ("C-c h" . hydra-python-mode/body))
-  :hook ((python-mode . pyvenv-mode)
-         (python-mode . (lambda () (aaronzinhoo--python-setup))))
+  :hook ((python-ts-mode . pyvenv-mode)
+         (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
   (pretty-hydra-define hydra-python-mode
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
     ("Run"
      (("r" run-python "Python Shell")
-      ("d" realgud:pdb "PDB" :color blue))
+      ("d" pdb "PDB" :color blue))
      "Eval"
      (("eb" python-shell-send-buffer "Run Buffer in Shell")
       ("er" python-shell-send-region "Run Region in Shell"))
@@ -2121,23 +2136,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (python-shell-completion-native-get-completions
        (get-buffer-process (current-buffer))
        nil "_")))
-  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
-  ;; used to help pyright find venv folders
-  (defun aaronzinhoo--pyvenv-workon ()
-    (when (buffer-file-name)
-      (let* ((python-version ".python-version")
-             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
-        (when project-dir
-	      (progn
-	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
-	        (lsp-workspace-folders-add project-dir)
-	        (pyvenv-workon
-             (with-temp-buffer
-               (insert-file-contents (expand-file-name python-version project-dir))
-               (car (split-string (buffer-string))))))))))
   (defun aaronzinhoo--python-setup ()
-    (aaronzinhoo--python-buffer-setup)
-    (aaronzinhoo--pyvenv-workon))
+    (aaronzinhoo--python-buffer-setup))
   :custom
   (python-check-command "flake8")
   :init
@@ -2164,7 +2164,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package py-autopep8
   :commands (py-autopep8-mode)
   :custom
-  (py-autopep8-options '("--max-line-length=140")))
+  (py-autopep8-options '("--max-line-length 140")))
 
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
