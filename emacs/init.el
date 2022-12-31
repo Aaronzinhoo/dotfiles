@@ -860,23 +860,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-mode
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook (((c-mode        ; clangd
-           c++-mode  ; clangd
-           go-mode
-           sql-mode
-           html-mode
-           web-mode
-           typescript-mode
-           rustic-mode
-           dockerfile-mode
-           sh-mode
-           python-mode
-           ) . lsp-deferred)
+  :hook ((c-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (go-mode . lsp-deferred)
+         (sql-mode . lsp-deferred)
+         (html-mode . lsp-deferred)
+         (typescript-mode . lsp-deferred)
+         (rustic-mode . lsp-deferred)
+         (dockerfile-mode . lsp-deferred)
+         (sh-mode . lsp-deferred)
+         (python-ts-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
-  :bind
-  (:map lsp-mode-map
-        ("s-l" . hydra-lsp/body))
+  :bind (:map lsp-mode-map
+               ("s-l" . hydra-lsp/body))
   :preface
   (defun lsp-go-install-save-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer)
@@ -932,7 +929,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
 (use-package lsp-treemacs
-  :commands lsp-treemacs-errors-list)
+  :commands (treemacs lsp-treemacs-errors-list))
 (use-package lsp-ivy
   :after (lsp-mode ivy))
 (use-package lsp-ui
@@ -945,17 +942,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-ui-peek-enable t)
   (lsp-ui-doc-use-webkit t)
   (lsp-ui-doc-enable nil))
+(use-package lsp-docker
+  :after (lsp)
+  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
 (use-package lsp-java
-  :after (treemacs)
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
-  :hook ((java-mode . lsp)
-         (java-mode . lsp-lens-mode)
+  :hook ((java-mode . lsp-deferred)
          (java-mode . lsp-java-boot-lens-mode))
-  :bind (:map java-mode-map
-              ("C-c h" . hydra-java-mode/body))
+  :bind (:map java-ts-mode-map
+              ("C-c h" . hydra-lsp-java-mode/body))
   :preface
-  (pretty-hydra-define hydra-java-mode
-    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java Mode" 1 -0.05))
+  (pretty-hydra-define hydra-lsp-java-mode
+    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java LSP Mode" 1 -0.05))
     ("Class"
      (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
       ("co" lsp-java-generate-overrides "Generate Overides")
@@ -1146,10 +1144,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; fix for async display of counsel-rg resuls
   (advice-add #'ivy-update-candidates :around #'ivy-update-candidates-dynamic-collection-workaround-a))
 (use-package counsel-tramp
+  :straight (:type git :host github :repo "masasam/emacs-counsel-tramp")
   :commands (counsel-tramp))
 (use-package counsel-projectile
-  :after projectile
   :straight (:type git :host github :repo "ericdanan/counsel-projectile")
+  :commands (counsel-projectile-switch-project-by-name)
   :config
   (counsel-projectile-mode t))
 ;; load before ivy-rich for better performance
