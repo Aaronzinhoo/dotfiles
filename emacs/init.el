@@ -760,10 +760,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'sh-shellcheck 'sh-mode))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
-(use-package dap-mode
-  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
-  :hook ((lsp-mode . dap-auto-configure-mode)
-         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
 (use-package aggressive-indent
   :straight t
   :diminish
@@ -895,6 +891,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+(use-package dap-mode
+  :requires (lsp-mode)
+  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
+  :hook ((lsp-mode . dap-auto-configure-mode)
+         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list))
 (use-package lsp-ivy
@@ -2015,7 +2016,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; markdown visualization
 (use-package vmd-mode
   :commands (vmd-mode))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; JS/react/angular config
 ;; completetion: lsp+company
@@ -2211,7 +2211,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))))
 (use-package protobuf-mode
   :mode (("\\.proto\\'" . protobuf-mode)))
-;; ----------------------------------------------------------------
 
 ;;; Theme
 (use-package powerline
