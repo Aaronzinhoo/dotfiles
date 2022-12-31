@@ -1821,6 +1821,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
+(use-package yaml-pro
+  :after (yaml-mode)
+  :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")
+  :requires (yaml-mode tree-sitter)
+  :mode (("\\.ya?ml$" . yaml-pro-ts-mode)
+         ("\\.tpl$" . yaml-pro-ts-mode))
+  :commands (yaml-pro-ts-mode))
 (use-package yaml-mode
   :mode (("\\.ya?ml$" . yaml-mode)
          ("\\.tpl$" . yaml-mode))
@@ -1861,18 +1868,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; DEVOPS CONFIG
 (use-package docker
+  :straight t
   :commands (docker)
   :bind ("s-d" . docker))
-(use-package docker-tramp
-  :after (counsel-tramp))
 (use-package docker-compose-mode
   :straight (:type git :host github :repo "aaronzinhoo/docker-compose-mode" :branch "master")
   :mode ("docker-compose\\'" . docker-compose-mode)
-  :hook (docker-compose-mode . aaronzinhoo-docker-compose-mode-setup)
+  :hook ((docker-compose-mode . aaronzinhoo-docker-compose-mode-setup)
+         (docker-compose-mode . lsp)
+         (docker-compose-mode . flycheck-mode))
   :preface
   (defun aaronzinhoo-docker-compose-mode-setup ()
-    (flycheck-mode)
-    (lsp)
     (hungry-delete-mode)
     (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
 (use-package dockerfile-mode
@@ -1890,7 +1896,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :defer t
   :commands (kubernetes-overview))
 
-;; WEB-DEV CONFIG
+;;; WEB-DEV CONFIG
+
+;; apache
+(use-package apache-mode
+  :straight (:type git :host github :repo "PommesSchranke/apache-mode" :branch "customizable-faces")
+  :mode (("apache2\\.conf\\'" . apache-mode)
+         ("httpd\\.conf\\'" . apache-mode))
+  :hook ((apache-mode . aaronzinhoo-apache2-company-mode-setup)
+         (apache-mode . aggressive-indent-mode))
+  :preface
+  (defun aaronzinhoo-apache2-company-mode-setup ()
+    (set (make-local-variable 'company-backends)
+         '((company-capf company-dabbrev company-files company-keywords)))))
 
 ;; formatting
 (use-package unibeautify
@@ -2218,11 +2236,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (rustic-lsp-server 'rls))
 
 ;;; Java | C++ | C
+(use-package groovy-mode
+  :defer t)
 (use-package cc-mode
   :straight nil
-  :hook (java-mode . (lambda ()
-                       (setq c-basic-offset 4
-                             tab-width 4))))
+  :hook ((java-mode . java-ts-mode)
+         (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))))
 (use-package protobuf-mode
   :mode (("\\.proto\\'" . protobuf-mode)))
 ;; ----------------------------------------------------------------
