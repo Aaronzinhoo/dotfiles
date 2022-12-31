@@ -1770,8 +1770,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   )
 (use-package projectile
   :after major-mode-hydra
-  :bind
-  ("s-p" . hydra-projectile/body)
+  :demand t
+  :bind ("s-p" . hydra-projectile/body)
   :preface
   (pretty-hydra-define hydra-projectile
     (:hint nil :color teal :quit-key "SPC" :title (with-faicon "rocket" "Projectile" 1 -0.05))
@@ -1781,9 +1781,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("S" projectile-save-project-buffers "save all"))
      "Find"
      (("d" counsel-projectile-find-dir "directory")
-      ("D" projectile-dired "root")
+      ("D" projectile-dired "proj. root")
       ("f" counsel-projectile-find-file "file")
-      ("p" counsel-projectile-switch-project "project"))
+      ("p" counsel-projectile-switch-project "project")
+      ("F" projectile-find-file-in-known-projects "file (all proj.)"))
      "Other"
      (("N" projectile-cleanup-known-projects)
       ("i" projectile-invalidate-cache "reset cache")
@@ -1799,7 +1800,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("tf" projectile-find-test-file "find test file"))))
   :custom
   (projectile-find-dir-includes-top-level t)
-  (projectile-switch-project-action #'projectile-find-dir)
+  (projectile-switch-project-action #'projectile-find-file)
   ;; use .gitignore to exclude files from search
   (projectile-indexing-method 'alien)
   (projectile-enable-caching t)
