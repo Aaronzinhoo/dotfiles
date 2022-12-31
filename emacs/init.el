@@ -155,6 +155,7 @@
   :straight (:type git :host github :repo "rejeep/f.el" :branch "master"))
 (use-package pcre2el :straight t)
 (use-package compat :straight t)
+;; log event/command history of all buffers
 (use-package command-log-mode
   :commands (command-log-mode))
 (use-package bind-key :straight t)
@@ -321,7 +322,8 @@
      "Errors"
      (("p" flycheck-previous-error "previous" :color pink)
       ("n" flycheck-next-error "next" :color pink)
-      ("l" flycheck-list-errors "list errors"))
+      ("l" flycheck-projectile-list-errors "list errors (proj)")
+      ("L" flycheck-list-errors "list errors"))
      "Other"
      (("r" recenter-top-bottom "recenter" :color pink)
       ("M" flycheck-manual "manual")
@@ -450,7 +452,7 @@
 
 ;;; CONTROL VERSION UTILS
 (use-package git-gutter
-  :after (all-the-icons)
+  :after (all-the-icons hydra)
   :straight (:type git :host github :repo "emacsorphanage/git-gutter" :branch "master")
   :hook (prog-mode . git-gutter-mode)
   :bind ("s-g" . hydra-git-gutter/body)
@@ -790,8 +792,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
   (flycheck-add-mode 'css-stylelint 'css-mode)
   (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-mode)
-  (flycheck-add-mode 'sh-shellcheck 'sh-mode)
-  )
+  (flycheck-add-mode 'sh-shellcheck 'sh-mode))
+(use-package flycheck-projectile
+  :commands (flycheck-projectile-list-errors))
+(use-package dap-mode
+  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
+  :hook ((lsp-mode . dap-auto-configure-mode)
+         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
 (use-package aggressive-indent
   :straight t
   :diminish
@@ -953,15 +960,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   :config
   (require 'lsp-java-boot)
-  (let ((lombok-file (concat user-init-dir-fullpath "/deps/lombok-1.18.12.jar")))
+  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.12.jar")))
     (setq lsp-java-vmargs
           (list "-noverify"
                 "-Xmx4G"
                 "-XX:+UseG1GC"
                 "-XX:+UseStringDeduplication"
                 (concat "-javaagent:" lombok-file)))))
+(use-package dap-java
+  :after (lsp-java dap)
+  :straight (dap-java :type git :host github :repo "emacs-lsp/lsp-java" :branch "master"))
+
 (use-package lsp-pyright
-  :after (lsp)
+  :requires (lsp pyvenv)
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
   :if (executable-find "pyright")
   :custom
