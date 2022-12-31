@@ -62,6 +62,11 @@
 ;; built-in
 (use-package simple
   :straight nil
+  :preface
+  (defun aaronzinhoo-remove-empty-lines-buffer ()
+    (save-excursion
+      (beginning-of-buffer)
+      (flush-lines "^\\s-*$" nil nil t)))
   :config
   (column-number-mode t)
   (global-visual-line-mode t))
