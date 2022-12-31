@@ -722,7 +722,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-banner-logo-title "Welcome to your Emacs Dashboard")
   (dashboard-items '((recents  . 5)
                      (projects . 5)
-                     (bookmarks . 5)))
+                     (bookmarks . 5)
+                     (agenda . 5)))
   ;; Set the banner
   ;; Value can be
   ;; 'official which displays the official emacs logo
@@ -732,6 +733,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-startup-banner "~/.emacs.d/dashboard-images/rei_ayanami_render.png")
   ;; Content is not centered by default. To center, set
   (dashboard-center-content t)
+  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   :config
   (dashboard-setup-startup-hook))
 (use-package beacon
@@ -1365,7 +1367,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
     (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
   :custom
-  (org-directory (concat (getenv "HOME") "/org"))
+  (org-directory (concat (getenv "HOME") "/development/org"))
   (org-publish-project-alist
    `(("blog-pages"
       :base-directory ,(concat org-directory "/personal/blog/src")
@@ -1394,7 +1396,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; Allow refile to create parent tasks with confirmation
   (org-refile-allow-creating-parent-nodes 'confirm)
   (org-refile-targets
-   '(("~/org/notebook/programming/web-development.org" :maxlevel . 2)
+   '(("~/development/org/notebook/programming/web-development.org" :maxlevel . 2)
      (nil :maxlevel . 4)
      (org-agenda-files :maxlevel . 3)
      ))
@@ -1484,14 +1486,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                (set (make-local-variable 'company-backends)
                     '(company-capf company-org-block company-ispell org-keyword-backend company-dabbrev))))
   (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline "~/org/gtd.org" "Tasks")
+        '(("t" "Todo" entry (file+headline "~/development/org/gtd.org" "Tasks")
            "* TODO %?\n  %i\n  %a")
-          ("j" "Journal" entry (file+datetree "~/org/journal.org")
+          ("j" "Journal" entry (file+datetree "~/development/org/journal.org")
            "* %?\nEntered on %U\n  %i\n  %a")
           ("a"                          ; key
            "Article"                    ; name
            entry                        ; type
-           (file+headline "~/org/references/articles.org" "Article") ; target
+           (file+headline "~/development/org/references/articles.org" "Article") ; target
            "* %^{Title} %(org-set-tags)  :article: \n:PROPERTIES:\n:Created: %U\n:Linked: %a\n:END:\n%i\nBrief description:\n%?" ; template
            :prepend t                   ; properties
            :empty-lines 1               ; properties
@@ -1503,19 +1505,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after org)
 (use-package ivy-bibtex
   :custom
-  (ivy-bibtex-bibliography "~/org/references/articles.bib")
-  (ivy-bibtex-library-path "~/org/pdfs/")
-  (ivy-bibtex-notes-path "~/org/notebook/")
+  (ivy-bibtex-bibliography "~/development/org/references/articles.bib")
+  (ivy-bibtex-library-path "~/development/org/pdfs/")
+  (ivy-bibtex-notes-path "~/development/org/notebook/")
   (ivy-set-display-transformer
    'org-ref-ivy-insert-cite-link
    'ivy-bibtex-display-transformer))
 (use-package org-ref
   :after org
   :custom
-  (org-ref-notes-directory "~/org/notebook/")
-  (org-ref-default-bibliography '("~/org/references/articles.bib"))
-  (org-ref-pdf-directory "~/org/pdfs/")
-  (bibtex-completion-bibliography "~/org/references/articles.bib")
+  (org-ref-notes-directory "~/development/org/notebook/")
+  (org-ref-default-bibliography '("~/development/org/references/articles.bib"))
+  (org-ref-pdf-directory "~/development/org/pdfs/")
+  (bibtex-completion-bibliography "~/development/org/references/articles.bib")
   :init ;;https://github.com/jkitchin/org-ref/blob/35711c02992413e1df8aee54af290ac8650dbb82/org-ref.org#customizing-how-pdfs-are-opened
   (defun my/org-ref-open-pdf-at-point ()
     "Open the pdf for bibtex key under point if it exists."
@@ -1549,7 +1551,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; create doct group of category Browser link
   (let ((templates (doct '( :group "Browser link"
  			                       :type entry
- 			                       :file "~/org/references/articles.org"
+ 			                       :file "~/development/org/references/articles.org"
  			                       :fetch-bibtex (lambda () (org-capture-ref-process-capture)) ; this must run first
 			                       :bibtex (lambda () (org-capture-ref-get-bibtex-field :bibtex-string))
                                    :url (lambda () (org-capture-ref-get-bibtex-field :url))
@@ -1625,9 +1627,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (bibtex-completion-pdf-symbol "")
   (bibtex-completion-notes-symbol "")
-  (bibtex-completion-library-path "~/org/pdfs/")
-  (bibtex-completion-notes-path "~/org/notebook/")
-  (bibtex-completion-bibliography '("~/org/references/articles.bib"))
+  (bibtex-completion-library-path "~/development/org/pdfs/")
+  (bibtex-completion-notes-path "~/development/org/notebook/")
+  (bibtex-completion-bibliography '("~/development/org/references/articles.bib"))
   (bibtex-completion-display-formats '((t . "${=has-pdf=:1}${=has-note=:1} ${author:20} ${year:4} ${title:*} ${=type=:3}")))
   :config
   (setq bibtex-completion-format-citation-functions
@@ -1641,10 +1643,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight nil
   ;; :config
   ;; (add-to-list 'org-capture-templates
-  ;;              '("p" "Protocol" entry (file "~/org/references/articles.org")
+  ;;              '("p" "Protocol" entry (file "~/development/org/references/articles.org")
   ;;                "* %?[[%:link][%:description]] %U\n%i\n" :prepend t))
   ;; (add-to-list 'org-capture-templates
-  ;;              '("L" "Protocol Link" entry (file+headline "~/org/references/articles.org" "Links:")
+  ;;              '("L" "Protocol Link" entry (file+headline "~/development/org/references/articles.org" "Links:")
   ;;                "* %?[[%:link][%:description]] %U\n" :prepend t))
   )
 (use-package org-sidebar
@@ -1658,7 +1660,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package org-noter
   :custom
   (org-noter-default-notes-file-names '("machine_learning.org" "cognitive_science.org" "programming_languages.org" "finance.org"))
-  (org-noter-notes-search-path '("~/org/notebook")))
+  (org-noter-notes-search-path '("~/development/org/notebook")))
 ;; use eldoc in org-mode
 (use-package org-eldoc
   :straight nil
