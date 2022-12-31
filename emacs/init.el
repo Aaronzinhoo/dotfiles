@@ -1060,11 +1060,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after (company)
   :init
   (require 'company-web-html))
-(use-package company-jedi
-  :commands (jedi:goto-definition jedi-mode company-jedi)
-  :bind (:map jedi-mode-map
-              ("M-d" . jedi:goto-definition)
-              ("M-b" . jedi:goto-definition-pop-marker)))
 (use-package company-org-block
   :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
 (use-package imenu-list
@@ -1804,14 +1799,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Indent Guides
 (use-package highlight-indent-guides)
 
-;; Debugging
-(use-package dap-mode
-  :after (lsp-mode)
-  :config
-  (add-hook 'dap-stopped-hook
-            (lambda (arg) (call-interactively #'dap-hydra)))
-  (dap-auto-configure-mode))
-
 ;; Code Coverage
 (use-package cov
   :defer t)
@@ -1899,8 +1886,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands unibeautify)
 
 ;; using verb instead because it is better
-(use-package restclient
-  :mode ("\\.http\\'" . restclient-mode))
 (use-package simple-httpd
   :defer t)
 (use-package skewer-mode
