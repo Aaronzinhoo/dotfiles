@@ -592,10 +592,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight t
   :config
   (global-hungry-delete-mode))
-(use-package powerline
-  :straight t
-  :init
-  (powerline-vc 'center))
 (use-package dired
   :straight nil
   :hook ((dired-mode . dired-collapse-mode)
@@ -2232,13 +2228,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; ----------------------------------------------------------------
 
 ;;; Theme
+(use-package powerline
+  :demand t
+  :init
+  (powerline-vc 'center))
 (use-package moe-theme
   :demand t
   :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
+  :custom
+  (moe-theme-highlight-buffer-id t))
+(use-package moe-theme-switcher
+  :after (moe-theme)
+  :demand t
+  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :config
-  (require 'moe-theme-switcher)
-  (setq moe-theme-highlight-buffer-id t)
-  (powerline-moe-theme))
-
+  (moe-theme-powerline))
 (message "Done loading packages")
 ;;; init.el ends here
