@@ -920,27 +920,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-ts-mode . lsp-deferred)
          (java-ts-mode . lsp-java-boot-lens-mode))
-  :bind (:map java-ts-mode-map
-              ("C-c h" . hydra-lsp-java-mode/body))
-  :preface
-  (pretty-hydra-define hydra-lsp-java-mode
-    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java LSP Mode" 1 -0.05))
-    ("Class"
-     (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
-      ("co" lsp-java-generate-overrides "Generate Overides")
-      ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
-      ("ct" lsp-java-add-throws "Add Throws"))
-     "Import"
-     (("a" lsp-java-add-import "Add")
-      ("o" lsp-java-organize-imports "Organize"))
-     "Notifications"
-     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
-     "Project Management"
-     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
-      ("pd" lsp-dependency-list "List Dependencies"))
-     "Test"
-     (("tb" lsp-jt-browser "Test Browser" :color blue)
-      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
   :config
   (require 'lsp-java-boot)
   (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.12.jar")))
@@ -2192,7 +2171,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; lsp-mode + ccls for debugging
 ;; configuration: use set(CMAKE_EXPORT_COMPILE_COMMANDS ON) in cmake file
 ;; cmake-mode + cmake-font-lock for editing cmake files
-(use-package cmake-font-lock)
 (use-package ccls
   :custom
   (ccls-args nil)
@@ -2214,6 +2192,33 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Java | C++ | C
 (use-package groovy-mode
   :defer t)
+(use-package java-ts-mode
+  :demand t
+  :straight nil
+  :hook ((java-mode . java-ts-mode)
+         (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
+  ;; define the hydra with the mode since the mode-map may not be defined yet
+  :bind (:map java-ts-mode-map
+              ("C-c h" . hydra-lsp-java-mode/body))
+  :preface
+  (pretty-hydra-define hydra-lsp-java-mode
+    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java LSP Mode" 1 -0.05))
+    ("Class"
+     (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
+      ("co" lsp-java-generate-overrides "Generate Overides")
+      ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
+      ("ct" lsp-java-add-throws "Add Throws"))
+     "Import"
+     (("a" lsp-java-add-import "Add")
+      ("o" lsp-java-organize-imports "Organize"))
+     "Notifications"
+     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
+     "Project Management"
+     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
+      ("pd" lsp-dependency-list "List Dependencies"))
+     "Test"
+     (("tb" lsp-jt-browser "Test Browser" :color blue)
+      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
 (use-package cc-mode
   :straight nil
   :hook ((c++-mode . c++-ts-mode)
