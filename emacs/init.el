@@ -1003,7 +1003,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '(company-capf company-keywords company-files company-ispell company-dabbrev))
+  (setq company-backends '(company-capf company-keywords company-files company-dabbrev))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
@@ -1772,39 +1772,36 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
 (use-package yaml-pro
-  :after (yaml-mode)
+  :demand t
+  :requires (tree-sitter)
+  :commands (yaml-pro-mode yaml-pro-ts-mode)
   :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")
-  :requires (yaml-mode tree-sitter)
-  :mode (("\\.ya?ml$" . yaml-pro-ts-mode)
-         ("\\.tpl$" . yaml-pro-ts-mode))
-  :commands (yaml-pro-ts-mode))
+  :bind (:map yaml-ts-mode-map
+              ("<tab>" . yaml-indent-line)))
 (use-package yaml-mode
   :mode (("\\.ya?ml$" . yaml-mode)
          ("\\.tpl$" . yaml-mode))
-  :hook ((yaml-mode . aaronzinhoo-yaml-mode-hook)
-         (yaml-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (yaml-ruby)))))))))
+  :hook ((yaml-mode . yaml-ts-mode)
+         (yaml-ts-mode . yaml-pro-mode)
+         (yaml-pro-mode . yaml-pro-ts-mode)
+         (yaml-ts-mode . aaronzinhoo-yaml-mode-hook)
+         (yaml-ts-mode . flycheck-mode)
+         (yaml-ts-mode . hungry-delete-mode)
+         (yaml-ts-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (lsp)))))))))
   :preface
   (defun aaronzinhoo-company-yaml-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files))))
+    (set (make-local-variable 'company-backends) '((company-capf :with company-dabbrev-code company-ispell) company-capf)))
   (defun aaronzinhoo-yaml-mode-hook ()
-    (flycheck-mode)
     (setq-local lsp-java-boot-enabled nil)
-    (lsp)
-    (setq-local flycheck-disabled-checkers
-                (append flycheck-disabled-checkers
-                        '(lsp)))
-    (hungry-delete-mode)
-    (aaronzinhoo-company-yaml-mode-hook)))
-;; use json-mode from https://github.com/joshwnj/json-mode for json instead of js-mode or js2-mode
-(use-package jsonian
-  :straight (:type git :host github :repo "iwahbe/jsonian" :branch "main")
-  :hook (jsonian-mode . prettier-mode)
-  :after (so-long flycheck)
+    (aaronzinhoo-company-yaml-mode-hook)
+    (yaml-pro-mode nil)))
+(use-package json-ts-mode
+  :straight nil
+  :mode (("\\.json$" . json-ts-mode))
+  :hook (json-ts-mode . prettier-mode)
+  :after (flycheck)
   :config
-  (jsonian-no-so-long-mode)
-  (jsonian-enable-flycheck)
   (setq-local js-indent-level 2))
-
 (use-package dotenv-mode
   :mode ("\\.env\\'" . dotenv-mode))
 (use-package jenkinsfile-mode
