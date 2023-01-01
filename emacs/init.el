@@ -557,7 +557,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-i" . magit-section-backward)
          ("M-k" . magit-section-forward)
          ("M-t" . magit-todos-mode))
-  :hook (magit-mode . magit-auto-revert-mode)
+  :hook ((magit-mode . magit-auto-revert-mode)
+         ((git-commit-setup . aaronzinhoo--git-commit-setup)))
+  :preface
+  (defun aaronzinhoo--git-commit-setup ()
+    (setq-local fill-column 72)
+    (setq-local company-dabbrev-code-modes '(text-mode magit-diff-mode))
+    (set (make-local-variable 'company-backends) '((company-dabbrev-code company-files company-ispell))))
   :custom
   (magit-completing-read-function 'ivy-completing-read)
   :config
@@ -957,6 +963,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (company-tooltip-idle-delay 0.1)
   (company-tooltip-minimum-width 40)
   (company-tooltip-maximum-width 80)
+  (company-dabbrev-code-time-limit 0.1)
+  (company-dabbrev-code-other-buffers 'code)
+  (company-dabbrev-minimum-length 3)
+  (company-dabbrev-code-modes '(prog-mode batch-file-mode csharp-mode css-mode erlang-mode haskell-mode jde-mode lua-mode python-mode yaml-ts-mode))
   :preface
   (defun company-yasnippet/disable-after-slash (fun command &optional arg &rest _ignore)
     (if (eq command 'prefix)
@@ -1003,7 +1013,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '(company-capf company-keywords company-files company-dabbrev))
+  (setq company-backends '((company-capf :with company-dabbrev-code company-files company-ispell) company-capf))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
