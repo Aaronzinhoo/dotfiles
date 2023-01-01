@@ -117,7 +117,7 @@
   :hook ((git-commit-mode . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
          (markdown-mode . markdown-add-electric-pairs)
-         (yaml-mode . yaml-add-electric-pairs))
+         (yaml-ts-mode . yaml-add-electric-pairs))
   :preface
   (defun git-commit-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
@@ -749,14 +749,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (append flycheck-disabled-checkers
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
-  (flycheck-add-mode 'json-jsonlint 'jsonian-mode)
+  (flycheck-add-mode 'json-jsonlint 'json-ts-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   ;; eslint requires you to be careful with the configuration
   ;; ensure to use .json files and setup accordingly
   ;; test with shell command
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
-  (flycheck-add-mode 'css-stylelint 'css-mode)
-  (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-mode)
+  (flycheck-add-mode 'css-stylelint 'css-ts-mode)
+  (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-ts-mode)
   (flycheck-add-mode 'sh-shellcheck 'sh-mode))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
@@ -830,8 +830,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (html-mode . lsp-deferred)
          (typescript-ts-mode . lsp-deferred)
          (rustic-mode . lsp-deferred)
-         (dockerfile-mode . lsp-deferred)
+         (dockerfile-ts-mode . lsp-deferred)
          (sh-mode . lsp-deferred)
+         (yaml-ts-mode . lsp-deferred)
          (python-ts-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
@@ -887,7 +888,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
-  (push '(yaml-mode . "yaml") lsp-language-id-configuration)
+  (push '(yaml-ts-mode . "yaml") lsp-language-id-configuration)
+  (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
@@ -1849,10 +1851,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :preface
   (defun aaronzinhoo-docker-compose-mode-setup ()
     (hungry-delete-mode)
-    (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-dabbrev-code))))
+    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev-code company-ispell)))))
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode)
-  :bind (:map dockerfile-mode-map
+  :hook (dockerfile-mode . dockerfile-ts-mode)
+  :bind (:map dockerfile-ts-mode-map
               ("C-c h" . hydra-dockerfile-mode/body))
   :preface
   (pretty-hydra-define hydra-dockerfile-mode
@@ -1918,11 +1921,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (web-mode . html-check-frag-mode))
 (use-package css-mode
   :straight nil
-  :hook ((css-mode . aaronzinhoo-company-css-mode-hook)
+  :hook ((css-mode . css-ts-mode)
+         (css-ts-mode . aaronzinhoo-company-css-mode-hook)
          (scss-mode . aaronzinhoo-company-css-mode-hook))
   :preface
   (defun aaronzinhoo-company-css-mode-hook ()
-    (set (make-local-variable 'company-backends) '(company-capf company-keywords company-files company-ispell company-dabbrev))))
+    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev company-ispell)))))
 (use-package web-mode
   :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo-company-web-mode-hook)
@@ -2051,7 +2055,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (json-mode . prettier-mode)
          (css-mode . prettier-mode)
          (rjsx-mode . prettier-mode)
-         (typescript-mode . prettier-mode)))
+         (typescript-ts-mode . prettier-mode)))
 (use-package js-comint
   :defer t
   :init
@@ -2070,7 +2074,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;angular setup
 (use-package typescript-mode
   :delight " Ts"
-  :hook (typescript-mode . typescript-company-mode-setup)
+  :hook ((typescript-mode . typescript-ts-mode)
+         (typescript-ts-mode . typescript-company-mode-setup))
   :preface
   (defun typescript-company-mode-setup ()
     (set (make-local-variable 'company-backends) '((company-capf :with company-yasnippet company-files company-keywords) company-capf))))
@@ -2174,7 +2179,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (set (make-local-variable 'compile-command)
              "go build -v -o ./main")))
   (setq compilation-read-command nil)
-  :bind (:map go-mode-map
+  :bind (:map go-ts-mode-map
               ("M-," . compile)
               ("M-." . godef-jump)
               ("M-*" . pop-tag-mark))
@@ -2196,7 +2201,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (lambda () (require 'ccls) (lsp))))
 (use-package cmake-mode
   :mode (("CMakeLists\\.txt\\'" . cmake-mode)
-         ("\\.cmake\\'" . cmake-mode)))
+         ("\\.cmake\\'" . cmake-mode))
+  :hook (cmake-mode . cmake-ts-mode))
 
 ;;; Rust
 (use-package toml-mode
@@ -2211,9 +2217,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package cc-mode
   :straight nil
   :hook ((c++-mode . c++-ts-mode)
-         (c-mode . c-ts-mode)
-         (java-mode . java-ts-mode)
-         (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))))
+         (c-mode . c-ts-mode)))
 (use-package protobuf-mode
   :mode (("\\.proto\\'" . protobuf-mode)))
 
