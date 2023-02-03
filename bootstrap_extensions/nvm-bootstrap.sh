@@ -25,6 +25,7 @@ npm install -g @typescript-eslint/parser
 npm install -g trepan-ni
 npm install -g @angular/language-service@next
 npm install -g @angular/language-server
+npm install -g @asyncapi/cli
 
 # yaml
 npm install -g yaml-language-server
