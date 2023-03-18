@@ -21,7 +21,7 @@ brew update
 # necessary packages
 #--------------------
 echo_with_prompt "installing necessary packages\n";
-brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep pandoc
+brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep pandoc git-lfs
 #--------------------
 
 #--------------------

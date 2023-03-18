@@ -228,8 +228,6 @@ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 
 ## Java
 echo_with_prompt "installing Java dependencies";
-apt install openjdk-11-jdk-headless
-curl -s "https://get.sdkman.io" | bash
 
 # ------------------
 ## Dockerfile
