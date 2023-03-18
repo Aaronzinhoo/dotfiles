@@ -31,8 +31,6 @@
  '(dired-subtree-depth-2-face ((t unspecified)))
  '(dired-subtree-depth-3-face ((t unspecified)))
  '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
- '(markdown-code-face ((t (:inherit fixed-pitch :background "SteelBlue4"))))
- '(markdown-table-face ((t (:inherit markdown-code-face :foreground "white smoke"))))
  '(swiper-background-match-face-2 ((t (:background "steel blue" :foreground "gainsboro"))))
  '(swiper-match-face-1 ((t (:background "light cyan" :foreground "dim gray" :weight bold))))
  '(swiper-match-face-2 ((t (:background "light coral" :foreground "white smoke" :weight bold)))))
