@@ -236,6 +236,10 @@
   :config
   (dolist (mode '(x509-mode-hook))
     (add-hook mode (lambda () (emojify-mode 0)))))
+;; edit in sudo mode, good when using tramp
+(use-package sudo-edit
+  :straight (:type git :host github :repo "nflath/sudo-edit")
+  :commands (sudo-edit))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package xclip
   :straight t
@@ -786,7 +790,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ([remap kill-ring-save] . easy-kill)))
 (use-package expand-region
   :bind (("M-2" . er/expand-region)
-         ("C-(" . er/mark-outside-pairs))
+         ("M-3" . er/mark-outside-pairs))
   :preface
   (defun aaronzinhoo-mark-line ()
     "Mark the current line."
@@ -808,9 +812,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 er/mark-inner-tag
                                 er/mark-outer-tag))))
   :config
+  (eval-after-load 'yaml-ts-mode '(require 'yaml-mode-expansions))
+  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-yaml-mode-expansions)
   (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
-  (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions))
+  (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
+  (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions))
 (use-package all-the-icons
   :straight t)
 (use-package emojify
@@ -927,14 +934,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((java-ts-mode . lsp-deferred)
          (java-ts-mode . lsp-java-boot-lens-mode))
   :config
-  (require 'lsp-java-boot)
-  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.12.jar")))
-    (setq lsp-java-vmargs
-          (list "-noverify"
-                "-Xmx4G"
-                "-XX:+UseG1GC"
-                "-XX:+UseStringDeduplication"
-                (concat "-javaagent:" lombok-file)))))
+  (let ((lombok-file (concat user-init-dir-fullpath "./deps/lombok-1.18.26.jar")))
+    ;; current VSCode defaults
+    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
+  (require 'lsp-java-boot))
 (use-package dap-java
   :after (lsp-java dap)
   :straight (dap-java :type git :host github :repo "emacs-lsp/lsp-java" :branch "master"))
@@ -966,7 +969,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (company-dabbrev-code-time-limit 0.1)
   (company-dabbrev-code-other-buffers 'code)
   (company-dabbrev-minimum-length 3)
-  (company-dabbrev-code-modes '(prog-mode batch-file-mode csharp-mode css-mode erlang-mode haskell-mode jde-mode lua-mode python-mode yaml-ts-mode))
+  (company-dabbrev-code-modes '(prog-mode batch-file-mode csharp-mode css-mode erlang-mode haskell-mode jde-mode lua-mode python-mode yaml-ts-mode emacs-elisp-mode))
   :preface
   (defun company-yasnippet/disable-after-slash (fun command &optional arg &rest _ignore)
     (if (eq command 'prefix)
@@ -1013,7 +1016,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '((company-capf :with company-dabbrev-code company-files company-ispell) company-capf))
+  (setq company-backends '(company-files (company-capf :separate company-dabbrev-code) company-dabbrev))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
@@ -1266,7 +1269,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("C-M-<return>" . org-insert-subheading)
         ("C-c h". hydra-org-nav/body)
         ("s-/" . undo-and-activate-hydra-undo)
-        ("s-v" . hydra-verb-request/body))
+        ("s-v" . hydra-verb-mode/body))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -1782,28 +1785,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
 (use-package yaml-pro
-  :demand t
   :requires (tree-sitter)
   :commands (yaml-pro-mode yaml-pro-ts-mode)
   :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")
-  :bind (:map yaml-ts-mode-map
-              ("<tab>" . yaml-indent-line)))
+  )
 (use-package yaml-mode
-  :mode (("\\.ya?ml$" . yaml-mode)
-         ("\\.tpl$" . yaml-mode))
-  :hook ((yaml-mode . yaml-ts-mode)
-         (yaml-ts-mode . yaml-pro-mode)
+  :demand t)
+(use-package yaml-ts-mode
+  :straight nil
+  :mode (("\\.ya?ml$" . yaml-ts-mode)
+         ("\\.tpl$" . yaml-ts-mode))
+  :hook ((yaml-ts-mode . yaml-pro-mode)
+         (docker-compose-mode . yaml-ts-mode)
          (yaml-pro-mode . yaml-pro-ts-mode)
          (yaml-ts-mode . aaronzinhoo-yaml-mode-hook)
          (yaml-ts-mode . flycheck-mode)
          (yaml-ts-mode . hungry-delete-mode)
+         (yaml-ts-mode . (lambda () (setq-local tab-width 2)))
          (yaml-ts-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (lsp)))))))))
+  :bind (:map yaml-ts-mode-map ("<backtab>" . yaml-indent-line))
   :preface
-  (defun aaronzinhoo-company-yaml-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf :with company-dabbrev-code company-ispell) company-capf)))
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
-    (aaronzinhoo-company-yaml-mode-hook)
+    (set (make-local-variable 'company-backends) '((company-capf company-files :separate company-dabbrev-code) company-capf))
     (yaml-pro-mode nil)))
 (use-package json-ts-mode
   :straight nil
@@ -1828,19 +1832,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight t
   :commands (docker)
   :bind ("s-d" . docker))
-(use-package docker-compose-mode
-  :straight (:type git :host github :repo "aaronzinhoo/docker-compose-mode" :branch "master")
-  :mode ("docker-compose\\'" . docker-compose-mode)
-  :hook ((docker-compose-mode . aaronzinhoo-docker-compose-mode-setup)
-         (docker-compose-mode . lsp)
-         (docker-compose-mode . flycheck-mode))
-  :preface
-  (defun aaronzinhoo-docker-compose-mode-setup ()
-    (hungry-delete-mode)
-    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev-code company-ispell)))))
-(use-package dockerfile-mode
-  :mode ("Dockerfile\\'" . dockerfile-mode)
-  :hook (dockerfile-mode . dockerfile-ts-mode)
+(use-package dockerfile-ts-mode
+  :straight nil
+  :mode ("Dockerfile\\'" . dockerfile-ts-mode)
   :bind (:map dockerfile-ts-mode-map
               ("C-c h" . hydra-dockerfile-mode/body))
   :preface
@@ -1885,10 +1879,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (json-mode . add-node-modules-path)
          ;; add completion for css class names in html files
          (css-mode . add-node-modules-path)))
-(use-package ac-html-csswatcher
-  :hook (web-mode . company-web-csswatcher-setup)
-  :config
-  (ac-html-csswatcher-setup-html-stuff-async))
 ;; TODO add electric pair for < or add snippet
 (use-package nxml-mode
   :straight nil
@@ -2001,7 +1991,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (("o" markdown-open "Open" :color blue))
      ))
   :init (setq markdown-command "pandoc"))
-;; prview for markdown profiles
+;; org github-esque markdown export
 (use-package ox-gfm
   :after org)
 ;; markdown visualization
@@ -2094,12 +2084,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
     ("Run"
      (("r" run-python "Python Shell")
-      ("d" pdb "PDB" :color blue))
+      ("d" pdb "PDB" :color blue)
+      ("s" python-shell-switch-to-shell "Switch to sh" :color blue))
      "Eval"
      (("eb" python-shell-send-buffer "Run Buffer in Shell")
       ("er" python-shell-send-region "Run Region in Shell"))
      "Formatting"
-     (("f" py-autopep8-mode "Autopep8 Mode" :toggle t))))
+     (("i" python-fix-imports "Fix Imports")
+      ("a" python-add-import "Add Import")
+      ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))))
   (defun aaronzinhoo--python-buffer-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
@@ -2144,9 +2137,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
 ;; need a package if not in GOPATH!
-(use-package go-mode
-  :mode ("\\.go\\'" . go-mode)
-  :hook (go-mode . go-ts-mode)
+(use-package go-ts-mode
+  :straight nil
+  :mode ("\\.go\\'" . go-ts-mode)
+  :hook ((go-ts-mode . yas-minor-mode)
+         (go-ts-mode . my-go-mode-hook)
+         (go-mode . go-ts-mode))
   :init
   ;;Smaller compilation buffer
   (setq compilation-window-height 14)
@@ -2170,10 +2166,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("M-." . godef-jump)
               ("M-*" . pop-tag-mark))
   :config
-  (setq compilation-scroll-output t)
-  ;; (add-hook 'compilation-mode-hook 'my-compilation-hook)
-  (add-hook 'go-mode-hook 'yas-minor-mode)
-  (add-hook 'go-mode-hook 'my-go-mode-hook))
+  (setq compilation-scroll-output t))
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
 ;; configuration: use set(CMAKE_EXPORT_COMPILE_COMMANDS ON) in cmake file
@@ -2242,12 +2235,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :demand t
   :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :custom
-  (moe-theme-highlight-buffer-id t))
+  (moe-theme-highlight-buffer-id t)
+  :config
+  (moe-theme-powerline))
 (use-package moe-theme-switcher
   :after (moe-theme)
   :demand t
-  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
-  :config
-  (moe-theme-powerline))
+  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev"))
 (message "Done loading packages")
 ;;; init.el ends here
