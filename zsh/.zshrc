@@ -77,14 +77,14 @@ fi
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 ZSH_CUSTOM_AUTOUPDATE_QUIET=true
-
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions zsh-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl kubetail rust spring gradle-completion zsh-sdkman )
+plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions zsh-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl kubetail rust spring gradle-completion zsh-sdkman )
 
+zstyle ':omz:plugins:nvm' lazy yes
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -134,3 +134,4 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
+export PATH="$PATH:/opt/homebrew/opt/node@16/bin"

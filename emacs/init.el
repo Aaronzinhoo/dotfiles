@@ -840,17 +840,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (c++-ts-mode . lsp-deferred)
          (go-ts-mode . lsp-deferred)
          (sql-mode . lsp-deferred)
-         (html-mode . lsp-deferred)
+         (web-mode . lsp-deferred)
          (typescript-ts-mode . lsp-deferred)
          (rustic-mode . lsp-deferred)
          (dockerfile-ts-mode . lsp-deferred)
          (sh-mode . lsp-deferred)
          (yaml-ts-mode . lsp-deferred)
          (python-ts-mode . lsp-deferred)
+         (conf-javaprop-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
   :bind (:map lsp-mode-map
-               ("s-l" . hydra-lsp/body))
+              ("s-l" . hydra-lsp/body))
   :preface
   (defun lsp-go-install-save-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer)
@@ -890,11 +891,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
      (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
-   `("node"     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules/@angular/language-server")
+   `("node"     ,(concat nvm-home-folder "lib/node_modules/@angular/language-server")
      "--ngProbeLocations"
-     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules")
+     ,(concat nvm-home-folder "lib/node_modules")
      "--tsProbeLocations"
-     ,(concat user-home-directory "/.nvm/versions/node/v14.19.0/lib/node_modules")
+     ,(concat nvm-home-folder "lib/node_modules")
      "--stdio"))
   :init
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
@@ -905,7 +906,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
-  (add-hook 'go-mode-hook 'lsp-go-install-save-hooks))
+  (add-hook 'go-ts-mode-hook 'lsp-go-install-save-hooks))
 (use-package lsp-docker
   :requires (lsp-mode)
   :after (lsp-mode)
@@ -1213,7 +1214,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      "Misc."
      (("2" er/expand-region "Expand Region")
       ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
-      ("RET" nil "Quit"))))
+      ("RET" newline-and-indent "New Line"))))
   :custom
   (mc/cmds-to-run-for-all
    '(abbrev-prefix-mark
@@ -1862,11 +1863,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends)
          '((company-capf company-dabbrev company-files company-keywords)))))
 
-;; formatting
-(use-package unibeautify
-  :straight (:type git :host github :repo "Aaronzinhoo/unibeautify" :branch "master")
-  :commands unibeautify)
-
 ;; using verb instead because it is better
 (use-package simple-httpd
   :defer t)
@@ -1904,9 +1900,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (defun aaronzinhoo-company-css-mode-hook ()
     (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev company-ispell)))))
 (use-package web-mode
-  :straight (:type git :host github :repo "Aaronzinhoo/web-mode" :branch "master")
+  :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo-company-web-mode-hook)
-  :mode (("\\.html\\$" . web-mode)
+  :mode (("\\.html\\'" . web-mode)
          ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
                ("C-c h" . hydra-web/body)))
@@ -1932,7 +1928,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (hungry-delete-backward 1))
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo-company-web-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-web-html company-bootstrap company-css company-files) company-capf)))
+    (set (make-local-variable 'company-backends) '(company-files (company-capf company-web-html company-bootstrap company-css :separate company-dabbrev-code) company-dabbrev)))
   (pretty-hydra-define hydra-web
     (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
     ("Navigation"
@@ -2086,9 +2082,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (("r" run-python "Python Shell")
       ("d" pdb "PDB" :color blue)
       ("s" python-shell-switch-to-shell "Switch to sh" :color blue))
-     "Eval"
-     (("eb" python-shell-send-buffer "Run Buffer in Shell")
-      ("er" python-shell-send-region "Run Region in Shell"))
+     "Run in Python Shell"
+     (("eb" python-shell-send-buffer "Run Buffer")
+      ("ef" python-shell-send-file "Run File")
+      ("er" python-shell-send-region "Run Region"))
      "Formatting"
      (("i" python-fix-imports "Fix Imports")
       ("a" python-add-import "Add Import")
@@ -2192,11 +2189,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; Java | C++ | C
 (use-package groovy-mode
   :defer t)
+(use-package conf-javaprop-mode
+  :straight nil
+  :mode ("\\.properties'" . conf-javaprop-mode))
 (use-package java-ts-mode
   :demand t
   :straight nil
-  :hook ((java-mode . java-ts-mode)
-         (java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
+  :mode (("\\.java\\'" . java-ts-mode))
+  :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
   ;; define the hydra with the mode since the mode-map may not be defined yet
   :bind (:map java-ts-mode-map
               ("C-c h" . hydra-lsp-java-mode/body))
