@@ -10,27 +10,30 @@ echo_with_prompt "NVM home dir: $NVM_DIR"
 nvm install 'lts/*' --reinstall-packages-from=current
 nvm alias default lts
 
-npm install -g typescript
-npm install -g jsonlint
-npm install -g @angular/cli
-npm install -g prettier
-npm install -g import-js
-npm install -g eslint
-npm install -g stylelint stylelint-config-standard stylelint-scss
-npm install -g @typescript-eslint/eslint-plugin
-npm install -g @typescript-eslint/parser
-npm install -g @angular/language-service@next
-npm install -g @angular/language-server
-npm install -g @asyncapi/cli
+touch "$NVM_DIR/default-packages"
+echo "typescript -g" >> "$NVM_DIR/default-packages"
+echo "jsonlint -g" >> "$NVM_DIR/default-packages"
+echo "@angular/cli -g" >> "$NVM_DIR/default-packages"
+echo "prettier -g" >> "$NVM_DIR/default-packages"
+echo "import-js -g" >> "$NVM_DIR/default-packages"
+echo "eslint -g" >> "$NVM_DIR/default-packages"
+echo "stylelint -g" >> "$NVM_DIR/default-packages"
+echo "stylelint-config-standard -g" >> "$NVM_DIR/default-packages"
+echo "stylelint-scss -g" >> "$NVM_DIR/default-packages"
+echo "@typescript-eslint/eslint-plugin -g" >> "$NVM_DIR/default-packages"
+echo "@typescript-eslint/parser -g" >> "$NVM_DIR/default-packages"
+echo "@angular/language-service@next -g" >> "$NVM_DIR/default-packages"
+echo "@angular/language-server -g" >> "$NVM_DIR/default-packages"
+echo "@asyncapi/cli -g" >> "$NVM_DIR/default-packages"
 
 # bash
-npm install -g bash-language-server
+echo "bash-language-server -g" >> "$NVM_DIR/default-packages"
 
 # yaml
-npm install -g yaml-language-server
+echo "yaml-language-server -g" >> "$NVM_DIR/default-packages"
 
 # ts-compint/REPL
-npm install -g tsun
+echo "tsun -g" >> "$NVM_DIR/default-packages"
 
 # docker language server & syntax checker
-npm i -g dockerfile-language-server-nodejs
+echo "dockerfile-language-server-nodejs -g" >> "$NVM_DIR/default-packages"
