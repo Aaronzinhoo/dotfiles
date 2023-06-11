@@ -768,6 +768,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'css-stylelint 'css-ts-mode)
   (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-ts-mode)
   (flycheck-add-mode 'sh-shellcheck 'sh-mode))
+(use-package flycheck-swagger-cli
+  :after (flycheck)
+  :straight (:type git :host github :repo "vercapi/flycheck-swagger-cli" :branch "master")
+  :custom
+  (flycheck-swagger-cli-executable "swagger-cli")
+  :init
+  (flycheck-add-mode 'swagger-cli 'yaml-ts-mode)
+  (require 'flycheck-swagger-cli))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
 (use-package aggressive-indent
@@ -854,8 +862,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("s-l" . hydra-lsp/body))
   :preface
   (defun lsp-go-install-save-hooks ()
-    (add-hook 'before-save-hook 'lsp-format-buffer)
-    (add-hook 'before-save-hook 'lsp-organize-imports)
+    (add-hook 'before-save-hook 'lsp-format-buffer nil t)
+    (add-hook 'before-save-hook 'lsp-organize-imports nil t)
     (setq lsp-gopls-staticcheck t)
     (setq lsp-eldoc-render-all t)
     (setq lsp-gopls-complete-unimported t))
@@ -953,6 +961,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright))))
+
+;;; Completetion outside of minibuffer
 (use-package company
   :straight (company :files (:defaults "icons"))
   :diminish company-mode
@@ -1042,7 +1052,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (imenu-list-focus-after-activation t)
   (imenu-list-auto-resize t))
-(use-package smex
+
+;;; Minibuffer Completion
+(use-package amx
   :straight t)
 ;; IF NEW MACHINE USE M-x all-the-icons-install-fonts
 ;; should load ivy and swiper automatically
@@ -1701,7 +1713,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (when (derived-mode-p 'compilation-mode)
       (ansi-color-process-output nil)
       (setq-local comint-last-output-start (point-marker)))))
-
 ;; Programming/Project Management
 ;; commenting
 (use-package turbo-log
@@ -1775,6 +1786,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 ;; Indent Guides
 (use-package highlight-indent-guides)
+(use-package combobulate
+  :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
+  :commands (combobulate-mode))
 
 ;; Code Coverage
 (use-package cov
@@ -1785,6 +1799,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
+(use-package openapi-yaml-mode
+  :straight (:type git :host github :repo "magoyette/openapi-yaml-mode" :branch "master")
+  :ensure t
+  :hook ((openapi-yaml-mode . yas-minor-mode)))
+(use-package openapi-preview
+  :commands (openapi-preview)
+  :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main"))
 (use-package yaml-pro
   :requires (tree-sitter)
   :commands (yaml-pro-mode yaml-pro-ts-mode)
@@ -1803,7 +1824,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (yaml-ts-mode . flycheck-mode)
          (yaml-ts-mode . hungry-delete-mode)
          (yaml-ts-mode . (lambda () (setq-local tab-width 2)))
-         (yaml-ts-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (lsp)))))))))
+         (yaml-ts-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (swagger-cli lsp)))))))))
   :bind (:map yaml-ts-mode-map ("<backtab>" . yaml-indent-line))
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
@@ -1846,9 +1867,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 ;; kubernetes settings overview
 (use-package kubernetes
+  :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
   :defer t
-  :commands (kubernetes-overview))
-
+  :commands (kubernetes-overview)
+  :config
+  (setq kubernetes-poll-frequency 5
+        kubernetes-redraw-frequency 5))
+(use-package kele
+  :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
+  :config
+  (kele-mode 1)
+  (bind-key (kbd "C-c k") kele-command-map kele-mode-map))
 ;;; WEB-DEV CONFIG
 
 ;; apache
@@ -1992,7 +2021,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after org)
 ;; markdown visualization
 (use-package vmd-mode
-  :commands (vmd-mode))
+  :commands (vmd-mode)
+  :custom
+  (vmd-binary-path "/Users/aaron.gonzales/.nvm/versions/node/v14.19.0/bin/vmd"))
 
 ;; JS/react/angular config
 ;; completetion: lsp+company
@@ -2074,23 +2105,33 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (:map python-ts-mode-map
               ("C-c h" . hydra-python-mode/body))
   :hook ((python-ts-mode . pyvenv-mode)
+         (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
+  (defun aaronzinhoo--python-shell-send-current-file ()
+    (interactive)
+    (python-shell-send-file (buffer-file-name)))
   (pretty-hydra-define hydra-python-mode
     (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
     ("Run"
-     (("r" run-python "Python Shell")
+     (("sh" run-python "Python Shell")
       ("d" pdb "PDB" :color blue)
-      ("s" python-shell-switch-to-shell "Switch to sh" :color blue))
+      ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
+      ("v" projectile-run-vterm "run vterm"))
      "Run in Python Shell"
-     (("eb" python-shell-send-buffer "Run Buffer")
-      ("ef" python-shell-send-file "Run File")
-      ("er" python-shell-send-region "Run Region"))
+     (("rb" python-shell-send-buffer "Run Buffer")
+      ("rf" python-shell-send-file "Run File")
+      ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
+      ("rr" python-shell-send-region "Run Region"))
      "Formatting"
      (("i" python-fix-imports "Fix Imports")
       ("a" python-add-import "Add Import")
-      ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))))
-  (defun aaronzinhoo--python-buffer-setup ()
+      ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
+     "Navigation/Editing"
+     (("j" combobulate-avy "Jump")
+      ("ed" combobulate-edit "Edit"))))
+      ("en" combobulate-envelop "Envelop")
+  (defun aaronzinhoo--python-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
   (defun aaronzinhoo--activate-python-shell-complettion ()
@@ -2101,8 +2142,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (python-shell-completion-native-get-completions
        (get-buffer-process (current-buffer))
        nil "_")))
-  (defun aaronzinhoo--python-setup ()
-    (aaronzinhoo--python-buffer-setup))
   :custom
   (python-check-command "flake8")
   :init

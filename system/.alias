@@ -10,3 +10,6 @@ alias kube-kahless='kubectl config use-context kahless'
 
 # python
 alias pip="python -m pip "
+
+# emacs
+alias e="emacs &"
