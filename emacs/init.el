@@ -117,6 +117,7 @@
   :hook ((git-commit-mode . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
          (markdown-mode . markdown-add-electric-pairs)
+         (go-ts-mode . go-add-electric-pairs)
          (yaml-ts-mode . yaml-add-electric-pairs))
   :preface
   (defun git-commit-add-electric-pairs ()
@@ -127,6 +128,9 @@
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   (defun markdown-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun go-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   (defun yaml-add-electric-pairs ()
@@ -847,6 +851,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((c-ts-mode . lsp-deferred)
          (c++-ts-mode . lsp-deferred)
          (go-ts-mode . lsp-deferred)
+         (go-ts-mode . lsp-go-hooks)
          (sql-mode . lsp-deferred)
          (web-mode . lsp-deferred)
          (typescript-ts-mode . lsp-deferred)
@@ -861,12 +866,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (:map lsp-mode-map
               ("s-l" . hydra-lsp/body))
   :preface
-  (defun lsp-go-install-save-hooks ()
+  (defun lsp-go-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer nil t)
     (add-hook 'before-save-hook 'lsp-organize-imports nil t)
-    (setq lsp-gopls-staticcheck t)
-    (setq lsp-eldoc-render-all t)
-    (setq lsp-gopls-complete-unimported t))
+    (setq-local lsp-gopls-staticcheck t)
+    (setq-local lsp-eldoc-render-all t)
+    (setq-local lsp-gopls-complete-unimported t))
   ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
   ;; used to help pyright find venv folders
   (defun aaronzinhoo-lsp-python-setup ()
@@ -914,7 +919,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
-  (add-hook 'go-ts-mode-hook 'lsp-go-install-save-hooks))
+  )
 (use-package lsp-docker
   :requires (lsp-mode)
   :after (lsp-mode)
@@ -2105,7 +2110,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (:map python-ts-mode-map
               ("C-c h" . hydra-python-mode/body))
   :hook ((python-ts-mode . pyvenv-mode)
-         (python-ts-mode . combobulate-mode)
+         ;; (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
   :preface
   (defun aaronzinhoo--python-shell-send-current-file ()
@@ -2128,9 +2133,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("a" python-add-import "Add Import")
       ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
      "Navigation/Editing"
-     (("j" combobulate-avy "Jump")
-      ("ed" combobulate-edit "Edit"))))
-      ("en" combobulate-envelop "Envelop")
+     (("c" combobulate-mode "Combobulate Mode" :toggle t)
+      ("j" combobulate-avy "Jump")
+      ("ed" combobulate-edit "Edit")
+      ("en" combobulate-envelop "Envelop"))))
   (defun aaronzinhoo--python-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
@@ -2173,12 +2179,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
 ;; need a package if not in GOPATH!
+(use-package go-playground
+  :commands (go-playground)
+  :straight (:type git :host github :repo "grafov/go-playground" :branch "master")
+  :config
+  (defun my/go-playground-remove-lsp-workspace ()
+    (when-let ((root (lsp-workspace-root))) (lsp-workspace-folders-remove root)))
+  (add-hook 'go-playground-pre-rm-hook #'my/go-playground-remove-lsp-workspace))
 (use-package go-ts-mode
   :straight nil
   :mode ("\\.go\\'" . go-ts-mode)
   :hook ((go-ts-mode . yas-minor-mode)
          (go-ts-mode . my-go-mode-hook)
          (go-mode . go-ts-mode))
+  :custom
+  (go-ts-mode-indent-offset 4)
   :init
   ;;Smaller compilation buffer
   (setq compilation-window-height 14)
@@ -2191,18 +2206,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (select-window w)
             (switch-to-buffer "*compilation*")
             (shrink-window (- h compilation-window-height)))))))
-  (defun my-go-mode-hook ()
-    ;; Customize compile command to run go build
-    (if (not (string-match "go" compile-command))
-        (set (make-local-variable 'compile-command)
-             "go build -v -o ./main")))
   (setq compilation-read-command nil)
   :bind (:map go-ts-mode-map
               ("M-," . compile)
               ("M-." . godef-jump)
               ("M-*" . pop-tag-mark))
   :config
-  (setq compilation-scroll-output t))
+  (setq-local compilation-scroll-output t))
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
 ;; configuration: use set(CMAKE_EXPORT_COMPILE_COMMANDS ON) in cmake file
