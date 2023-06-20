@@ -3,6 +3,7 @@
 ;;;init.el --- Emacs configuration
 
 ;;; Code:
+;; TODO add build for shell scripts, and add help menu for go
 ;; load the early init file if this is not a recent emacs
 (message "Initializing settings...")
 (when (version< emacs-version "27")
@@ -245,6 +246,7 @@
   :straight (:type git :host github :repo "nflath/sudo-edit")
   :commands (sudo-edit))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package xclip
   :straight t
   :init
@@ -979,6 +981,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("<tab>" . company-complete-common-or-cycle)
         ("<backtab>" . company-select-previous))
   :custom
+  ;; additional capf needed otherwise lsp will add company-capf to the front of the list
+  (company-backends '(company-files (company-capf :separate company-dabbrev-code) company-dabbrev company-capf))
   (company-tooltip-idle-delay 0.1)
   (company-tooltip-minimum-width 40)
   (company-tooltip-maximum-width 80)
@@ -1032,7 +1036,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           company-pseudo-tooltip-frontend
           company-preview-if-just-one-frontend
           company-echo-metadata-frontend))
-  (setq company-backends '(company-files (company-capf :separate company-dabbrev-code) company-dabbrev))
   :config
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
   (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
@@ -1699,11 +1702,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; update based on discussions from https://github.com/flycheck/flycheck/issues/1762
 (use-package modern-sh
   :hook ((sh-mode . modern-sh-mode)
-         (sh-mode . aaronzinhoo-sh-mode-setup)
-         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck)))))))))
-  :preface
-  (defun aaronzinhoo-sh-mode-setup ()
-    (set (make-local-variable 'company-backends) '((company-files company-capf company-dabbrev-code)))))
+         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package vterm
   :commands vterm)
 (use-package multi-vterm
@@ -1829,12 +1828,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (yaml-ts-mode . flycheck-mode)
          (yaml-ts-mode . hungry-delete-mode)
          (yaml-ts-mode . (lambda () (setq-local tab-width 2)))
-         (yaml-ts-mode . (lambda () (setq flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (swagger-cli lsp)))))))))
+         (yaml-ts-mode . (lambda () (setq-local flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (swagger-cli lsp)))))))))
   :bind (:map yaml-ts-mode-map ("<backtab>" . yaml-indent-line))
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
-    (set (make-local-variable 'company-backends) '((company-capf company-files :separate company-dabbrev-code) company-capf))
     (yaml-pro-mode nil)))
 (use-package json-ts-mode
   :straight nil
@@ -2086,7 +2084,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (typescript-ts-mode . typescript-company-mode-setup))
   :preface
   (defun typescript-company-mode-setup ()
-    (set (make-local-variable 'company-backends) '((company-capf :with company-yasnippet company-files company-keywords) company-capf))))
+    (setq-local '((company-capf :with company-yasnippet company-files company-keywords) company-capf))))
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
@@ -2196,7 +2194,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (go-ts-mode-indent-offset 4)
   :init
   ;;Smaller compilation buffer
-  (setq compilation-window-height 14)
+  (setq-local compilation-windowp-height 14)
   (defun my-compilation-hook ()
     (when (not (get-buffer-window "*compilation*"))
       (save-selected-window
