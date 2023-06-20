@@ -1857,8 +1857,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight t
   :commands (docker)
   :bind ("s-d" . docker))
+(use-package dockerfile-mode
+  :commands (dockerfile-build-buffer dockerfile-build-no-cache-buffer)
+  :straight (:type git :host github :repo "spotify/dockerfile-mode" :branch "master"))
 (use-package dockerfile-ts-mode
   :straight nil
+  :hook (dockerfile-mode . dockerfile-ts-mode)
   :mode ("Dockerfile\\'" . dockerfile-ts-mode)
   :bind (:map dockerfile-ts-mode-map
               ("C-c h" . hydra-dockerfile-mode/body))
