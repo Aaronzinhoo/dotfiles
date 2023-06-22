@@ -2191,9 +2191,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package go-ts-mode
   :straight nil
   :mode ("\\.go\\'" . go-ts-mode)
-  :hook ((go-ts-mode . yas-minor-mode)
-         (go-ts-mode . my-go-mode-hook)
-         (go-mode . go-ts-mode))
+  :hook ((go-mode . go-ts-mode)
+         (go-ts-mode . yas-minor-mode))
   :custom
   (go-ts-mode-indent-offset 4)
   :init
