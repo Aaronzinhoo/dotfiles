@@ -6,61 +6,27 @@
 ;; TODO add build for shell scripts, and add help menu for go
 ;; load the early init file if this is not a recent emacs
 (message "Initializing settings...")
-(when (version< emacs-version "27")
-  (load (concat user-emacs-directory "early-init.el")))
-;; load init packages
-(let ((dir (file-name-directory (or load-file-name buffer-file-name))))
-  (add-to-list 'load-path (expand-file-name (concat dir "elisp/init"))))
-(let ((dir (file-name-directory (or load-file-name buffer-file-name))))
-  (add-to-list 'load-path (expand-file-name (concat dir "elisp/pair-navigation"))))
-;; load the utils for some helper functions
-(require 'init-constants)
-(require 'init-defaults)
-(require 'init-straight)
-(require 'init-fonts)
-(require 'init-keybindings)
-(require 'init-utils)
-(require 'pair-navigator)
+(let ((default-directory  (concat (expand-file-name (file-name-directory (or load-file-name buffer-file-name))) "elisp/")))
+  ;; load all paths from default-directory recursively
+  (normal-top-level-add-subdirs-to-load-path)
+  ;; load the utils for some helper functions
+  (require 'init-constants (concat default-directory "init/init-constants.elc"))
+  (require 'init-defaults (concat default-directory "init/init-defaults.elc"))
+  (require 'init-straight (concat default-directory "init/init-straight.elc"))
+  (require 'init-fonts (concat default-directory "init/init-fonts.elc"))
+  (require 'init-utils (concat default-directory "init/init-utils.elc"))
+  (require 'init-keybindings (concat default-directory "init/init-keybindings.elc"))
+  (require 'pair-navigator (concat default-directory "pair-navigation/pair-navigator.elc")))
+(require 'custom)
 
 (message "Loading packages")
-;; overlay to help display where other paren is unobtrusively
-;; ov is enclosed in show-paren--off-screen+
-;; TODO: figure out where to put this damn function
-(let ((ov nil)) ; keep track of the overlay
-  (advice-add
-   #'show-paren-function
-   :after
-   (defun show-paren--off-screen+ (&rest _args)
-     "Display matching line for off-screen paren."
-     (when (overlayp ov)
-       (delete-overlay ov))
-     ;; check if it's appropriate to show match info,
-     ;; see `blink-paren-post-self-insert-function'
-     (when (and (overlay-buffer show-paren--overlay)
-                (not (or cursor-in-echo-area
-                         executing-kbd-macro
-                         noninteractive
-                         (minibufferp)
-                         this-command))
-                (and (not (bobp))
-                     (memq (char-syntax (char-before)) '(?\) ?\$)))
-                (= 1 (logand 1 (- (point)
-                                  (save-excursion
-                                    (forward-char -1)
-                                    (skip-syntax-backward "/\\")
-                                    (point))))))
-       ;; rebind `minibuffer-message' called by
-       ;; `blink-matching-open' to handle the overlay display
-       (cl-letf (((symbol-function #'minibuffer-message)
-                  (lambda (msg &rest args)
-                    (let ((msg (apply #'format-message msg args)))
-                      (setq ov (display-line-overlay+
-                                (window-start) msg ))))))
-         (blink-matching-open))))))
-
 ;;; Packages
 
 ;; built-in
+(use-package sh-mode
+  :straight nil
+  :hook ((sh-mode . modern-sh-mode)
+         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package simple
   :straight nil
   :preface
@@ -159,7 +125,8 @@
 (use-package f
   :straight (:type git :host github :repo "rejeep/f.el" :branch "master"))
 (use-package pcre2el :straight t)
-(use-package compat :straight t)
+(use-package compat
+  :straight (:type git :host github :repo "emacs-compat/compat" :branch "main"))
 ;; log event/command history of all buffers
 (use-package command-log-mode
   :commands (command-log-mode))
@@ -576,11 +543,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '((company-dabbrev-code company-files company-ispell))))
   :custom
   (magit-completing-read-function 'ivy-completing-read)
+  (magit-bind-magit-project-status nil)
   :config
-  (setq magit-bind-magit-project-status nil)
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package matching-paren-overlay
+  :straight (:type git :host codeberg :repo "acdw/matching-paren-overlay.el" :branch "main")
+  :hook (prog-mode . matching-paren-overlay-mode))
 (use-package better-defaults
   :defer t)
 (use-package grep
@@ -591,6 +561,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package xr
   :straight (:type git :host github :repo "mattiase/xr" :branch "master"))
 (use-package wgrep
+    :straight (:type git :host github :repo "mhayashi1120/Emacs-wgrep" :branch "master")
   :custom
   (wgrep-auto-save-buffer t))
 ;; Ripgrep
@@ -715,6 +686,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   :config
   (dashboard-setup-startup-hook))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package beacon
   :straight t
   :diminish
@@ -832,7 +806,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
   (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions))
+(use-package all-the-icons-dired
+  :straight (:type git :host github :repo "jtbm37/all-the-icons-dired" :branch "master"))
 (use-package all-the-icons
+  :after (all-the-icons-dired)
   :straight t)
 (use-package emojify
   :if (display-graphic-p)
@@ -1698,11 +1675,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (exec-path-from-shell-initialize))
 (use-package list-environment
   :commands (list-environment))
-;; depends on ctags install
-;; update based on discussions from https://github.com/flycheck/flycheck/issues/1762
-(use-package modern-sh
-  :hook ((sh-mode . modern-sh-mode)
-         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package vterm
   :commands vterm)
 (use-package multi-vterm
@@ -1777,6 +1749,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("tt" projectile-test-project "run tests")
       ("tf" projectile-find-test-file "find test file"))))
   :custom
+  (projectile-git-fd-args "-H -0 -E .git -tf")
+  (projectile-generic-command "fd . -0 --type f --color=never")
   (projectile-find-dir-includes-top-level t)
   (projectile-switch-project-action #'projectile-find-file)
   ;; use .gitignore to exclude files from search
@@ -2030,8 +2004,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package vmd-mode
   :commands (vmd-mode)
   :custom
-  (vmd-binary-path "/Users/aaron.gonzales/.nvm/versions/node/v14.19.0/bin/vmd"))
-
+  (vmd-binary-path (concat nvm-home-folder "versions/node/v14.19.0/bin/vmd")))
 ;; JS/react/angular config
 ;; completetion: lsp+company
 ;; refactor: js-prettier
@@ -2273,8 +2246,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight nil
   :hook ((c++-mode . c++-ts-mode)
          (c-mode . c-ts-mode)))
-(use-package protobuf-mode
-  :mode (("\\.proto\\'" . protobuf-mode)))
+(use-package protobuf-ts-mode
+  :mode (("\\.proto\\'" . protobuf-ts-mode)))
+(use-package flycheck-buf-lint
+  :straight t
+  :hook ((protobuf-mode protobuf-ts-mode) . (lambda() (flycheck-buf-lint-setup))))
+
+;;; SQL Mode
+(use-package sqlformat
+  :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
+  :hook (sql-mode . sqlformat-on-save))
 
 ;;; Theme
 (use-package powerline

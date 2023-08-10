@@ -1,4 +1,4 @@
-;;; early-init.el --- -*- lexical-binding: t -*-
+;;; early-init.el --- early bird  -*- lexical-binding: t no-byte-compile: t -*-
 ;;
 ;; Filename: early-init.el
 ;; Description: Early initialization
@@ -44,8 +44,15 @@
 
 ;; Always load newer code
 (setq load-prefer-newer t)
+;; load init packages recursively
+(let ((default-directory  (expand-file-name (file-name-directory (or load-file-name buffer-file-name)))))
+  ;; setup auto-compile
+  (add-to-list 'load-path (concat default-directory "deps/auto-compile/auto-compile.el"))
+  (require 'auto-compile (concat default-directory "deps/auto-compile/auto-compile.el"))
+  (auto-compile-on-load-mode)
+  (auto-compile-on-save-mode))
 
-;; I know what the scratch buffer is for
+;; I know what the scratch buffer is for ... or do I?
 (setq initial-scratch-message "")
 
 ;; AfterInitHook
@@ -57,10 +64,8 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 (defconst user-emacs-directory (expand-file-name "~/.config/emacs"))
-;; Set eln-cache dir
-(when (fboundp 'startup-redirect-eln-cache)
-  (startup-redirect-eln-cache (expand-file-name "eln-cache" user-emacs-directory)))
-(setq native-comp-deferred-compilation t)
+
+(setq native-comp-jit-compilation t)
 (setq native-comp-async-report-warnings-errors nil)
 
 (provide 'early-init)
