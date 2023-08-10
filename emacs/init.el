@@ -25,7 +25,7 @@
 ;; built-in
 (use-package sh-mode
   :straight nil
-  :hook ((sh-mode . modern-sh-mode)
+  :hook ((sh-mode . bash-ts-mode)
          (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package simple
   :straight nil

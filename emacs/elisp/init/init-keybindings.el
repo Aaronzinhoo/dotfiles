@@ -11,6 +11,7 @@
 (message "Loading keybindings")
 (define-key key-translation-map (kbd "ESC") (kbd "C-c"))
 (define-key key-translation-map (kbd "<escape>") (kbd "C-c"))
+(define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
 (global-set-key (kbd "M-h") 'backward-char)
 (global-set-key (kbd "M-j") 'next-line)
 (global-set-key (kbd "M-k") 'previous-line)
