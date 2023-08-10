@@ -30,12 +30,7 @@ export PATH="/usr/local/go/bin:$PATH"
 # source $ZSH_CUSTOM_SETUP_DIR/os/wsl.zsh
 # fi
 
-# OS specific setup
-case $OSTYPE in
-    darwin*)
-        source $ZSH_CUSTOM_SETUP_DIR/os/mac.zsh
-	    ;;
-    *)
-	    echo "OS type $OSTYPE does not have an OS specific configuration"
-	    ;;
-esac
+# OS speific setup
+if [ "$OSTYPE" ~= "darwin*" ]; then
+    source $ZSH_CUSTOM_SETUP_DIR/os/mac.zsh
+fi
