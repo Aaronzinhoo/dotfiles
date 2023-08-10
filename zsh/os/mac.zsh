@@ -10,3 +10,6 @@ export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
 [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
 
 alias chrome="open -a Google\ Chrome"
+
+# nvm
+export NVM_DIR="$HOME/.nvm"

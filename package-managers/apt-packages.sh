@@ -92,8 +92,20 @@ apt install gh -y
 # docker
 #---------------------
 echo_with_prompt "installing docker\n"
-apt install apt-transport-https ca-certificates software-properties-common -y
-apt install docker-compose lazydocker -y
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Adds docker apt repository
+echo \
+"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Refreshes apt repos
+sudo apt-get update
+apt install apt-transport-https ca-certificates software-properties-common gnupg lsb-release -y
+apt install lazydocker
+apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+sudo usermod -aG docker $USER
 #---------------------
 
 #---------------------

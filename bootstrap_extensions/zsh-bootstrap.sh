@@ -34,9 +34,9 @@ git clone https://github.com/lukechilds/zsh-nvm "${CUSTOM_PLUGINS}"/zsh-nvm
 
 git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUGINS}"/zsh-better-npm-completion
 
-git clone https://github.com/johanhaleby/kubetail.git kubetail
+git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}"/kubetail
 
-git clone https://github.com/matthieusb/zsh-sdkman.git
+git clone https://github.com/matthieusb/zsh-sdkman.git "${CUSTOM_PLUGINS}"/zsh-sdkman
 
 echo_with_prompt "adding poetry completion to zsh"
 check_and_mkdir "${CUSTOM_PLUGINS}/poetry"

@@ -82,7 +82,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions zsh-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl kubetail rust spring gradle-completion zsh-sdkman )
+plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-sdkman )
 
 zstyle ':omz:plugins:nvm' lazy yes
 source $ZSH/oh-my-zsh.sh
@@ -105,10 +105,6 @@ bindkey '^ ' autosuggest-accept
 
 # Load environment aliases
 . "${HOME}/.alias"
-
-# pyenv setup
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -133,8 +129,8 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 
 # Load Angular CLI autocompletion.
-source <(ng completion script)
-export PATH="$PATH:/opt/homebrew/opt/node@16/bin"
+# source <(ng completion script)
+# export PATH="$PATH:/opt/homebrew/opt/node@16/bin"
 
 # place this after nvm initialization!
 autoload -U add-zsh-hook
@@ -159,3 +155,7 @@ load-nvmrc
 
 export PATH="$HOME/.gobrew/current/bin:$HOME/.gobrew/bin:$PATH"
 export GOROOT="$HOME/.gobrew/current/go"
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="/home/aaronzinho/.sdkman"
+[[ -s "/home/aaronzinho/.sdkman/bin/sdkman-init.sh" ]] && source "/home/aaronzinho/.sdkman/bin/sdkman-init.sh"
