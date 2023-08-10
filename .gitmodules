@@ -1,0 +1,3 @@
+[submodule "emacs/deps/auto-compile"]
+	path = emacs/deps/auto-compile
+	url = git@github.com:emacscollective/auto-compile.git
