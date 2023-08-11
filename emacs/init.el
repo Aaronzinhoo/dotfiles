@@ -786,6 +786,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'css-stylelint 'css-ts-mode)
   (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-ts-mode)
   (flycheck-add-mode 'sh-shellcheck 'sh-mode))
+(use-package flycheck-aspell
+  :after flycheck
+  :config
+  ;; If you want to check Markdown/GFM buffers
+  (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic)
+  ;; If you want to check HTML buffers
+  (add-to-list 'flycheck-checkers 'html-aspell-dynamic))
 (use-package flycheck-swagger-cli
   :after (flycheck)
   :straight (:type git :host github :repo "vercapi/flycheck-swagger-cli" :branch "master")
@@ -921,11 +928,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
      (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
-   `("node"     ,(concat nvm-home-folder "lib/node_modules/@angular/language-server")
+   `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
      "--ngProbeLocations"
-     ,(concat nvm-home-folder "lib/node_modules")
+     ,(concat node-home-folder "lib/node_modules")
      "--tsProbeLocations"
-     ,(concat nvm-home-folder "lib/node_modules")
+     ,(concat node-home-folder "lib/node_modules")
      "--stdio"))
   :init
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
@@ -2020,6 +2027,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("C-c h" . hydra-markdown-mode/body))
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
+  :hook (markdown-mode . flycheck-mode)
   :preface
   (pretty-hydra-define hydra-markdown-mode
     (:hint nil :title (with-octicon "markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
@@ -2076,7 +2084,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (json-mode . prettier-mode)
          (css-mode . prettier-mode)
          (rjsx-mode . prettier-mode)
-         (typescript-ts-mode . prettier-mode)))
+         (typescript-ts-mode . prettier-mode))
+  :custom
+  (prettier-mode-sync-config-flag nil))
 (use-package js-comint
   :defer t
   :init
@@ -2095,11 +2105,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;angular setup
 (use-package typescript-mode
   :delight " Ts"
-  :hook ((typescript-mode . typescript-ts-mode)
-         (typescript-ts-mode . typescript-company-mode-setup))
-  :preface
-  (defun typescript-company-mode-setup ()
-    (setq-local '((company-capf :with company-yasnippet company-files company-keywords) company-capf))))
+  :hook ((typescript-mode . typescript-ts-mode)))
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))

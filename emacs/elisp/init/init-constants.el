@@ -23,7 +23,7 @@
 (defconst autosave-dir (concat user-emacs-directory "/autosave"))
 (defconst calendar-latitude 33.916403)
 (defconst calendar-longitude -118.352575)
-(defconst nvm-home-folder (file-name-directory (getenv "NVM_DIR")) "Path to currently used nvm node version with trailing slash.")
+(defconst node-home-folder (file-name-directory (getenv "NVM_BIN")) "Path to currently used nvm node version with trailing slash.")
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 (message "Done loading constants")
 
