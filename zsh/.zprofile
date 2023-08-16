@@ -31,6 +31,6 @@ export PATH="/usr/local/go/bin:$PATH"
 # fi
 
 # OS speific setup
-if [ "$OSTYPE" ~= "darwin*" ]; then
+if [[ "$OSTYPE" =~ "^darwin" ]]; then
     source $ZSH_CUSTOM_SETUP_DIR/os/mac.zsh
 fi
