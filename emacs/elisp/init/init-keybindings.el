@@ -9,8 +9,8 @@
 ;; C-c ' edit code in buffer
 ;; C-c C-c run org code block
 (message "Loading keybindings")
-(define-key key-translation-map (kbd "ESC") (kbd "C-c"))
-(define-key key-translation-map (kbd "<escape>") (kbd "C-c"))
+(define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
+(define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
 (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
 (global-set-key (kbd "M-h") 'backward-char)
 (global-set-key (kbd "M-j") 'next-line)
