@@ -21,8 +21,44 @@
 
 (message "Loading packages")
 ;;; Packages
-
 ;; built-in
+(use-package emacs
+  :straight nil
+  :hook (minibuffer-setup . cursor-intangible-mode)
+  :custom
+  (delete-selection-mode t)
+  (enable-recursive-minibuffers t)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (tab-always-indent 'complete)
+  :config
+  (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
+(use-package tree-sitter
+  :straight nil
+  :init
+  (setq treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+     (c "https://github.com/tree-sitter/tree-sitter-c")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (java "https://github.com/tree-sitter/tree-sitter-java")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+     (proto "https://github.com/mitchellh/tree-sitter-proto" "main")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+  (dolist (lang treesit-language-source-alist)
+  (unless (treesit-language-available-p (car lang))
+    (treesit-install-language-grammar (car lang)))))
 (use-package sh-mode
   :straight nil
   :hook ((sh-mode . bash-ts-mode)
@@ -51,11 +87,6 @@
   (show-paren-when-point-in-periphery t)
   :config
   (show-paren-mode t))
-(use-package tree-sitter
-  :straight nil
-  :diminish
-  :custom
-  (treesit-extra-load-path `(,(concat user-init-dir-fullpath "deps/tree-sitter"))))
 (use-package system-packages
   :straight t
   :custom
