@@ -41,6 +41,8 @@ apt install xclip -y
 apt-get install software-properties-common
 apt-get install ctags
 apt install pandoc
+apt install libenchant-2-dev pkgconf -y
+apt install gcc-10 g++-10 libgccjit0 libgccjit-10-dev libjansson4 libjansson-dev
 #--------------------
 
 #--------------------
