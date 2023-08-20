@@ -291,41 +291,24 @@
   :demand t
   :after hydra
   :preface
-  (defun with-alltheicon (icon str &optional height v-adjust)
-    "Displays an icon from all-the-icon."
-    (s-concat (all-the-icons-alltheicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
   (defun with-faicon (icon str &optional height v-adjust)
     "Displays an icon from Font Awesome icon."
-    (s-concat (all-the-icons-faicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
-  (defun with-fileicon (icon str &optional height v-adjust)
+    (s-concat (nerd-icons-faicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+  (defun with-sucicon (icon str &optional height v-adjust)
     "Displays an icon from the Atom File Icons package."
-    (s-concat (all-the-icons-fileicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+    (s-concat (nerd-icons-sucicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
   (defun with-octicon (icon str &optional height v-adjust)
     "Displays an icon from the GitHub Octicons."
-    (s-concat (all-the-icons-octicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
-  (defun undo-and-activate-hydra-undo ()
-    (interactive)
-    (undo-fu-only-undo)
-    (hydra-undo-fu/body))
+    (s-concat (nerd-icons-octicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+  (defun with-codicon (icon str &optional height v-adjust)
+    "Displays an icon from the GitHub Octicons."
+    (s-concat (nerd-icons-codicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
+  (defun with-mdicon (icon str &optional height v-adjust)
+    "Displays an icon from the Atom File Icons package."
+    (s-concat (nerd-icons-mdicon icon :v-adjust (or v-adjust 0) :height (or height 1)) " " str))
   :config
-  (pretty-hydra-define hydra-flycheck
-    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "plane" "Flycheck" 1 -0.05))
-    ("Checker"
-     (("?" flycheck-describe-checker "describe")
-      ("d" flycheck-disable-checker "disable")
-      ("m" flycheck-mode "mode")
-      ("s" flycheck-select-checker "select"))
-     "Errors"
-     (("p" flycheck-previous-error "previous" :color pink)
-      ("n" flycheck-next-error "next" :color pink)
-      ("l" flycheck-projectile-list-errors "list errors (proj)")
-      ("L" flycheck-list-errors "list errors"))
-     "Other"
-     (("r" recenter-top-bottom "recenter" :color pink)
-      ("M" flycheck-manual "manual")
-      ("v" flycheck-verify-setup "verify setup"))))
   (pretty-hydra-define hydra-org
-    (:hint nil :color pink :quit-key "SPC" :title (with-fileicon "org" "Org" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-sucicon "nf-custom-orgmode" "Org" 1 -0.05))
     ("Action"
      (("a" org-agenda "agenda")
       ("c" org-capture "capture")
@@ -337,7 +320,7 @@
       ("s" org-store-link "store-link")
       ("t" org-show-todo-tree "todo-tree"))))
   (pretty-hydra-define hydra-org-nav
-    (:hint nil :color pink :quit-key "SPC" :title (with-fileicon "org" "Org" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-sucicon "nf-custom-orgmode" "Org" 1 -0.05))
     ("Navigation"
      (("p" org-previous-visible-heading "prev heading")
       ("n" org-next-visible-heading "next heading")
@@ -357,49 +340,8 @@
       ("a" outline-show-all "show-all" :color blue))
      "Other"
      (("RET" nil :color blue))))
-  (pretty-hydra-define hydra-ivy
-    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "tree" "Ivy" 1 -0.05))
-    ("Counsel Functions"
-     (("f" counsel-recentf "recent-file")
-      ("t" counsel-faces "faces")
-      ("m" counsel-imenu "imenu")
-      ("l" counsel-find-library "library"))
-     "Ivy Actions"
-     (("e" ivy-call "execute command")
-      ("r" ivy-resume "resume"))
-     "Text"
-     (("i" ivy-insert-current "insert current cand." :color red))
-     "Other"
-     (("s" counsel-info-lookup-symbol "symbol")
-      ("u" counsel-unicode-char "unicode"))))
-  (pretty-hydra-define hydra-lsp
-    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "cog" "LSP" 1 -0.05))
-    ("Goto"
-     (("r" lsp-find-references "refs")
-      ("d" lsp-find-definition "defs")
-      ("i" lsp-goto-implementation "implementation (interface)")
-      ("t" lsp-find-type-definition "type-def")
-      ("b" xref-pop-marker-stack "pop back" :color red))
-     "Refactor"
-     (("f" lsp-format-buffer "format")
-      ("n" lsp-rename "rename"))
-     "UI"
-     (("p" lsp-ui-peek-mode "peek-mode")
-      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
-      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
-      ("m" lsp-ui-imenu "peek-menu"))
-     "Server"
-     (("s" lsp-describe-session "session")
-      ("I" lsp-install-server "install")
-      ("S" lsp-workspace-restart "restart"))))
-  (pretty-hydra-define hydra-undo-fu
-    (:hint nil :color red :quit-key "SPC" :title (with-faicon "undo" "Undo/Redo" 1 -0.05))
-    ("Action"
-     (("/" undo-fu-only-undo "Undo")
-      ("r" undo-fu-only-redo "Redo")
-      ("RET" nil "Quit" :color blue))))
   (pretty-hydra-define hydra-nav
-    (:hint nil :color amaranth :quit-key "SPC" :title (with-faicon "cog" "Navigation" 1 -0.05))
+    (:hint nil :color amaranth :quit-key "SPC" :title (with-mdicon "nf-md-navigation_variant_outline" "Navigation" 1 -0.05))
     ("Buffer"
      (("a" crux-move-beginning-of-line "Begin Line")
       ("z" end-of-visual-line "End Line")
@@ -432,7 +374,7 @@
      (("b" ace-window "Switch to window")
       ("x" delete-window "Delete Window"))))
   (pretty-hydra-define hydra-bookmark
-    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "bookmark" "Bookmark" 1 -0.05))
+    (:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-bookmark" "Bookmark" 1 -0.05))
     ("Burly"
      (("o" burly-open-bookmark "Open Burly Bookmark")
       ("b" burly-open-last-opened-bookmark "Most Recently Opened Bookmark")
@@ -443,12 +385,52 @@
      (("j" counsel-bookmark "Jump to bookmark"))
      "List"
      (("l" bookmark-bmenu-list "List Bookmarks")))))
-
+(use-package helpful
+  :after (major-mode-hydra)
+  :custom
+  (help-window-select t)
+  :bind
+  ("C-h" . helpful-hydra/body)
+  ([remap describe-function] . helpful-callable)
+  ([remap describe-command]  . helpful-command)
+  ([remap describe-variable] . helpful-variable)
+  ([remap describe-key]      . helpful-key)
+  :pretty-hydra
+  ((:color teal :quit-key "q")
+   ("Helpful"
+    (("f" helpful-callable "callable")
+     ("v" helpful-variable "variable")
+     ("k" helpful-key "key")
+     ("c" helpful-command "command")
+     ("d" helpful-at-point "thing at point")))))
+(use-package undo-fu-session
+  :custom
+  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  :init
+  (undo-fu-session-global-mode t))
+(use-package undo-fu
+  :after (major-mode-hydra)
+  :bind
+  ("C-/" . undo-fu-only-undo)
+  ("s-/" . undo-and-activate-hydra-mode)
+  (:map org-mode-map
+        ("s-/" . undo-and-activate-hydra-mode))
+  :pretty-hydra
+  (undo-fu-hydra
+    (:hint nil :color red :quit-key "SPC" :title (with-faicon "nf-fa-undo" "Undo/Redo" 1 -0.05))
+    ("Action"
+     (("/" undo-fu-only-undo "Undo")
+      ("r" undo-fu-only-redo "Redo")
+      ("RET" nil "Quit" :color blue))))
+  :preface
+  (defun undo-and-activate-hydra-undo ()
+    (interactive)
+    (undo-fu-hydra/body)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; CONTROL VERSION UTILS
 (use-package git-gutter
-  :after (all-the-icons hydra)
+  :after (nerd-icons hydra)
   :straight (:type git :host github :repo "emacsorphanage/git-gutter" :branch "master")
   :hook (prog-mode . git-gutter-mode)
   :bind ("s-g" . hydra-git-gutter/body)
@@ -456,7 +438,7 @@
   :diminish git-gutter-mode
   :preface
   (pretty-hydra-define hydra-git-gutter
-    (:hint nil :color "pink" :quit-key "SPC" :title (with-octicon "diff" "Diff" 1 -0.05))
+    (:hint nil :color "pink" :quit-key "SPC" :title (with-octicon "nf-oct-diff" "Diff" 1 -0.05))
     ("Nav Hunks"
      (("n" git-gutter:next-hunk "next")
       ("p" git-gutter:previous-hunk "prev")
@@ -473,9 +455,9 @@
   (git-gutter:sign-width 1)
   (git-gutter:hide-gutter t)
   (git-gutter:window-width 2)
-  (git-gutter:modified-sign (all-the-icons-octicon "diff-modified" :height 0.85 :width 0.85))
-  (git-gutter:added-sign (all-the-icons-octicon "diff-added" :height 0.85 :width 0.85))
-  (git-gutter:deleted-sign (all-the-icons-octicon "diff-removed" :height 0.85 :width 0.85))
+  (git-gutter:modified-sign (nerd-icons-codicon "nf-cod-diff_modified"))
+  (git-gutter:added-sign (nerd-icons-codicon "nf-cod-diff_added"))
+  (git-gutter:deleted-sign (nerd-icons-codicon "nf-cod-diff_removed"))
   (git-gutter:update-interval 1))
 (use-package git-timemachine
   :defer t
@@ -613,7 +595,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq dirvish-mode-line-format
         '(:left (sort symlink) :right (omit yank index)))
   (setq dirvish-attributes
-        '(all-the-icons file-time file-size collapse subtree-state vc-state git-msg))
+        '(file-time file-size collapse subtree-state vc-state git-msg))
   (setq delete-by-moving-to-trash t)
   (setq dired-listing-switches
         "-l --almost-all --human-readable --group-directories-first --no-group")
@@ -775,6 +757,23 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :commands flycheck-mode
   :hook (prog-mode . flycheck-mode)
+  :bind ("s-f" . flycheck-hydra/body)
+  :pretty-hydra
+  ((:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-debug" "Flycheck" 1 -0.05))
+    ("Checker"
+     (("?" flycheck-describe-checker "describe")
+      ("d" flycheck-disable-checker "disable")
+      ("m" flycheck-mode "mode")
+      ("s" flycheck-select-checker "select"))
+     "Errors"
+     (("p" flycheck-previous-error "previous" :color pink)
+      ("n" flycheck-next-error "next" :color pink)
+      ("l" flycheck-projectile-list-errors "list errors (proj)")
+      ("L" flycheck-list-errors "list errors"))
+     "Other"
+     (("r" recenter-top-bottom "recenter" :color pink)
+      ("M" flycheck-manual "manual")
+      ("v" flycheck-verify-setup "verify setup"))))
   :preface
   (defvar-local flycheck-local-checkers nil)
   (defun +flycheck-checker-get(fn checker property)
@@ -865,11 +864,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
   (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions))
-(use-package all-the-icons-dired
-  :straight (:type git :host github :repo "jtbm37/all-the-icons-dired" :branch "master"))
-(use-package all-the-icons
-  :after (all-the-icons-dired)
-  :straight t)
 (use-package emojify
   :if (display-graphic-p)
   :hook (prog-mode . (lambda () (emojify-mode 0)))
@@ -902,8 +896,40 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . yas-minor-mode))
   :bind (:map lsp-mode-map
-              ("s-l" . hydra-lsp/body))
+              ("s-l" . lsp-hydra/body))
+  :pretty-hydra
+  (lsp-hydra
+    (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocker" "LSP" 1 -0.05))
+    ("Goto"
+     (("r" lsp-find-references "refs")
+      ("d" lsp-find-definition "defs")
+      ("i" lsp-goto-implementation "implementation (interface)")
+      ("t" lsp-find-type-definition "type-def")
+      ("b" xref-pop-marker-stack "pop back" :color red))
+     "Refactor"
+     (("f" lsp-format-buffer "format")
+      ("n" lsp-rename "rename"))
+     "UI"
+     (("p" lsp-ui-peek-mode "peek-mode")
+      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
+      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
+      ("m" lsp-ui-imenu "peek-menu"))
+     "Server"
+     (("s" lsp-describe-session "session")
+      ("I" lsp-install-server "install")
+      ("S" lsp-workspace-restart "restart"))))
   :preface
+  (defun aaronzinhoo--lsp-mode-setup-completion ()
+    "Replace the default `lsp-completion-at-point' with its
+`cape-capf-buster' version. Also add `cape-file' and
+`company-yasnippet' backends."
+  (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+        (cape-capf-buster #'lsp-completion-at-point))
+  (add-to-list 'completion-at-point-functions #'cape-file t)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+  (bind-key (kbd "TAB") 'corfu-next corfu-map)
+  (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+        '(flex))) ;; Configure flex
   (defun lsp-go-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer nil t)
     (add-hook 'before-save-hook 'lsp-organize-imports nil t)
@@ -1241,18 +1267,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :init
   (move-text-default-bindings))
 (use-package avy
-  :bind* ("M-SPC" . avy-goto-char-timer)
+  :bind (("M-SPC" . avy-goto-char-timer))
   :custom
   (avy-all-windows nil))
 ;; TODO add fix for mark outer-tag
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
-  :bind (("M-m" . hydra-multiple-cursors/body))
+  :bind (("M-m" . multiple-cursors-hydra/body))
   :hook ((prog-mode . multiple-cursors-mode)
          (text-mode . multiple-cursors-mode))
-  :init
-  (pretty-hydra-define hydra-multiple-cursors
-    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "key" "Multiple Cursors" 1 -0.05))
+  :pretty-hydra
+  (multiple-cursors-hydra
+    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
     ("Up"
      (("p" mc/mark-previous-like-this "Prev")
       ("P" mc/skip-to-previous-like-this "Skip Prev")
@@ -1304,29 +1330,28 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package verb
   :after (org)
   :commands (verb-mode)
-  :preface
-  (pretty-hydra-define hydra-verb-mode
-    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "viacoin" "Verb Mode" 1 -0.05))
-    ("Request"
-     (("rs" verb-send-request-on-point-other-window-stay "Other Window (Stay)")
-      ("ro" verb-send-request-on-point-other-window "Other Window")
-      ("rc" verb-send-request-on-point "Current Window"))
-     "Kill"
-     (("k" verb-kill-all-response-buffers "All Response Buffers"))
-     )))
+  :bind (:map org-mode-map
+              ("s-v" . verb-hydra/body))
+  :pretty-hydra
+  (verb-hydra
+   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-web" "Verb Mode" 1 -0.05))
+   ("Request"
+    (("rs" verb-send-request-on-point-other-window-stay "Other Window (Stay)")
+     ("ro" verb-send-request-on-point-other-window "Other Window")
+     ("rc" verb-send-request-on-point "Current Window"))
+    "Kill"
+    (("k" verb-kill-all-response-buffers "All Response Buffers")))))
 (use-package org
   :mode (("\\.org$" . org-mode))
-  :hook ((org-mode . aaronzinhoo-org-setup)
-         (org-mode . aaronzinhoo-org-font-setup))
+  :hook ((org-mode . aaronzinhoo--org-setup)
+         (org-mode . aaronzinhoo--org-font-setup))
   :bind
   ("C-c l" . org-store-link)
   ("C-c A" . org-agenda)
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
-        ("C-c h". hydra-org-nav/body)
-        ("s-/" . undo-and-activate-hydra-undo)
-        ("s-v" . hydra-verb-mode/body))
+        ("C-c h". hydra-org-nav/body))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -1780,33 +1805,32 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package projectile
   :after major-mode-hydra
   :demand t
-  :bind ("s-p" . hydra-projectile/body)
-  :preface
-  (pretty-hydra-define hydra-projectile
-    (:hint nil :color teal :quit-key "SPC" :title (with-faicon "rocket" "Projectile" 1 -0.05))
-    ("Buffers"
-     (("b" counsel-projectile-switch-to-buffer "list")
-      ("k" projectile-kill-buffers "kill all")
-      ("S" projectile-save-project-buffers "save all"))
-     "Find"
-     (("d" counsel-projectile-find-dir "directory")
-      ("D" projectile-dired "proj. root")
-      ("f" counsel-projectile-find-file "file")
-      ("p" counsel-projectile-switch-project "project")
-      ("F" projectile-find-file-in-known-projects "file (all proj.)"))
-     "Other"
-     (("N" projectile-cleanup-known-projects)
-      ("i" projectile-invalidate-cache "reset cache")
-      ("c" projectile-compile-project "compile")
-      ("v" projectile-run-vterm "run vterm"))
-     "Search & Replace"
-     (("r" projectile-replace "replace")
-      ("R" projectile-replace-regexp "regexp replace")
-      ("s" counsel-projectile-rg "search"))
-     "Tests"
-     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
-      ("tt" projectile-test-project "run tests")
-      ("tf" projectile-find-test-file "find test file"))))
+  :bind ("s-p" . projectile-hydra/body)
+  :pretty-hydra
+  ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
+   ("Buffers"
+    (("b" consult-projectile-switch-to-buffer "list")
+     ("k" projectile-kill-buffers "kill all")
+     ("S" projectile-save-project-buffers "save all"))
+    "Find"
+    (("d" consult-projectile-find-dir "directory")
+     ("D" projectile-dired "proj. root")
+     ("f" consult-projectile-find-file "file")
+     ("p" consult-projectile-switch-project "project")
+     ("F" projectile-find-file-in-known-projects "file (all proj.)"))
+    "Other"
+    (("N" projectile-cleanup-known-projects)
+     ("i" projectile-invalidate-cache "reset cache")
+     ("c" projectile-compile-project "compile")
+     ("v" projectile-run-vterm "run vterm"))
+    "Search & Replace"
+    (("r" projectile-replace "replace")
+     ("R" projectile-replace-regexp "regexp replace")
+     ("s" counsel-projectile-rg "search"))
+    "Tests"
+    (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
+     ("tt" projectile-test-project "run tests")
+     ("tf" projectile-find-test-file "find test file"))))
   :custom
   (projectile-git-fd-args "-H -0 -E .git -tf")
   (projectile-generic-command "fd . -0 --type f --color=never")
@@ -1844,7 +1868,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands (openapi-preview)
   :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main"))
 (use-package yaml-pro
-  :requires (tree-sitter)
   :commands (yaml-pro-mode yaml-pro-ts-mode)
   :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")
   )
@@ -1898,13 +1921,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (dockerfile-mode . dockerfile-ts-mode)
   :mode ("Dockerfile\\'" . dockerfile-ts-mode)
   :bind (:map dockerfile-ts-mode-map
-              ("C-c h" . hydra-dockerfile-mode/body))
-  :preface
-  (pretty-hydra-define hydra-dockerfile-mode
-    (:hint nil :title (with-fileicon "dockerfile" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
-    ("Build"
-     (("b" dockerfile-build-buffer "Build Image")
-      ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
+              ("C-c h" . dockerfile-hydra/body))
+  :pretty-hydra
+  (dockerfile-hydra
+   (:hint nil :title (with-mdicon "nf-md-docker" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
+   ("Build"
+    (("b" dockerfile-build-buffer "Build Image")
+     ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 ;; kubernetes settings overview
 (use-package kubernetes
   :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
@@ -1970,11 +1993,31 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev company-ispell)))))
 (use-package web-mode
   :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
-  :hook (web-mode . aaronzinhoo-company-web-mode-hook)
+  :hook (web-mode . aaronzinhoo--web-mode-hook)
   :mode (("\\.html\\'" . web-mode)
          ("\\.component.html\\'" . web-mode))
   :bind ((:map web-mode-map
-               ("C-c h" . hydra-web/body)))
+               ("s-h" . web-mode-hydra/body)))
+  :pretty-hydra
+  ((:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
+   ("Navigation"
+    (("a" sgml-skip-tag-backward "tag beginning | prev tag")
+     ("e" sgml-skip-tag-forward "tag end | next tag")
+     ("n" web-mode-element-next "next tag")
+     ("p" web-mode-element-previous "previous tag")
+     ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
+     ("f" web-mode-fold-or-unfold "fold/unfold"))
+    "Edit"
+    (("r" unibeautify "refactor HTML")
+     ("d" aaronzinhoo-delete-tag "delete tag"))
+    "Error"
+    (("v" html-check-frag-next "next html error")
+     ("E" web-mode-dom-errors-show "show errors"))
+    "Action"
+    (("w" web-mode-element-wrap "wrap element in tag" ));end action
+    "Other"
+    (("s" helm-emmet "Insert Emmet Snippet")
+     ("RET" nil "Quit" :color blue))))
   :preface
   (defun aaronzinhoo-sgml-prettify-html ()
     """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
@@ -1996,28 +2039,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (er/mark-outer-tag)
     (hungry-delete-backward 1))
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
-  (defun aaronzinhoo-company-web-mode-hook ()
-    (set (make-local-variable 'company-backends) '(company-files (company-capf company-web-html company-bootstrap company-css :separate company-dabbrev-code) company-dabbrev)))
-  (pretty-hydra-define hydra-web
-    (:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
-    ("Navigation"
-     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
-      ("e" sgml-skip-tag-forward "tag end | next tag")
-      ("n" web-mode-element-next "next tag")
-      ("p" web-mode-element-previous "previous tag")
-      ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
-      ("f" web-mode-fold-or-unfold "fold/unfold"))
-     "Edit"
-     (("r" unibeautify "refactor HTML")
-      ("d" aaronzinhoo-delete-tag "delete tag"))
-     "Error"
-     (("v" html-check-frag-next "next html error")
-      ("E" web-mode-dom-errors-show "show errors"))
-     "Action"
-     (("w" web-mode-element-wrap "wrap element in tag" ));end action
-     "Other"
-     (("s" helm-emmet "Insert Emmet Snippet")
-      ("RET" nil "Quit" :color blue))))
+  (defun aaronzinhoo--web-mode-hook ()
+    (setq-local completion-at-point-functions (list #'lsp-completion-at-point #'cape-file (cape-super-capf (cape-company-to-capf #'company-web-html) #'css-completion-at-point) #'cape-dabbrev #'cape-dict)))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
@@ -2038,25 +2061,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :bind (:map markdown-mode-map
-              ("C-c h" . hydra-markdown-mode/body))
+              ("s-h" . markdown-mode-hydra/body))
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
   :hook (markdown-mode . flycheck-mode)
-  :preface
-  (pretty-hydra-define hydra-markdown-mode
-    (:hint nil :title (with-octicon "markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
-    ("Insert"
-     (("it" markdown-insert-table "table")
-      ("ii" markdown-insert-image "image")
-      ("ib" markdown-insert-uri "uri")
-      ("ic" markdown-insert-code-block "code block")
-      ("id" markdown-insert-gfm-checkbox "checkbox"))
-     "Preview"
-     (("p" vmd-mode "Preview" :toggle t))
-     "Action"
-     (("o" markdown-open "Open" :color blue))
-     ))
-  :init (setq markdown-command "pandoc"))
+  :pretty-hydra
+  ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
+   ("Insert"
+    (("it" markdown-insert-table "table")
+     ("ii" markdown-insert-image "image")
+     ("ib" markdown-insert-uri "uri")
+     ("ic" markdown-insert-code-block "code block")
+     ("id" markdown-insert-gfm-checkbox "checkbox"))
+    "Preview"
+    (("p" vmd-mode "Preview" :toggle t))
+    "Action"
+    (("o" markdown-open "Open" :color blue))
+    ))
+  :custom
+  (markdown-command "pandoc"))
 ;; org github-esque markdown export
 (use-package ox-gfm
   :after org)
@@ -2141,35 +2164,36 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :delight " Py"
   :mode ("\\.py" . python-ts-mode)
   :bind (:map python-ts-mode-map
-              ("C-c h" . hydra-python-mode/body))
+              ("C-c h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
          ;; (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
+  :pretty-hydra
+  (python-hydra
+   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
+   ("Run"
+    (("sh" run-python "Python Shell")
+     ("d" pdb "PDB" :color blue)
+     ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
+     ("v" projectile-run-vterm "run vterm"))
+    "Run in Python Shell"
+    (("rb" python-shell-send-buffer "Run Buffer")
+     ("rf" python-shell-send-file "Run File")
+     ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
+     ("rr" python-shell-send-region "Run Region"))
+    "Formatting"
+    (("i" python-fix-imports "Fix Imports")
+     ("a" python-add-import "Add Import")
+     ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
+    "Navigation/Editing"
+    (("c" combobulate-mode "Combobulate Mode" :toggle t)
+     ("j" combobulate-avy "Jump")
+     ("ed" combobulate-edit "Edit")
+     ("en" combobulate-envelop "Envelop"))))
   :preface
   (defun aaronzinhoo--python-shell-send-current-file ()
     (interactive)
     (python-shell-send-file (buffer-file-name)))
-  (pretty-hydra-define hydra-python-mode
-    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "python" "Python Mode" 1 -0.05))
-    ("Run"
-     (("sh" run-python "Python Shell")
-      ("d" pdb "PDB" :color blue)
-      ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
-      ("v" projectile-run-vterm "run vterm"))
-     "Run in Python Shell"
-     (("rb" python-shell-send-buffer "Run Buffer")
-      ("rf" python-shell-send-file "Run File")
-      ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
-      ("rr" python-shell-send-region "Run Region"))
-     "Formatting"
-     (("i" python-fix-imports "Fix Imports")
-      ("a" python-add-import "Add Import")
-      ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
-     "Navigation/Editing"
-     (("c" combobulate-mode "Combobulate Mode" :toggle t)
-      ("j" combobulate-avy "Jump")
-      ("ed" combobulate-edit "Edit")
-      ("en" combobulate-envelop "Envelop"))))
   (defun aaronzinhoo--python-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
@@ -2280,26 +2304,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
   ;; define the hydra with the mode since the mode-map may not be defined yet
   :bind (:map java-ts-mode-map
-              ("C-c h" . hydra-lsp-java-mode/body))
-  :preface
-  (pretty-hydra-define hydra-lsp-java-mode
-    (:hint nil :color pink :quit-key "SPC" :title (with-alltheicon "java" "Java LSP Mode" 1 -0.05))
-    ("Class"
-     (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
-      ("co" lsp-java-generate-overrides "Generate Overides")
-      ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
-      ("ct" lsp-java-add-throws "Add Throws"))
-     "Import"
-     (("a" lsp-java-add-import "Add")
-      ("o" lsp-java-organize-imports "Organize"))
-     "Notifications"
-     (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
-     "Project Management"
-     (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
-      ("pd" lsp-dependency-list "List Dependencies"))
-     "Test"
-     (("tb" lsp-jt-browser "Test Browser" :color blue)
-      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
+              ("C-c h" . java-hydra/body))
+  :pretty-hydra
+  (java-hydra
+   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
+   ("Class"
+    (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
+     ("co" lsp-java-generate-overrides "Generate Overides")
+     ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
+     ("ct" lsp-java-add-throws "Add Throws"))
+    "Import"
+    (("a" lsp-java-add-import "Add")
+     ("o" lsp-java-organize-imports "Organize"))
+    "Notifications"
+    (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
+    "Project Management"
+    (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
+     ("pd" lsp-dependency-list "List Dependencies"))
+    "Test"
+    (("tb" lsp-jt-browser "Test Browser" :color blue)
+     ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
 (use-package cc-mode
   :straight nil
   :hook ((c++-mode . c++-ts-mode)
