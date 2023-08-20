@@ -22,6 +22,25 @@
 (message "Loading packages")
 ;;; Packages
 ;; built-in
+(use-package delsel
+  :straight nil
+  :config
+  (delete-selection-mode t))
+(use-package display-line-numbers
+  :straight nil
+  :hook ((conf-mode . display-line-numbers-mode)
+         (text-mode . display-line-numbers-mode)
+         (prog-mode . display-line-numbers-mode))
+  :config
+  (dolist (mode '(org-mode-hook
+                  term-mode-hook
+                  dashboard-mode-hook
+                  shell-mode-hook
+                  treemacs-mode-hook
+                  compilation-mode-hook
+                  vterm-mode-hook
+                  eshell-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package emacs
   :straight nil
   :hook (minibuffer-setup . cursor-intangible-mode)
@@ -33,6 +52,69 @@
   (tab-always-indent 'complete)
   :config
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
+(use-package elec-pair
+  :straight nil
+  :hook ((git-commit-mode . git-commit-add-electric-pairs)
+         (org-mode . org-add-electric-pairs)
+         (markdown-mode . markdown-add-electric-pairs)
+         (go-ts-mode . go-add-electric-pairs)
+         (yaml-ts-mode . yaml-add-electric-pairs))
+  :preface
+  (defun git-commit-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  ;; setup electric-pairs mode for org-mode
+  (defun org-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun markdown-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun go-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun yaml-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?\( . ?\)))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  :init
+  ;; disable <> auto pairing in electric-pair-mode for org-mode
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (setq-local electric-pair-inhibit-predicate
+                          `(lambda (c)
+                             (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
+  :init
+  (electric-pair-mode t))
+(use-package paren
+  :straight nil
+  :custom
+  (show-paren-style 'paren)
+  (show-paren-delay 0.03)
+  (show-paren-highlight-openparen t)
+  (show-paren-when-point-inside-paren nil)
+  (show-paren-when-point-in-periphery t)
+  :config
+  (show-paren-mode t))
+(use-package sh-mode
+  :straight nil
+  :hook ((sh-mode . bash-ts-mode)
+         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
+(use-package simple
+  :straight nil
+  :preface
+  (defun aaronzinhoo-remove-empty-lines-buffer ()
+    (save-excursion
+      (beginning-of-buffer)
+      (flush-lines "^\\s-*$" nil nil t)))
+  :config
+  (column-number-mode t)
+  (global-visual-line-mode t))
+(use-package tramp
+  :straight nil
+  :custom
+  (tramp-verbose 10)
+  (tramp-debug-buffer t)
+  (tramp-default-method "ssh"))
 (use-package tree-sitter
   :straight nil
   :init
@@ -57,36 +139,20 @@
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
   (dolist (lang treesit-language-source-alist)
-  (unless (treesit-language-available-p (car lang))
-    (treesit-install-language-grammar (car lang)))))
-(use-package sh-mode
-  :straight nil
-  :hook ((sh-mode . bash-ts-mode)
-         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
-(use-package simple
-  :straight nil
-  :preface
-  (defun aaronzinhoo-remove-empty-lines-buffer ()
-    (save-excursion
-      (beginning-of-buffer)
-      (flush-lines "^\\s-*$" nil nil t)))
-  :config
-  (column-number-mode t)
-  (global-visual-line-mode t))
-(use-package delsel
+    (unless (treesit-language-available-p (car lang))
+      (treesit-install-language-grammar (car lang))))
+  (dolist (mapping '((python-mode . python-ts-mode)
+                     (css-mode . css-ts-mode)
+                     (typescript-mode . tsx-ts-mode)
+                     (json-mode . json-ts-mode)
+                     (js-mode . js-ts-mode)
+                     (css-mode . css-ts-mode)
+                     (yaml-mode . yaml-ts-mode)))
+    (add-to-list 'major-mode-remap-alist mapping)))
+(use-package winner
   :straight nil
   :config
-  (delete-selection-mode t))
-(use-package paren
-  :straight nil
-  :custom
-  (show-paren-style 'paren)
-  (show-paren-delay 0.03)
-  (show-paren-highlight-openparen t)
-  (show-paren-when-point-inside-paren nil)
-  (show-paren-when-point-in-periphery t)
-  :config
-  (show-paren-mode t))
+  (winner-mode 1))
 (use-package system-packages
   :straight t
   :custom
@@ -94,55 +160,6 @@
   :init
   (when (eq system-type 'darwin)
     (setq system-packages-package-manager 'brew)))
-(use-package display-line-numbers
-  :straight nil
-  :hook ((conf-mode . display-line-numbers-mode)
-         (text-mode . display-line-numbers-mode)
-         (prog-mode . display-line-numbers-mode))
-  :config
-  (dolist (mode '(org-mode-hook
-                  term-mode-hook
-                  dashboard-mode-hook
-                  shell-mode-hook
-                  treemacs-mode-hook
-                  compilation-mode-hook
-                  vterm-mode-hook
-                  eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0)))))
-(use-package elec-pair
-  :demand t
-  :straight nil
-  :hook ((git-commit-mode . git-commit-add-electric-pairs)
-         (org-mode . org-add-electric-pairs)
-         (markdown-mode . markdown-add-electric-pairs)
-         (go-ts-mode . go-add-electric-pairs)
-         (yaml-ts-mode . yaml-add-electric-pairs))
-  :preface
-  (defun git-commit-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  ;; setup electric-pairs mode for org-mode
-  (defun org-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun markdown-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun go-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun yaml-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?( . ?)))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  :init
-  ;; disable <> auto pairing in electric-pair-mode for org-mode
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (setq-local electric-pair-inhibit-predicate
-                          `(lambda (c)
-                             (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
-  :config
-  (electric-pair-mode t))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package s :straight t)
@@ -178,29 +195,8 @@
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
-(use-package undo-fu-session
-  :custom
-  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  :config
-  (global-undo-fu-session-mode))
-(use-package undo-fu) ;; for hydra check hydra config
+;; for hydra check hydra config
 ;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package tramp
-  :straight nil
-  :custom
-  (tramp-verbose 10)
-  (tramp-debug-buffer t)
-  (tramp-default-method "ssh"))
-(use-package helpful
-  :custom
-  (help-window-select t)
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
-  :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
 (use-package no-littering
   :demand t
   :config
@@ -226,11 +222,12 @@
 (use-package ssh-agency
   :if (string-equal system-type "windows-nt"))
 (use-package ssh-config-mode
-  :hook ((ssh-config-mode . aaronzinhoo-ssh-config-mode-hook)
+  :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook)
          (ssh-config-mode . er/add-ssh-config-mode-expansions))
   :preface
-  (defun aaronzinhoo-ssh-config-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-dabbrev-code company-files)))))
+  (defun aaronzinhoo--ssh-config-mode-hook ()
+    (setq-local completion-at-point-functions
+                (list #'ssh-config-completion-at-point #'cape-file #'cape-dabbrev))))
 (use-package x509-mode
   :straight t
   :commands (x509-mode)
@@ -246,6 +243,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package xclip
+  :if (string-equal system-type "windows-nt")
   :straight t
   :init
   (defun wsl-copy (start end)
@@ -269,11 +267,6 @@
   :straight t
   :config
   (keychain-refresh-environment))
-;; preview line for goto-line
-(use-package goto-line-preview
-  :commands (goto-line-preview)
-  :config
-  (global-set-key [remap goto-line] 'goto-line-preview))
 (use-package benchmark-init
   :straight (:type git :host github :repo "dholm/benchmark-init-el")
   :config
@@ -286,16 +279,11 @@
   :custom
   (block-nav-move-skip-shallower t)
   (block-nav-center-after-scroll t))
-
 (use-package hydra
   :demand t
   :bind
   ("s-SPC" . hydra-nav/body)
-  ("s-f" . hydra-flycheck/body)
   ("s-o" . hydra-org/body)
-  ("s-p" . hydra-projectile/body)
-  ("s-i" . hydra-ivy/body)
-  ("s-/" . undo-and-activate-hydra-undo)
   ("s-B" . hydra-bookmark/body)
   :custom
   (hydra-default-hint nil))
@@ -652,8 +640,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package dired
   :straight nil
   :hook ((dired-mode . hl-line-mode)
-         (dired-mode . auto-revert-mode)
-         (dired-mode . all-the-icons-dired-mode))
+         (dired-mode . auto-revert-mode))
   :custom
   (dired-dwim-target t)
   (delete-by-moving-to-trash t)
@@ -713,10 +700,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package resize-window
   :straight (:type git :host github :repo "dpsutton/resize-window" :branch "master")
   :bind ("s-w" . resize-window))
-(use-package winner
-  :straight nil
-  :config
-  (winner-mode 1))
 (use-package ace-window
   :commands ace-window
   :bind* ("s-b" . ace-window)
