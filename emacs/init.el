@@ -134,6 +134,7 @@
      (markdown "https://github.com/ikatyang/tree-sitter-markdown")
      (proto "https://github.com/mitchellh/tree-sitter-proto" "main")
      (python "https://github.com/tree-sitter/tree-sitter-python")
+     (rust "https://github.com/tree-sitter/tree-sitter-rust")
      (toml "https://github.com/tree-sitter/tree-sitter-toml")
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
@@ -141,12 +142,15 @@
   (dolist (lang treesit-language-source-alist)
     (unless (treesit-language-available-p (car lang))
       (treesit-install-language-grammar (car lang))))
-  (dolist (mapping '((python-mode . python-ts-mode)
+  (dolist (mapping '((shell-mode . bash-ts-mode)
+                     (c++-mode . c++-ts-mode)
                      (css-mode . css-ts-mode)
-                     (typescript-mode . tsx-ts-mode)
+                     (go-mode . go-ts-mode)
+                     (java-mode . java-ts-mode)
                      (json-mode . json-ts-mode)
                      (js-mode . js-ts-mode)
-                     (css-mode . css-ts-mode)
+                     (python-mode . python-ts-mode)
+                     (typescript-mode . tsx-ts-mode)
                      (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping)))
 (use-package winner
@@ -411,7 +415,7 @@
   :after (major-mode-hydra)
   :bind
   ("C-/" . undo-fu-only-undo)
-  ("s-/" . undo-fu-hydra)
+  ("s-/" . undo-fu-hydra/body)
   (:map org-mode-map
         ("s-/" . undo-and-activate-hydra-mode))
   :pretty-hydra
@@ -883,7 +887,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (sql-mode . lsp-deferred)
          (web-mode . lsp-deferred)
          (typescript-ts-mode . lsp-deferred)
-         (rustic-mode . lsp-deferred)
+         (rust-ts-mode . lsp-deferred)
          (dockerfile-ts-mode . lsp-deferred)
          (sh-mode . lsp-deferred)
          (yaml-ts-mode . lsp-deferred)
@@ -2163,8 +2167,6 @@ When the number of characters in a buffer exceeds this threshold,
   :demand t)
 (use-package yaml-ts-mode
   :straight nil
-  :mode (("\\.ya?ml$" . yaml-ts-mode)
-         ("\\.tpl$" . yaml-ts-mode))
   :hook ((yaml-ts-mode . yaml-pro-mode)
          (docker-compose-mode . yaml-ts-mode)
          (yaml-pro-mode . yaml-pro-ts-mode)
@@ -2452,7 +2454,6 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package python
   :straight nil
   :delight " Py"
-  :mode ("\\.py" . python-ts-mode)
   :bind (:map python-ts-mode-map
               ("C-c h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
@@ -2533,6 +2534,9 @@ When the number of characters in a buffer exceeds this threshold,
   (defun my/go-playground-remove-lsp-workspace ()
     (when-let ((root (lsp-workspace-root))) (lsp-workspace-folders-remove root)))
   (add-hook 'go-playground-pre-rm-hook #'my/go-playground-remove-lsp-workspace))
+(use-package go-mod-ts-mode
+  :straight nil
+  :mode ("\\.mod\\'" . go-mod-ts-mode))
 (use-package go-ts-mode
   :straight nil
   :mode ("\\.go\\'" . go-ts-mode)
@@ -2577,9 +2581,10 @@ When the number of characters in a buffer exceeds this threshold,
 ;;; Rust
 (use-package toml-mode
   :hook (toml-mode . toml-ts-mode))
-(use-package rustic
-  :custom
-  (rustic-lsp-server 'rls))
+(use-package rust-mode)
+(use-package rust-ts-mode
+  :straight nil
+  :mode ("\\.rs\\'" . rust-ts-mode))
 
 ;;; Java | C++ | C
 (use-package groovy-mode
