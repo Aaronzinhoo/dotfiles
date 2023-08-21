@@ -400,7 +400,8 @@
      ("v" helpful-variable "variable")
      ("k" helpful-key "key")
      ("c" helpful-command "command")
-     ("d" helpful-at-point "thing at point")))))
+     ("d" helpful-at-point "thing at point")
+     ("m" describe-mode "mode")))))
 (use-package undo-fu-session
   :custom
   (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
@@ -603,6 +604,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
    ("h"   . dirvish-history-jump) ; remapped `describe-mode'
    ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
    ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
+   ("DEL" . dired-up-directory)
    ("TAB" . dirvish-subtree-toggle)
    ("M-f" . dirvish-history-go-forward)
    ("M-b" . dirvish-history-go-backward)
