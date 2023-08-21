@@ -204,7 +204,12 @@
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 (use-package url)
 (use-package xref
-  :straight t)
+  :straight t
+  ;;
+  ;; :custom
+  ;; xref at point always
+  ;; (setq xref-prompt-for-indentifier nil)
+  )
 (use-package frame-local
   :straight t)
 (use-package compdef
@@ -692,11 +697,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-set-init-info t)
   (dashboard-set-heading-icons t)
   (dashboard-set-file-icons t)
-  (dashboard-banner-logo-title "Welcome to your Emacs Dashboard")
+  (dashboard-banner-logo-title "Welcome to your Emacs Dashboard!")
   (dashboard-items '((recents  . 5)
                      (projects . 5)
                      (bookmarks . 5)
                      (agenda . 5)))
+  (dashboard-icon-type 'nerd-icons) ;; use `nerd-icons' package
   ;; Set the banner
   ;; Value can be
   ;; 'official which displays the official emacs logo
@@ -2034,8 +2040,16 @@ When the number of characters in a buffer exceeds this threshold,
   (exec-path-from-shell-initialize))
 (use-package list-environment
   :commands (list-environment))
+;; NOTE C-c C-t vterm-copy-mode for copying vterm text!
 (use-package vterm
-  :commands vterm)
+  :commands vterm
+  :preface
+  (setq vterm-install t)
+  :custom
+  (vterm-kill-buffer-on-exit t)
+  (vterm-max-scrollback 10000)
+  (confirm-kill-processes nil)
+  (hscroll-margin 0))
 (use-package multi-vterm
   :commands multi-vterm)
 (use-package ansi-color
@@ -2211,9 +2225,10 @@ When the number of characters in a buffer exceeds this threshold,
         kubernetes-redraw-frequency 5))
 (use-package kele
   :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
+  :bind ((:map kele-mode-map
+               ("s-k" . kele-command-map)))
   :config
-  (kele-mode 1)
-  (bind-key (kbd "C-c k") kele-command-map kele-mode-map))
+  (kele-mode t))
 ;;; WEB-DEV CONFIG
 
 ;; apache
