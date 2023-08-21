@@ -326,7 +326,7 @@
       ("n" org-next-visible-heading "next heading")
       ("B" org-previous-block)
       ("b" org-next-block)
-      ("g" counsel-org-goto "goto"))
+      ("g" consult-org-heading "goto"))
      "Links"
      (("l" org-next-link "next link")
       ("L" org-previous-link "prev link")
@@ -365,14 +365,7 @@
      (("r" er/contract-region "Contract Region")
       ("e" er/expand-region "Expand Region")
       ("w" easy-kill "Copy")
-      ("q" yank "Paste"))
-     "Project"
-     (("S" counsel-projectile-rg "Search" :color blue)
-      ("n" counsel-projectile-find-file "Find File" :color blue)
-      ("m" counsel-projectile-switch-to-buffer "Switch Buffer" :color blue))
-     "Window"
-     (("b" ace-window "Switch to window")
-      ("x" delete-window "Delete Window"))))
+      ("q" yank "Paste"))))
   (pretty-hydra-define hydra-bookmark
     (:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-bookmark" "Bookmark" 1 -0.05))
     ("Burly"
@@ -382,7 +375,7 @@
      "Cycle"
      (("c" bmkp-cycle "Cycle Bookmarks" :color red))
      "Jump"
-     (("j" counsel-bookmark "Jump to bookmark"))
+     (("j" consult-bookmark "Jump to bookmark"))
      "List"
      (("l" bookmark-bmenu-list "List Bookmarks")))))
 (use-package helpful
@@ -412,7 +405,7 @@
   :after (major-mode-hydra)
   :bind
   ("C-/" . undo-fu-only-undo)
-  ("s-/" . undo-and-activate-hydra-mode)
+  ("s-/" . undo-fu-hydra)
   (:map org-mode-map
         ("s-/" . undo-and-activate-hydra-mode))
   :pretty-hydra
@@ -421,11 +414,7 @@
     ("Action"
      (("/" undo-fu-only-undo "Undo")
       ("r" undo-fu-only-redo "Redo")
-      ("RET" nil "Quit" :color blue))))
-  :preface
-  (defun undo-and-activate-hydra-undo ()
-    (interactive)
-    (undo-fu-hydra/body)))
+      ("RET" nil "Quit" :color blue)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; CONTROL VERSION UTILS
@@ -540,10 +529,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :preface
   (defun aaronzinhoo--git-commit-setup ()
     (setq-local fill-column 72)
-    (setq-local company-dabbrev-code-modes '(text-mode magit-diff-mode))
-    (set (make-local-variable 'company-backends) '((company-dabbrev-code company-files company-ispell))))
+    (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
-  (magit-completing-read-function 'ivy-completing-read)
   (magit-bind-magit-project-status nil)
   :config
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
@@ -562,7 +549,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package xr
   :straight (:type git :host github :repo "mattiase/xr" :branch "master"))
 (use-package wgrep
-    :straight (:type git :host github :repo "mhayashi1120/Emacs-wgrep" :branch "master")
+  :straight (:type git :host github :repo "mhayashi1120/Emacs-wgrep" :branch "master")
+  :bind (:map grep-mode-map
+              ("M-e" . wgrep-change-to-wgrep-mode))
   :custom
   (wgrep-auto-save-buffer t))
 ;; Ripgrep
@@ -717,7 +706,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dashboard-startup-banner "~/.emacs.d/dashboard-images/rei_ayanami_render.png")
   ;; Content is not centered by default. To center, set
   (dashboard-center-content t)
-  (dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
   :config
   (dashboard-setup-startup-hook))
 
@@ -880,7 +868,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-mode
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook ((c-ts-mode . lsp-deferred)
+  :hook ((lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
+         (c-ts-mode . lsp-deferred)
          (c++-ts-mode . lsp-deferred)
          (go-ts-mode . lsp-deferred)
          (go-ts-mode . lsp-go-hooks)
@@ -951,6 +940,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                (insert-file-contents (expand-file-name python-version project-dir))
                (car (split-string (buffer-string))))))))))
   :custom
+  (lsp-completion-provider :none) ;; we use Corfu!
   (lsp-treemacs-sync-mode t)
   (lsp-auto-guess-root t)
   (lsp-log-io nil)
@@ -995,8 +985,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list))
-(use-package lsp-ivy
-  :after (lsp-mode ivy))
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -1012,7 +1000,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((java-ts-mode . lsp-deferred)
          (java-ts-mode . lsp-java-boot-lens-mode))
   :config
-  (let ((lombok-file (concat user-init-dir-fullpath "./deps/lombok-1.18.26.jar")))
+  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.26.jar")))
     ;; current VSCode defaults
     (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
   (require 'lsp-java-boot))
@@ -1031,235 +1019,534 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (python-mode . (lambda ()
                    (require 'lsp-pyright))))
 
-;;; Completetion outside of minibuffer
-(use-package company
-  :straight (company :files (:defaults "icons"))
-  :diminish company-mode
-  :hook ((prog-mode . company-mode)
-         (org-mode . company-mode))
-  :bind
-  ([remap indent-for-tab-command] . company-indent-or-complete-common)
-  (:map company-active-map
-        ("<tab>" . company-complete-common-or-cycle)
-        ("<backtab>" . company-select-previous))
-  :custom
-  ;; additional capf needed otherwise lsp will add company-capf to the front of the list
-  (company-backends '(company-files (company-capf :separate company-dabbrev-code) company-dabbrev company-capf))
-  (company-tooltip-idle-delay 0.1)
-  (company-tooltip-minimum-width 40)
-  (company-tooltip-maximum-width 80)
-  (company-dabbrev-code-time-limit 0.1)
-  (company-dabbrev-code-other-buffers 'code)
-  (company-dabbrev-minimum-length 3)
-  (company-dabbrev-code-modes '(prog-mode batch-file-mode csharp-mode css-mode erlang-mode haskell-mode jde-mode lua-mode python-mode yaml-ts-mode emacs-elisp-mode))
-  :preface
-  (defun company-yasnippet/disable-after-slash (fun command &optional arg &rest _ignore)
-    (if (eq command 'prefix)
-        (let ((prefix (funcall fun 'prefix)))
-          (when (and prefix (not
-                             (eq
-                              (char-before (- (point) (length prefix)))
-                              ?/)))
-            prefix))
-      (funcall fun command arg)))
-  (defun company-yasnippet/disable-after-dot (fun command &optional arg &rest _ignore)
-    (if (eq command 'prefix)
-        (let ((prefix (funcall fun 'prefix)))
-          (when (and prefix (not
-                             (eq
-                              (char-before (- (point) (length prefix)))
-                              ?.)))
-            prefix))
-      (funcall fun command arg)))
-  (defun company-preview-if-not-tng-frontend (command)
-    "`company-preview-frontend', but not when tng is active."
-    (unless (and (eq command 'post-command)
-                 company-selection-changed
-                 (memq 'company-tng-frontend company-frontends))
-      (company-preview-frontend command)))
+;;; Minibuffer Compleitions
+
+;; icons!!
+(use-package nerd-icons
+  :straight t)
+(use-package nerd-icons-dired
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+(use-package treemacs-nerd-icons
+  :after (treemacs)
+  :config
+  (treemacs-load-theme "nerd-icons"))
+(use-package nerd-icons-ibuffer
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
+(use-package nerd-icons-completion
+  :demand t
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
   :init
-  (setq company-format-margin-function #'company-vscode-dark-icons-margin)
-  (setq company-idle-delay 0.0
-        company-echo-delay 0 ;; remove annoying blinking
-        company-tooltip-flip-when-above t
-        company-tooltip-limit 20
-        company-require-match nil
-        company-dabbrev-ignore-case nil
-        company-dabbrev-downcase nil
-        company-show-numbers nil
-        company-minimum-prefix-length 1
-        company-selection-wrap-around t
-        company-tooltip-align-annotations t
-        company-transformers '(company-sort-by-backend-importance
-                               company-sort-prefer-same-case-prefix
-                               company-sort-by-occurrence))
-  (setq company-frontends
-        '(company-preview-if-not-tng-frontend
-          company-pseudo-tooltip-frontend
-          company-preview-if-just-one-frontend
-          company-echo-metadata-frontend))
+  (nerd-icons-completion-mode))
+(use-package kind-icon
+  :straight (kind-icon :type git :host github :repo "jdtsmith/kind-icon" :branch "main")
+  :after (corfu nerd-icons)
+  :demand
+  :custom
+  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+
+  ;; (setq kind-icon-blend-background nil)  ; Use midpoint color between foreground and background colors ("blended")?
+  (kind-icon-blend-frac 0.10)
+  (kind-icon-use-icons nil)
+  (kind-icon-mapping
+      `(
+        (array ,(nerd-icons-codicon "nf-cod-symbol_array") :face font-lock-type-face)
+        (boolean ,(nerd-icons-codicon "nf-cod-symbol_boolean") :face font-lock-builtin-face)
+        (class ,(nerd-icons-codicon "nf-cod-symbol_class") :face font-lock-type-face)
+        (color ,(nerd-icons-codicon "nf-cod-symbol_color") :face success)
+        (command ,(nerd-icons-codicon "nf-cod-terminal") :face default)
+        (constant ,(nerd-icons-codicon "nf-cod-symbol_constant") :face font-lock-constant-face)
+        (constructor ,(nerd-icons-codicon "nf-cod-triangle_right") :face font-lock-function-name-face)
+        (enummember ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
+        (enum-member ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
+        (enum ,(nerd-icons-codicon "nf-cod-symbol_enum") :face font-lock-builtin-face)
+        (event ,(nerd-icons-codicon "nf-cod-symbol_event") :face font-lock-warning-face)
+        (field ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-variable-name-face)
+        (file ,(nerd-icons-codicon "nf-cod-symbol_file") :face font-lock-string-face)
+        (folder ,(nerd-icons-codicon "nf-cod-folder") :face font-lock-doc-face)
+        (interface ,(nerd-icons-codicon "nf-cod-symbol_interface") :face font-lock-type-face)
+        (keyword ,(nerd-icons-codicon "nf-cod-symbol_keyword") :face font-lock-keyword-face)
+        (macro ,(nerd-icons-codicon "nf-cod-symbol_misc") :face font-lock-keyword-face)
+        (magic ,(nerd-icons-codicon "nf-cod-wand") :face font-lock-builtin-face)
+        (method ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
+        (function ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
+        (module ,(nerd-icons-codicon "nf-cod-file_submodule") :face font-lock-preprocessor-face)
+        (numeric ,(nerd-icons-codicon "nf-cod-symbol_numeric") :face font-lock-builtin-face)
+        (operator ,(nerd-icons-codicon "nf-cod-symbol_operator") :face font-lock-comment-delimiter-face)
+        (param ,(nerd-icons-codicon "nf-cod-symbol_parameter") :face default)
+        (property ,(nerd-icons-codicon "nf-cod-symbol_property") :face font-lock-variable-name-face)
+        (reference ,(nerd-icons-codicon "nf-cod-references") :face font-lock-variable-name-face)
+        (snippet ,(nerd-icons-codicon "nf-cod-symbol_snippet") :face font-lock-string-face)
+        (string ,(nerd-icons-codicon "nf-cod-symbol_string") :face font-lock-string-face)
+        (struct ,(nerd-icons-codicon "nf-cod-symbol_structure") :face font-lock-variable-name-face)
+        (text ,(nerd-icons-codicon "nf-cod-text_size") :face font-lock-doc-face)
+        (typeparameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
+        (type-parameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
+        (unit ,(nerd-icons-codicon "nf-cod-symbol_ruler") :face font-lock-constant-face)
+        (value ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-builtin-face)
+        (variable ,(nerd-icons-codicon "nf-cod-symbol_variable") :face font-lock-variable-name-face)
+        (t ,(nerd-icons-codicon "nf-cod-code") :face font-lock-warning-face)))
+  :init
+  (defvar after-enable-theme-hook nil)
+  (defun run-after-enable-theme-hook (&rest _args)
+    (run-hooks 'after-enable-theme-hook))
+  (advice-add 'enable-theme :after #'run-after-enable-theme-hook)
   :config
-  (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-dot)
-  (advice-add #'company-yasnippet :around #'company-yasnippet/disable-after-slash)
-  (global-company-mode t))
-(use-package company-posframe
-  :straight (:type git :host github :repo "tumashu/company-posframe" :branch "master")
-  :diminish company-posframe-mode
-  :hook (company-mode . company-posframe-mode)
+  (add-hook 'after-enable-theme-hook  #'kind-icon-reset-cache)
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+(use-package marginalia
+  :demand t
+  :after (vertico)
+  :bind (:map vertico-map
+              ("M-A" . marginalia-cycle))
+  :custom
+  (marginalia-max-relative-age 0)
+  (marginalia-align 'right)
+  :init
+  (marginalia-mode))
+(use-package orderless
+  :demand t
+  :ensure t
   :config
-  (setq company-posframe-show-indicator nil)
-  (setq company-posframe-show-metadata nil))
-(use-package company-bootstrap
-  :straight (:type git :host github :repo "typefo/company-bootstrap" :branch "master"))
+  (orderless-define-completion-style orderless+initialism
+    (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
+  ;; Define orderless style with initialism by default
+  (setq completion-styles '(orderless basic))
+  (setq completion-category-defaults nil)
+  (setq completion-category-overrides '((file (styles basic partial-completion))
+                                   (command (styles orderless+initialism))
+                                   (symbol (styles orderless+initialism))
+                                   (variable (styles orderless+initialism)))))
+;; consult
+;; Example configuration for Consult
+(use-package consult-dir
+  :straight (consult-dir :type git :host github :repo "karthink/consult-dir" :branch "master")
+  :bind (("C-x C-d" . consult-dir)
+         :map vertico-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file))
+  :preface
+  (defun consult-dir--tramp-docker-hosts ()
+  "Get a list of hosts from Docker."
+  (when (require 'tramp-container nil t)
+    (mapcar (lambda (e)
+	    (concat "/docker:" (format "%s" (cadr e)) ":/"))
+	  (tramp-docker--completion-function))))
+  :custom
+  (consult-dir-project-list-function #'consult-dir-projectile-dirs)
+  :config
+  (defvar consult-dir--source-tramp-docker
+    `(:name     "Docker"
+                :narrow   ?d
+                :category file
+                :face     consult-file
+                :history  file-name-history
+                :items    ,#'consult-dir--tramp-docker-hosts)
+    "Docker candiadate source for `consult-dir'.")
+
+  ;; Adding to the list of consult-dir sources
+  (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-docker t)
+  (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-ssh t))
+(use-package consult-flycheck
+  :after (consult)
+  :straight (consult-flycheck :type git :host github :repo "minad/consult-flycheck" :branch "main"))
+(use-package consult-projectile
+  :after (consult)
+  :demand t
+  :straight (consult-projectile :type git :host gitlab :repo "OlMon/consult-projectile" :branch "master")
+  :custom
+  (consult-projectile-use-projectile-switch-project t))
+(use-package consult
+  ;; Replace bindings. Lazily loaded due by `use-package'.
+  :bind (;; C-c bindings in `mode-specific-map'
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c k" . consult-kmacro)
+         ("C-c m" . consult-man)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
+         ;; C-x bindings in `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ;; M-g bindings in `goto-map'
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings in `search-map'
+         ("s-s f" . consult-fd)
+         ("s-s p" . consult-ripgrep-thing-at-point)
+         ;; ("M-s D" . consult-locate)
+         ;; ("M-s g" . consult-grep)
+         ;; ("M-s G" . consult-git-grep)
+         ("C-s" . aaronzinhoo--consult-ripgrep-or-line)
+         ;; ("M-s L" . consult-line-multi)
+         ;; ("M-s k" . consult-keep-lines)
+         ;; ("M-s u" . consult-focus-lines)
+         ;; Isearch integration
+         ;; ("C-M-S" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook
+  (completion-list-mode . consult-preview-at-point-mode)
+
+  :preface
+  (defun consult-ripgrep-thing-at-point (&optional dir given-initial)
+  "Pass the region to consult-ripgrep if available.
+
+DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
+  (interactive "P")
+  (let ((initial
+         (or given-initial
+             (cond ((not (use-region-p))
+                    (er/mark-symbol)
+                    (buffer-substring-no-properties (region-beginning) (region-end)))
+                   ((use-region-p)
+                    (buffer-substring-no-properties (region-beginning) (region-end)))))))
+    (deactivate-mark)
+    (consult-ripgrep (file-name-directory buffer-file-name) initial)))
+  (defun consult--fd-builder (input)
+  (let ((fd-command
+         (if (eq 0 (process-file-shell-command "fdfind"))
+             "fdfind"
+           "fd")))
+    (pcase-let* ((`(,arg . ,opts) (consult--command-split input))
+                 (`(,re . ,hl) (funcall consult--regexp-compiler
+                                        arg 'extended t)))
+      (when re
+        (cons (append
+               (list fd-command
+                     "--color=never" "--full-path"
+                     (consult--join-regexps re 'extended))
+               opts)
+              hl)))))
+
+  (defun consult-fd (&optional dir initial)
+    (interactive "P")
+    (pcase-let* ((`(,prompt ,paths ,dir) (consult--directory-prompt "Fd" dir))
+                 (default-directory dir))
+      (find-file (consult--find prompt #'consult--fd-builder initial))))
+  (defcustom aaronzinhoo--consult-ripgrep-or-line-limit 1000000
+  "Buffer size threshold for `my-consult-ripgrep-or-line'.
+When the number of characters in a buffer exceeds this threshold,
+`consult-ripgrep' will be used instead of `consult-line'."
+  :type 'integer)
+
+  (defun aaronzinhoo--consult-ripgrep-or-line ()
+    "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
+    (interactive)
+    (if (or (not buffer-file-name)
+            (buffer-narrowed-p)
+            (ignore-errors
+              (file-remote-p buffer-file-name))
+            (jka-compr-get-compression-info buffer-file-name)
+            (<= (buffer-size)
+                (/ aaronzinhoo--consult-ripgrep-or-line-limit
+                   (if (eq major-mode 'org-mode) 4 1))))
+        (consult-line)
+      (when (file-writable-p buffer-file-name)
+        (save-buffer))
+      (let ((consult-ripgrep-command
+             (concat "rg "
+                     "--null "
+                     "--line-buffered "
+                     "--color=ansi "
+                     "--max-columns=250 "
+                     "--no-heading "
+                     "--line-number "
+                     ;; adding these to default
+                     "--smart-case "
+                     "--hidden "
+                     "--max-columns-preview "
+                     ;; add back filename to get parsing to work
+                     "--with-filename "
+                     ;; defaults
+                     "-e ARG OPTS "
+                     (shell-quote-argument buffer-file-name))))
+        (consult-ripgrep))))
+
+  ;; The :init configuration is always executed (Not lazy)
+  :init
+
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register', `consult-register-load',
+  ;; `consult-register-store' and the Emacs built-ins.
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
+
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
+
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-file-register
+   consult--source-recent-file consult--source-project-recent-file
+   ;; :preview-key "M-."
+   :preview-key '(:debounce 0.4 any))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<") ;; "C-+"
+
+  ;; Optionally make narrowing help available in the minibuffer.
+  ;; You may want to use `embark-prefix-help-command' or which-key instead.
+  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+)
+;; Enable vertico
+(use-package embark
+  :straight t
+  :bind (:map minibuffer-mode-map
+              ("M-e" . embark-act))
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+;;; minibuffer completion
+(use-package vertico
+  ;; Special recipe to load extensions conveniently
+  :straight (vertico :files (:defaults "extensions/*")
+                     :includes (vertico-indexed
+                                vertico-flat
+                                vertico-grid
+                                vertico-mouse
+                                vertico-quick
+                                vertico-buffer
+                                vertico-repeat
+                                vertico-reverse
+                                vertico-directory
+                                vertico-multiform
+                                vertico-unobtrusive
+                                ))
+  :bind (:map vertico-map
+              ("<tab>" . vertico-insert)
+              ;; NOTE 2022-02-05: Cycle through candidate groups
+              ("C-M-n" . vertico-next-group)
+              ("C-M-p" . vertico-previous-group)
+              ;; Multiform toggles
+              ("<backspace>" . vertico-directory-delete-char)
+              ("M-<backspace>" . vertico-directory-delete-word)
+              ("RET" . vertico-directory-enter)
+              ("C-i" . vertico-quick-insert)
+              ("C-o" . vertico-quick-exit)
+              ("C-s" . vertico-save)
+              ("M-o" . aaronzinhoo--vertico-quick-embark))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  :preface
+  (defvar +vertico-transform-functions nil)
+
+  (cl-defmethod vertico--format-candidate :around
+    (cand prefix suffix index start &context ((not +vertico-transform-functions) null))
+    (dolist (fun (ensure-list +vertico-transform-functions))
+      (setq cand (funcall fun cand)))
+    (cl-call-next-method cand prefix suffix index start))
+
+  (defun +vertico-highlight-directory (file)
+    "If FILE ends with a slash, highlight it as a directory."
+    (if (string-suffix-p "/" file)
+        (propertize file 'face 'marginalia-file-priv-dir) ; or face 'dired-directory
+      file))
+  (defun sort-directories-first (files)
+    ;; Still sort by history position, length and alphabetically
+    (setq files (vertico-sort-history-length-alpha files))
+    ;; But then move directories first
+    (nconc (seq-filter (lambda (x) (string-suffix-p "/" x)) files)
+           (seq-remove (lambda (x) (string-suffix-p "/" x)) files)))
+  (defun aaronzinhoo--vertico-highlight-enabled-mode (cmd)
+    "If MODE is enabled, highlight it."
+    (let ((sym (intern cmd)))
+      (if (or (eq sym major-mode)
+              (and
+               (memq sym minor-mode-list)
+               (boundp sym)))
+        (propertize cmd 'face 'font-lock-constant-face)
+        cmd)))
+  (defun aaronzinhoo--vertico-quick-embark (&optional arg)
+    "Embark on candidate using quick keys."
+    (interactive)
+    (when (vertico-quick-jump)
+      (embark-act arg)))
+  :custom
+  (vertico-scroll-margin 0)
+  (vertico-count 20)                    ; Number of candidates to display
+  (vertico-resize t)
+  (vertico-grid-separator "       ")
+  (vertico-grid-lookahead 50)
+  (vertico-buffer-display-action '(display-buffer-reuse-window)) ; Default
+  (vertico-multiform-categories                                  ; Choose a multiform
+   '((file reverse
+           (vertico-sort-function . sort-directories-first)
+           (+vertico-transform-functions . +vertico-highlight-directory))
+     (consult-grep buffer)
+     (consult-location)
+     (imenu buffer)
+     (library reverse indexed)
+     (org-roam-node reverse indexed)
+     (jinx grid (vertico-grid-annotate . 20))
+     (t reverse)
+     ))
+  (vertico-multiform-commands
+   '((org-refile grid reverse indexed)
+     (consult-yank-pop indexed)
+     (consult-flycheck)
+     (consult-lsp-diagnostics)
+     (execute-extended-command reverse
+                               (+vertico-transform-functions . aaronzinhoo--vertico-highlight-enabled-mode))
+     ))
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode))
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+;;; Completetion outside of minibuffer
+
+;; correct spelling mistakes
+(use-package jinx
+  :delight
+  :hook (emacs-startup . global-jinx-mode)
+  :bind (("M-$" . jinx-correct)
+         ("C-M-$" . jinx-languages)))
+;; useful company backends
 (use-package company-web
   :after (company)
   :init
   (require 'company-web-html))
 (use-package company-org-block
   :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
+;; See the Cape README for more tweaks!
+(use-package cape
+  :demand t
+  :custom
+  (cape-dabbrev-min-length 2))
+(use-package corfu
+  :straight (corfu :type git :host github :repo "minad/corfu" :files (:defaults "extensions/*"))
+  ;; Optionally use TAB for cycling, default is `corfu-complete'.
+  :bind (:map corfu-map
+              ("M-SPC"      . corfu-insert-separator)
+              ("TAB"        . corfu-complete-common-or-next)
+              ([tab]        . corfu-complete-common-or-next)
+              ("S-TAB"      . corfu-previous)
+              ([backtab]    . corfu-previous)
+              ("<return>"   . corfu-insert)
+              ("M-p"        . corfu-popupinfo-scroll-up)
+              ("M-n"        . corfu-popupinfo-scroll-down))
+  :hook ((vterm-mode . (lambda () (setq-local corfu-quit-at-boundary t
+                                               corfu-quit-no-match t
+                                               corfu-auto nil)
+                          (corfu-mode)))
+         (eshell-mode . (lambda () (setq-local corfu-quit-at-boundary t
+                                               corfu-quit-no-match t
+                                               corfu-auto t
+                                               completion-at-point-functions (list (cape-capf-buster
+                                                                                    (cape-super-capf
+                                                                                     #'pcomplete-completions-at-point
+                                                                                     #'cape-abbrev))
+                                                                                   #'cape-file))
+                          (corfu-mode))))
+  ;; Optional customizations
+  :custom
+  (corfu-min-width 80)
+  (corfu-max-width corfu-min-width)       ; Always have the same width
+  (corfu-count 15)
+  (corfu-scroll-margin 4)
+
+  ;; `nil' means to ignore `corfu-separator' behavior, that is, use the older
+  ;; `corfu-quit-at-boundary' = nil behavior. Set this to separator if using
+  ;; `corfu-auto' = `t' workflow (in that case, make sure you also set up
+  ;; `; commentrfu-separator' and a keybind for `corfu-insert-separator', which my
+  ;; configuration already has pre-prepared). Necessary for manual corfu usage with
+  ;; orderless, otherwise first component is ignored, unless `corfu-separator'
+  ;; is inserted.
+  ;; (corfu-quit-at-boundary nil)
+  (corfu-cycle t)                 ; Allows cycling through candidates
+  (corfu-auto t)                  ; Enable auto completion
+  (corfu-auto-prefix 1)
+  (corfu-auto-delay 0.0)
+  (corfu-popupinfo-delay '(0.5 . 0.2))
+  (corfu-preview-current t)
+  (corfu-preselect 'valid)
+  (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+  (corfu-popupinfo-max-height 20)
+  (corfu-popupinfo-max-width 70)
+  :preface
+  (defun corfu-complete-common-or-next ()
+    "Complete common prefix or go to next candidate."
+    (interactive)
+    (if (= corfu--total 1)
+        (progn
+          (corfu--goto 1)
+          (corfu-insert))
+      (let* ((input (car corfu--input))
+             (str (if (thing-at-point 'filename) (file-name-nondirectory input) input))
+             (pt (length str))
+             (common (try-completion str corfu--candidates)))
+        (if (and (> pt 0)
+                 (stringp common)
+                 (not (string= str common)))
+            (insert (substring common pt))
+          (corfu-next)))))
+  :init
+  ;; local settings for completion at point settings will override this
+  (global-corfu-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode) ; Popup completion info
+  )
 (use-package imenu-list
   :bind (("s-m" . imenu-list-smart-toggle))
   :custom
   (imenu-list-focus-after-activation t)
   (imenu-list-auto-resize t))
-
-;;; Minibuffer Completion
-(use-package amx
-  :straight t)
-;; IF NEW MACHINE USE M-x all-the-icons-install-fonts
-;; should load ivy and swiper automatically
-(use-package flx  ;; Improves sorting for fuzzy-matched results
-  :after ivy
-  :init
-  (setq ivy-flx-limit 10000))
-(use-package counsel
-  :diminish (ivy-mode counsel-mode)
-  :bind* (("M-x" . counsel-M-x)
-          ("C-s" . counsel-grep-or-swiper)
-          ("C-r" . counsel-rg)
-          ("M-t" .  swiper-isearch-thing-at-point)
-          ("C-S-s" . swiper-isearch)
-          ("C-x d" . counsel-dired)
-          ("C-x D" . dired-jump)
-          ("C-x b" . counsel-switch-buffer)
-          ("C-x C-f" . counsel-find-file)
-          ("C-x C-r" . counsel-recentf)
-          :map ivy-switch-buffer-map
-          ("C-k" . ivy-switch-buffer-kill)
-          :map ivy-minibuffer-map
-          ("C-c o" . ivy-occur)
-          ("M-j" . nil)
-          ("C-j" . ivy-immediate-done)
-          ("DEL" . ivy-backward-delete-char)
-          :map ivy-occur-grep-mode-map
-          ("C-c h" . hydra-ivy-occur/body)
-          :map swiper-map
-          ("C-SPC" . swiper-avy))
-  :hook ((after-init . ivy-mode)
-         (ivy-mode . counsel-mode))
-  :preface
-  (defun ivy-update-candidates-dynamic-collection-workaround-a (old-fun &rest args)
-    (cl-letf (((symbol-function #'completion-metadata) #'ignore))
-      (apply old-fun args)))
-  (pretty-hydra-define hydra-ivy-occur
-    (:hint nil :color pink :quit-key "SPC" :title (with-faicon "tree" "Ivy-Occur" 1 -0.05))
-    ("Navigation"
-     (("n" ivy-occur-next-line "next")
-      ("p" ivy-occur-previous-line "prev"))
-     "Edit"
-     (("w" ivy-wgrep-change-to-wgrep-mode "wgrep" :color teal)
-      ("d" ivy-occur-delete-candidate "delete")
-      ("o" ivy-occur-dispatch "dispatch")
-      ("g" ivy-occur-revert-buffer))
-     "View"
-     (("v" ivy-occur-press "preview")
-      ("RET" ivy-occur-press-and-switch "goto" :color teal))))
-  :custom
-  (imenu-auto-rescan t)
-  (ivy-wrap t)
-  (ivy-initial-inputs-alist nil)
-  (swiper-action-recenter t)
-  (enable-recursive-minibuffers t)
-  (ivy-extra-directories nil)
-  (ivy-use-virtual-buffers t)
-  (ivy-count-format "%d/%d ")
-  (ivy-display-style 'fancy)
-  (ivy-height 20)
-  :config
-  (setq swiper-use-visual-line-p (lambda (_) nil))
-  ;; fix for async display of counsel-rg resuls
-  (advice-add #'ivy-update-candidates :around #'ivy-update-candidates-dynamic-collection-workaround-a))
-(use-package counsel-tramp
-  :straight (:type git :host github :repo "masasam/emacs-counsel-tramp")
-  :commands (counsel-tramp))
-(use-package counsel-projectile
-  :straight (:type git :host github :repo "ericdanan/counsel-projectile")
-  :commands (counsel-projectile-switch-project-by-name)
-  :config
-  (counsel-projectile-mode t))
-;; load before ivy-rich for better performance
-(use-package all-the-icons-ivy-rich
-  :hook (ivy-mode . all-the-icons-ivy-rich-mode))
-(use-package ivy-avy
-  :after (ivy)
-  :bind* (:map ivy-minibuffer-map
-               ("C-SPC" . ivy-avy)))
-(use-package ivy-rich
-  :after ivy
-  :hook (all-the-icons-ivy-rich-mode . ivy-rich-mode)
-  :init
-  (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line)
-  (defun ivy-rich-switch-buffer-icon (candidate)
-    (with-current-buffer
-        (get-buffer candidate)
-      (let ((icon (all-the-icons-icon-for-mode major-mode)))
-        (if (symbolp icon)
-            (all-the-icons-icon-for-mode 'fundamental-mode)
-          icon))))
-  :custom
-  (ivy-rich-parse-remote-buffer nil)
-  :config
-  ;; All the icon support to ivy-rich
-  (setq ivy-rich-display-transformers-list
-        '(ivy-switch-buffer
-          (:columns
-           ((ivy-rich-switch-buffer-icon (:width 2))
-            (ivy-rich-candidate (:width 30))
-            (ivy-rich-switch-buffer-size (:width 7))
-            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
-            (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))
-            (ivy-rich-switch-buffer-project (:width 15 :face success))
-            (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3))))))
-           :predicate
-           (lambda (cand) (get-buffer cand)))
-          counsel-projectile-find-file
-          (:columns
-           ((ivy-rich-switch-buffer-icon (:width 2))
-            (ivy-rich-candidate (:width 50)))
-           :predicate
-           (lambda (cand) (get-buffer cand)))))
-  (setq ivy-rich-path-style 'abbrev)
-  (ivy-rich-mode 1))
-(use-package prescient
-  :after (counsel)
-  :config
-  (prescient-persist-mode t))
-(use-package ivy-prescient
-  :after (prescient)
-  :custom
-  (ivy-prescient-enable-sorting t)
-  (ivy-prescient-enable-filtering t)
-  (ivy-re-builders-alist
-   '((swiper-isearch . ivy-prescient-re-builder)
-     (swiper . ivy-prescient-re-builder)
-     (swiper-isearch-thing-at-point . ivy-prescient-re-builder)
-     (t . ivy--regex-plus)))
-  :config
-  (ivy-prescient-mode t))
-(use-package company-prescient
-  :after (company prescient)
-  :config
-  (company-prescient-mode t))
 (use-package ag
   :defer 3)
 (use-package move-text
@@ -1303,20 +1590,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      crux-smart-delete-line
      hungry-delete-backward
      hungry-delete-forward))
-  (mc/cmds-to-run-once '(avy-goto-char-timer counsel-M-x dap-tooltip-mouse-motion hydra-multiple-cursors/body hydra-multiple-cursors/mc-hide-unmatched-lines-mode hydra-multiple-cursors/mc/edit-lines-and-exit hydra-multiple-cursors/mc/mark-all-dwim hydra-multiple-cursors/mc/mark-all-like-this hydra-multiple-cursors/mc/mark-all-like-this-and-exit hydra-multiple-cursors/mc/mark-next-like-this hydra-multiple-cursors/mc/mark-previous-like-this hydra-multiple-cursors/mc/nil hydra-multiple-cursors/mc/skip-to-next-like-this hydra-multiple-cursors/mc/skip-to-previous-like-this hydra-multiple-cursors/mc/unmark-next-like-this hydra-multiple-cursors/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
+  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion hydra-multiple-cursors/body hydra-multiple-cursors/mc-hide-unmatched-lines-mode hydra-multiple-cursors/mc/edit-lines-and-exit hydra-multiple-cursors/mc/mark-all-dwim hydra-multiple-cursors/mc/mark-all-like-this hydra-multiple-cursors/mc/mark-all-like-this-and-exit hydra-multiple-cursors/mc/mark-next-like-this hydra-multiple-cursors/mc/mark-previous-like-this hydra-multiple-cursors/mc/nil hydra-multiple-cursors/mc/skip-to-next-like-this hydra-multiple-cursors/mc/skip-to-previous-like-this hydra-multiple-cursors/mc/unmark-next-like-this hydra-multiple-cursors/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
   :straight (:type git :host github :repo "Aaronzinhoo/plantuml-mode" :branch "master")
   :mode (("\\plantuml\\'" . plantuml-mode))
+  :hook (plantuml-mode . aaronzinhoo--plantuml-setup-hook)
+  :preface
+  (defun aaronzinhoo-plantuml-setup-hook ()
+    (setq-local completion-at-point-functions
+                (list #'plantuml-completion-at-point #'cape-abbrev #'cape-dabbrev)))
   :custom
   (plantuml-executable-path "plantuml")
-  (plantuml-default-exec-mode 'executable)
-  :config
-  (add-hook 'plantuml-mode-hook (lambda ()
-                                  (set (make-local-variable 'company-backends)
-                                       '((company-capf company-dabbrev-code))))))
+  (plantuml-default-exec-mode 'executable))
 ;;; Org Support
 ;; for exporting html documents
 (use-package htmlize
@@ -1382,11 +1670,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                (buffer-string))
                              "/*]]>*/-->\n"
                              "</style>\n")))))
-  (defun aaronzinhoo-org-setup ()
+  (defun aaronzinhoo--org-setup ()
     (variable-pitch-mode t)
     (org-indent-mode t)
-    (org-superstar-mode t))
-  (defun aaronzinhoo-org-font-setup ()
+    (org-superstar-mode t)
+    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-company-to-capf #'company-org-keyword-backend) (cape-super-capf #'cape-dict #'cape-dabbrev))))
+  (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
                     (org-level-2 . 1.5)
@@ -1520,11 +1809,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
   (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
 
-  ;; make company backend simple for org files
-  (add-hook 'org-mode-hook
-            '(lambda ()
-               (set (make-local-variable 'company-backends)
-                    '(company-capf company-org-block company-ispell org-keyword-backend company-dabbrev))))
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "~/development/org/gtd.org" "Tasks")
            "* TODO %?\n  %i\n  %a")
@@ -1543,14 +1827,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   )
 (use-package org-contrib
   :after org)
-(use-package ivy-bibtex
-  :custom
-  (ivy-bibtex-bibliography "~/development/org/references/articles.bib")
-  (ivy-bibtex-library-path "~/development/org/pdfs/")
-  (ivy-bibtex-notes-path "~/development/org/notebook/")
-  (ivy-set-display-transformer
-   'org-ref-ivy-insert-cite-link
-   'ivy-bibtex-display-transformer))
 (use-package org-ref
   :after org
   :custom
@@ -1570,7 +1846,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (message "No PDF found for %s" key))))
 
   :config
-  (setq org-ref-completion-library 'org-ref-ivy-cite)
   ;; open pdfs with pdf-tools
   (setq org-ref-open-pdf-function 'my/org-ref-open-pdf-at-point)
   ;; Tell org-ref to let helm-bibtex find notes for it
@@ -1803,8 +2078,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (bookmark-save-flag t) ;;save bookmarks to .emacs.bmk after each entry
   )
 (use-package projectile
-  :after major-mode-hydra
-  :demand t
+  :after (major-mode-hydra)
+  :hook (dashboard-mode . projectile-mode)
   :bind ("s-p" . projectile-hydra/body)
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
@@ -1826,7 +2101,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     "Search & Replace"
     (("r" projectile-replace "replace")
      ("R" projectile-replace-regexp "regexp replace")
-     ("s" counsel-projectile-rg "search"))
+     ("s" consult-ripgrep "search"))
     "Tests"
     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
      ("tt" projectile-test-project "run tests")
@@ -1835,12 +2110,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (projectile-git-fd-args "-H -0 -E .git -tf")
   (projectile-generic-command "fd . -0 --type f --color=never")
   (projectile-find-dir-includes-top-level t)
-  (projectile-switch-project-action #'projectile-find-file)
   ;; use .gitignore to exclude files from search
   (projectile-indexing-method 'alien)
   (projectile-enable-caching t)
-  (projectile-sort-order 'recentf)
-  (projectile-completion-system 'ivy))
+  (projectile-sort-order 'recentf))
 
 
 ;;; Languages Support
@@ -1903,7 +2176,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :mode ("\\Jenkinsfile\\'" . jenkinsfile-mode)
   :preface
   (defun aaronzinhoo-company-jenkinsfile-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files))))
+    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict)))
   :config
   (add-hook 'jenkinsfile-mode-hook 'aaronzinhoo-company-jenkinsfile-mode-hook))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1952,8 +2225,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (apache-mode . aggressive-indent-mode))
   :preface
   (defun aaronzinhoo-apache2-company-mode-setup ()
-    (set (make-local-variable 'company-backends)
-         '((company-capf company-dabbrev company-files company-keywords)))))
+    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict))))
 
 ;; using verb instead because it is better
 (use-package simple-httpd
@@ -1986,11 +2258,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package css-mode
   :straight nil
   :hook ((css-mode . css-ts-mode)
-         (css-ts-mode . aaronzinhoo-company-css-mode-hook)
-         (scss-mode . aaronzinhoo-company-css-mode-hook))
+         (css-ts-mode . aaronzinhoo--css-setup-hook)
+         (scss-mode . aaronzinhoo--css-setup-hook))
   :preface
-  (defun aaronzinhoo-company-css-mode-hook ()
-    (set (make-local-variable 'company-backends) '((company-capf company-keywords company-files company-dabbrev company-ispell)))))
+  (defun aaronzinhoo--css-setup-hook ()
+    (setq-local completion-at-point-functions (list #'css-completion-at-point #'cape-file #'cape-dabbrev #'cape-dict)))
+  :custom
+  (css-indent-offset 2))
 (use-package web-mode
   :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo--web-mode-hook)
