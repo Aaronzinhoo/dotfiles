@@ -940,13 +940,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     "Replace the default `lsp-completion-at-point' with its
 `cape-capf-buster' version. Also add `cape-file' and
 `company-yasnippet' backends."
-  (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
-        (cape-capf-buster #'lsp-completion-at-point))
-  (add-to-list 'completion-at-point-functions #'cape-file t)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-  (bind-key (kbd "TAB") 'corfu-next corfu-map)
-  (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-        '(flex))) ;; Configure flex
+    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+          (cape-capf-buster #'lsp-completion-at-point))
+    (add-to-list 'completion-at-point-functions #'cape-file t)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+    (bind-key (kbd "TAB") 'corfu-next corfu-map)
+    (setq-local completion-styles '(flex basic))
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(flex))) ;; Configure flex
   (defun lsp-go-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer nil t)
     (add-hook 'before-save-hook 'lsp-organize-imports nil t)
@@ -968,6 +969,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                (insert-file-contents (expand-file-name python-version project-dir))
                (car (split-string (buffer-string))))))))))
   :custom
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-eldoc-render-all t)
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
   (lsp-completion-provider :none) ;; we use Corfu!
   (lsp-treemacs-sync-mode t)
   (lsp-auto-guess-root t)
@@ -995,6 +1000,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :init
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
   :config
+  (push 'rustic-clippy flycheck-checkers)
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
   (push '(yaml-ts-mode . "yaml") lsp-language-id-configuration)
@@ -1010,7 +1016,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :requires (lsp-mode lsp-docker)
   :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
   :hook ((lsp-mode . dap-auto-configure-mode)
-         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))))
+         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
+  :custom
+  (dap-ui-controls-mode t)
+  :config
+  (require 'dap-lldb)
+  (require 'dap-gdb-lldb))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list))
 (use-package lsp-ui
