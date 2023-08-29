@@ -58,7 +58,8 @@
          (org-mode . org-add-electric-pairs)
          (markdown-mode . markdown-add-electric-pairs)
          (go-ts-mode . go-add-electric-pairs)
-         (yaml-ts-mode . yaml-add-electric-pairs))
+         (yaml-ts-mode . yaml-add-electric-pairs)
+         (rust-ts-mode . rust-add-electric-pairs))
   :preface
   (defun git-commit-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
@@ -75,6 +76,9 @@
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   (defun yaml-add-electric-pairs ()
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?\( . ?\)))))
+    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defun rust-add-electric-pairs ()
+    (setq-local electric-pair-pairs (append electric-pair-pairs '((?' . ?'))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   :init
   ;; disable <> auto pairing in electric-pair-mode for org-mode
@@ -151,6 +155,7 @@
                      (js-mode . js-ts-mode)
                      (python-mode . python-ts-mode)
                      (typescript-mode . tsx-ts-mode)
+                     (toml-mode . toml-ts-mode)
                      (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping)))
 (use-package winner
@@ -834,6 +839,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (([remap open-line] . aaronzinhoo-open-line)
          ([remap kill-ring-save] . easy-kill)))
 (use-package expand-region
+  :commands (er/mark-symbol)
   :bind (("M-2" . er/expand-region)
          ("M-3" . er/mark-outside-pairs))
   :preface
@@ -843,6 +849,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (end-of-line)
     (set-mark (point))
     (beginning-of-line-text))
+  (defun er/add-rust-mode-expansions ()
+    (make-variable-buffer-local 'er/try-expand-list)
+    (setq er/try-expand-list (append
+                              er/try-expand-list
+                              '(er/c-mark-statement
+                                er/c-mark-fully-qualified-name
+                                er/c-mark-function-call-1   er/c-mark-function-call-2
+                                er/c-mark-statement-block-1 er/c-mark-statement-block-2
+                                er/c-mark-vector-access-1   er/c-mark-vector-access-2
+                                aaronzinhoo-mark-line))))
   (defun er/add-rjsx-mode-expansions ()
     (make-variable-buffer-local 'er/try-expand-list)
     (setq er/try-expand-list (append
@@ -862,7 +878,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
-  (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions))
+  (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions)
+  (er/enable-mode-expansions 'rust-ts-mode 'er/add-rust-mode-expansions))
 (use-package emojify
   :if (display-graphic-p)
   :hook (prog-mode . (lambda () (emojify-mode 0)))
@@ -899,7 +916,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("s-l" . lsp-hydra/body))
   :pretty-hydra
   (lsp-hydra
-    (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocker" "LSP" 1 -0.05))
+    (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "LSP" 1 -0.05))
     ("Goto"
      (("r" lsp-find-references "refs")
       ("d" lsp-find-definition "defs")
@@ -2579,12 +2596,19 @@ When the number of characters in a buffer exceeds this threshold,
   :hook (cmake-mode . cmake-ts-mode))
 
 ;;; Rust
-(use-package toml-mode
-  :hook (toml-mode . toml-ts-mode))
 (use-package rust-mode)
+(use-package rustic)
 (use-package rust-ts-mode
   :straight nil
-  :mode ("\\.rs\\'" . rust-ts-mode))
+  :mode ("\\.rs\\'" . rust-ts-mode)
+  :preface
+  (defun cargo-run-offline ()
+    (interactive)
+    (rustic-cargo-run-command "--offline")))
+(use-package cargo-mode
+  :hook
+  (rust-ts-mode . cargo-minor-mode)
+  (rust-ts-mode . (lambda () (setq-local flycheck-local-checkers '((rust-clippy . ((next-checkers . (rust-cargo)))))))))
 
 ;;; Java | C++ | C
 (use-package groovy-mode
@@ -2806,6 +2830,7 @@ When the number of characters in a buffer exceeds this threshold,
 (message "Done loading packages")
 
 ;;; init.el ends here
- ;; Local Variables:
+
+;; Local Variables:
 ;; jinx-local-words: "config"
 ;; End:
