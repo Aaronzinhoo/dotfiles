@@ -1407,7 +1407,9 @@ When the number of characters in a buffer exceeds this threshold,
               ("C-o" . vertico-quick-exit)
               ("C-s" . vertico-save)
               ("M-o" . aaronzinhoo--vertico-quick-embark))
-  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  :hook
+  (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  (after-change-major-mode . aaronzinhoo--save-major-mode)
   :preface
   (defvar +vertico-transform-functions nil)
 
@@ -1432,11 +1434,20 @@ When the number of characters in a buffer exceeds this threshold,
     "If MODE is enabled, highlight it."
     (let ((sym (intern cmd)))
       (if (or (eq sym major-mode)
+              (eq sym aaronzinhoo--last-major-mode)
               (and
                (memq sym minor-mode-list)
                (boundp sym)))
         (propertize cmd 'face 'font-lock-constant-face)
         cmd)))
+  (defun aaronzinhoo--save-major-mode ()
+    "Function to capture major mode of buffer."
+    (when (not (or
+                (eq 'minibuffer-mode major-mode)
+                (eq 'fundamental-mode major-mode)
+                (eq 'minibuffer-inactive-mode major-mode)
+                (eq 'special-mode major-mode)))
+      (setq aaronzinhoo--last-major-mode major-mode)))
   (defun aaronzinhoo--vertico-quick-embark (&optional arg)
     "Embark on candidate using quick keys."
     (interactive)
@@ -1470,6 +1481,8 @@ When the number of characters in a buffer exceeds this threshold,
                                (+vertico-transform-functions . aaronzinhoo--vertico-highlight-enabled-mode))
      ))
   :init
+  ;; variable to enable highlighting major mode in minibuffer
+  (setq aaronzinhoo--last-major-mode nil)
   (vertico-mode)
   (vertico-multiform-mode))
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
