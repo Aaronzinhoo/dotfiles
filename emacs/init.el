@@ -46,6 +46,7 @@
   :hook (minibuffer-setup . cursor-intangible-mode)
   :custom
   (delete-selection-mode t)
+  (pixel-scroll-precision-mode t)
   (enable-recursive-minibuffers t)
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
@@ -101,8 +102,7 @@
   (show-paren-mode t))
 (use-package sh-mode
   :straight nil
-  :hook ((sh-mode . bash-ts-mode)
-         (sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
+  :hook ((sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package simple
   :straight nil
   :preface
@@ -128,6 +128,7 @@
      (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
      (c "https://github.com/tree-sitter/tree-sitter-c")
      (css "https://github.com/tree-sitter/tree-sitter-css")
+     (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
      (go "https://github.com/tree-sitter/tree-sitter-go")
      (html "https://github.com/tree-sitter/tree-sitter-html")
@@ -139,16 +140,23 @@
      (proto "https://github.com/mitchellh/tree-sitter-proto" "main")
      (python "https://github.com/tree-sitter/tree-sitter-python")
      (rust "https://github.com/tree-sitter/tree-sitter-rust")
+     (sql "https://github.com/m-novikov/tree-sitter-sql")
      (toml "https://github.com/tree-sitter/tree-sitter-toml")
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (xml "https://github.com/ObserverOfTime/tree-sitter-xml" "master" "tree-sitter-xml/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
   (dolist (lang treesit-language-source-alist)
     (unless (treesit-language-available-p (car lang))
       (treesit-install-language-grammar (car lang))))
-  (dolist (mapping '((shell-mode . bash-ts-mode)
+  (dolist (mapping '((sh-mode . bash-ts-mode)
+                     (c-mode . c-ts-mode)
+                     (cc-mode . c++-ts-mode)
                      (c++-mode . c++-ts-mode)
+                     (c-or-c++-mode . c-or-c++-ts-mode)
                      (css-mode . css-ts-mode)
+                     (dockerfile-mode . dockerfile-ts-mode)
+                     (go-dot-mod-mode . go-mod-ts-mode)
                      (go-mode . go-ts-mode)
                      (java-mode . java-ts-mode)
                      (json-mode . json-ts-mode)
@@ -157,7 +165,10 @@
                      (typescript-mode . tsx-ts-mode)
                      (toml-mode . toml-ts-mode)
                      (yaml-mode . yaml-ts-mode)))
-    (add-to-list 'major-mode-remap-alist mapping)))
+    (add-to-list 'major-mode-remap-alist mapping))
+  :custom
+  (treesit-load-name-override-list
+   '((c++ "libtree-sitter-cpp"))))
 (use-package winner
   :straight nil
   :config
@@ -183,6 +194,7 @@
   :straight (:type git :host github :repo "rejeep/f.el" :branch "master"))
 (use-package pcre2el :straight t)
 (use-package compat
+  :demand t
   :straight (:type git :host github :repo "emacs-compat/compat" :branch "main"))
 ;; log event/command history of all buffers
 (use-package command-log-mode
@@ -412,12 +424,13 @@
      ("d" helpful-at-point "thing at point")
      ("m" describe-mode "mode")))))
 (use-package undo-fu-session
+  :straight (:type git :host nil :repo "https://codeberg.org/ideasman42/emacs-undo-fu-session" :branch "main")
+  :hook (emacs-startup . undo-fu-session-global-mode)
   :custom
-  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  :init
-  (undo-fu-session-global-mode t))
+  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 (use-package undo-fu
   :after (major-mode-hydra)
+  :straight (:type git :host nil :repo "https://codeberg.org/ideasman42/emacs-undo-fu" :branch "main")
   :bind
   ("C-/" . undo-fu-only-undo)
   ("s-/" . undo-fu-hydra/body)
@@ -1252,7 +1265,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; relevant when you use the default completion UI.
   :hook
   (completion-list-mode . consult-preview-at-point-mode)
-
+  :custom
+  (completion-in-region-function #'consult-completion-in-region)
   :preface
   (defun consult-ripgrep-thing-at-point (&optional dir given-initial)
   "Pass the region to consult-ripgrep if available.
@@ -1668,8 +1682,6 @@ When the number of characters in a buffer exceeds this threshold,
 ;; better way to test APIs (like postman but with org files!)
 ;; must keep here since org uses ob-verb
 (use-package verb
-  :after (org)
-  :commands (verb-mode)
   :bind (:map org-mode-map
               ("s-v" . verb-hydra/body))
   :pretty-hydra
@@ -1726,7 +1738,7 @@ When the number of characters in a buffer exceeds this threshold,
     (variable-pitch-mode t)
     (org-indent-mode t)
     (org-superstar-mode t)
-    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-company-to-capf #'company-org-keyword-backend) (cape-super-capf #'cape-dict #'cape-dabbrev))))
+    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-super-capf #'cape-dict #'cape-dabbrev))))
   (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
@@ -2260,18 +2272,24 @@ When the number of characters in a buffer exceeds this threshold,
     (("b" dockerfile-build-buffer "Build Image")
      ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 ;; kubernetes settings overview
+(use-package kubel
+  :after (vterm)
+  :config (kubel-vterm-setup))
 (use-package kubernetes
   :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
   :defer t
   :commands (kubernetes-overview)
+  :custom
+  (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
+  (kubernetes-default-overview-view 'my-view)
   :config
   (setq kubernetes-poll-frequency 5
         kubernetes-redraw-frequency 5))
 (use-package kele
+  :demand t
   :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
-  :bind ((:map kele-mode-map
-               ("s-k" . kele-command-map)))
   :config
+  (define-key kele-mode-map (kbd "s-k") kele-command-map)
   (kele-mode t))
 ;;; WEB-DEV CONFIG
 
@@ -2667,10 +2685,8 @@ When the number of characters in a buffer exceeds this threshold,
     "Test"
     (("tb" lsp-jt-browser "Test Browser" :color blue)
      ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
-(use-package cc-mode
-  :straight nil
-  :hook ((c++-mode . c++-ts-mode)
-         (c-mode . c-ts-mode)))
+
+;; protobuf
 (use-package protobuf-ts-mode
   :mode (("\\.proto\\'" . protobuf-ts-mode)))
 (use-package flycheck-buf-lint
@@ -2680,7 +2696,7 @@ When the number of characters in a buffer exceeds this threshold,
 ;;; SQL Mode
 (use-package sqlformat
   :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
-  :hook (sql-mode . sqlformat-on-save))
+  :hook (sql-mode . sqlformat-on-save-mode))
 
 
 ;;; Theme
