@@ -51,6 +51,30 @@
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (tab-always-indent 'complete)
+  :preface
+  (defun uuid-create ()
+    "Return a newly generated UUID. This uses a simple hashing of variable data."
+    (let ((s (md5 (format "%s%s%s%s%s%s%s%s%s%s"
+                          (user-uid)
+                          (emacs-pid)
+                          (system-name)
+                          (user-full-name)
+                          user-mail-address
+                          (current-time)
+                          (emacs-uptime)
+                          (garbage-collect)
+                          (random)
+                          (recent-keys)))))
+      (format "%s-%s-3%s-%s-%s"
+              (substring s 0 8)
+              (substring s 8 12)
+              (substring s 13 16)
+              (substring s 16 20)
+              (substring s 20 32))))
+  (defun uuid-insert ()
+    "Inserts a new UUID at the point."
+    (interactive)
+    (insert (uuid-create)))
   :config
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
@@ -131,6 +155,7 @@
      (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
      (go "https://github.com/tree-sitter/tree-sitter-go")
+     (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
      (html "https://github.com/tree-sitter/tree-sitter-html")
      (java "https://github.com/tree-sitter/tree-sitter-java")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
@@ -913,7 +938,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          (c-ts-mode . lsp-deferred)
          (c++-ts-mode . lsp-deferred)
          (go-ts-mode . lsp-deferred)
-         (go-ts-mode . lsp-go-hooks)
          (sql-mode . lsp-deferred)
          (web-mode . lsp-deferred)
          (typescript-ts-mode . lsp-deferred)
@@ -953,8 +977,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     "Replace the default `lsp-completion-at-point' with its
 `cape-capf-buster' version. Also add `cape-file' and
 `company-yasnippet' backends."
-    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
-          (cape-capf-buster #'lsp-completion-at-point))
+    (setq-local completion-at-point-functions
+            (list (cape-capf-buster #'lsp-completion-at-point)))
     (add-to-list 'completion-at-point-functions #'cape-file t)
     (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
@@ -2415,7 +2439,13 @@ When the number of characters in a buffer exceeds this threshold,
               ("s-h" . markdown-mode-hydra/body))
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
-  :hook (markdown-mode . flycheck-mode)
+  :hook ((markdown-mode . flycheck-mode)
+         (markdown-mode . aaronzinhoo--markdown-mode-hook)
+         (gfm-mode      . aaronzinhoo--markdown-mode-hook))
+  :preface
+  (defun aaronzinhoo--markdown-mode-hook ()
+    (setq-local completion-at-point-functions
+                (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :pretty-hydra
   ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Insert"
