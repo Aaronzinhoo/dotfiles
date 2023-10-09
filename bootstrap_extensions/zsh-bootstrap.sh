@@ -24,7 +24,7 @@ git clone https://github.com/mattberther/zsh-pyenv "${CUSTOM_PLUGINS}"/zsh-pyenv
 
 git clone https://github.com/zsh-users/zsh-completions "${CUSTOM_PLUGINS}"/zsh-completions
 
-git clone https://github.com/zdharma/fast-syntax-highlighting.git "${CUSTOM_PLUGINS}"/fast-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${CUSTOM_PLUGINS}/zsh-syntax-highlighting"
 
 git clone https://github.com/agkozak/zsh-z "${CUSTOM_PLUGINS}"/zsh-z
 
