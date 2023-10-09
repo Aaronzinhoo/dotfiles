@@ -82,7 +82,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions fast-syntax-highlighting command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-sdkman )
+plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip poetry golang zsh-completions command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-sdkman zsh-syntax-highlighting )
 
 zstyle ':omz:plugins:nvm' lazy yes
 source $ZSH/oh-my-zsh.sh
@@ -157,5 +157,22 @@ export PATH="$HOME/.gobrew/current/bin:$HOME/.gobrew/bin:$PATH"
 export GOROOT="$HOME/.gobrew/current/go"
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="/home/aaronzinho/.sdkman"
-[[ -s "/home/aaronzinho/.sdkman/bin/sdkman-init.sh" ]] && source "/home/aaronzinho/.sdkman/bin/sdkman-init.sh"
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$SDKMAN_DIR/.sdkman/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/.sdkman/bin/sdkman-init.sh"
+
+_gobrew()
+{
+    COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
+    case "$COMP_CWORD" in
+        1)
+            COMMANDS="ls ls-remote use install uninstall self-update prune version help"
+            ;;
+        2)
+            COMMANDS=`gobrew ls |sed '/*/d'| sed '/current/d' |awk NF`
+            ;;
+    esac
+    COMPREPLY=(`compgen -W "$COMMANDS" -- "${COMP_WORDS[COMP_CWORD]}"`)
+    return 0
+}
+
+complete -F _gobrew gobrew
