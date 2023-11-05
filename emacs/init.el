@@ -979,8 +979,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 `company-yasnippet' backends."
     (setq-local completion-at-point-functions
             (list (cape-capf-buster #'lsp-completion-at-point)))
-    (add-to-list 'completion-at-point-functions #'cape-file t)
     (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+    (add-to-list 'completion-at-point-functions #'cape-file t)
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
     (setq-local completion-styles '(flex basic))
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
@@ -2256,6 +2256,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
+    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev (cape-capf-buster #'lsp-completion-at-point) #'cape-dict))
     (yaml-pro-mode nil)))
 (use-package json-ts-mode
   :straight nil
@@ -2468,7 +2469,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package vmd-mode
   :commands (vmd-mode)
   :custom
-  (vmd-binary-path (concat nvm-home-folder "versions/node/v14.19.0/bin/vmd")))
+  (vmd-binary-path (concat node-home-folder "versions/node/v14.19.0/bin/vmd")))
 ;; JS/react/angular config
 ;; completetion: lsp+company
 ;; refactor: js-prettier
