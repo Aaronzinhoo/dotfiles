@@ -2211,6 +2211,10 @@ When the number of characters in a buffer exceeds this threshold,
 
 ;;; Languages Support
 
+;; folding
+(use-package ts-fold
+  :straight (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold"))
+
 ;; Indent Guides
 (use-package highlight-indent-guides)
 (use-package combobulate
