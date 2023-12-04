@@ -2375,7 +2375,7 @@ When the number of characters in a buffer exceeds this threshold,
   :bind ((:map web-mode-map
                ("s-h" . web-mode-hydra/body)))
   :pretty-hydra
-  ((:hint nil :title (with-octicon "globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
+  ((:hint nil :title (with-octicon "nf-oct-globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Navigation"
     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
      ("e" sgml-skip-tag-forward "tag end | next tag")
@@ -2469,7 +2469,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package vmd-mode
   :commands (vmd-mode)
   :custom
-  (vmd-binary-path (concat node-home-folder "versions/node/v14.19.0/bin/vmd")))
+  (vmd-binary-path (concat nvm-home-folder "/versions/node/v14.19.0/bin/vmd")))
 ;; JS/react/angular config
 ;; completetion: lsp+company
 ;; refactor: js-prettier
