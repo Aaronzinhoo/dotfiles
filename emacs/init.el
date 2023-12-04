@@ -1724,7 +1724,7 @@ When the number of characters in a buffer exceeds this threshold,
   ("C-c c" . org-capture)
   (:map org-mode-map
         ("C-M-<return>" . org-insert-subheading)
-        ("C-c h". hydra-org-nav/body))
+        ("s-h". hydra-org-nav/body))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -2286,7 +2286,7 @@ When the number of characters in a buffer exceeds this threshold,
   :hook (dockerfile-mode . dockerfile-ts-mode)
   :mode ("Dockerfile\\'" . dockerfile-ts-mode)
   :bind (:map dockerfile-ts-mode-map
-              ("C-c h" . dockerfile-hydra/body))
+              ("s-h" . dockerfile-hydra/body))
   :pretty-hydra
   (dockerfile-hydra
    (:hint nil :title (with-mdicon "nf-md-docker" "Dockerfile Commands" 1 -0.05) :quit-key "SPC" :color pink)
@@ -2342,7 +2342,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package nxml-mode
   :straight nil
   :bind ((:map nxml-mode-map
-               ("C-c h" . hydra-web/body)))
+               ("s-h" . hydra-web/body)))
   :config
   (add-to-list 'auto-mode-alist
                (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
@@ -2542,7 +2542,7 @@ When the number of characters in a buffer exceeds this threshold,
   :straight nil
   :delight " Py"
   :bind (:map python-ts-mode-map
-              ("C-c h" . python-hydra/body))
+              ("s-h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
          ;; (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
@@ -2693,7 +2693,7 @@ When the number of characters in a buffer exceeds this threshold,
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
   ;; define the hydra with the mode since the mode-map may not be defined yet
   :bind (:map java-ts-mode-map
-              ("C-c h" . java-hydra/body))
+              ("s-h" . java-hydra/body))
   :pretty-hydra
   (java-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
