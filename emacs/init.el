@@ -978,9 +978,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 `cape-capf-buster' version. Also add `cape-file' and
 `company-yasnippet' backends."
     (setq-local completion-at-point-functions
-            (list (cape-capf-buster #'lsp-completion-at-point)))
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-    (add-to-list 'completion-at-point-functions #'cape-file t)
+            (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev)))
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
     (setq-local completion-styles '(flex basic))
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
@@ -1023,8 +1021,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   (lsp-yaml-schemas
-   `((,(intern "https://json.schemastore.org/helmfile.json") . ["Chart.yaml" , "pipeline.yaml"])
-     (,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
+   `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
      (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
      (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
@@ -1579,7 +1576,7 @@ When the number of characters in a buffer exceeds this threshold,
                                                corfu-quit-no-match t
                                                corfu-auto t
                                                completion-at-point-functions (list (cape-capf-buster
-                                                                                    (cape-super-capf
+                                                                                    (cape-capf-super
                                                                                      #'pcomplete-completions-at-point
                                                                                      #'cape-abbrev))
                                                                                    #'cape-file))
@@ -1762,7 +1759,7 @@ When the number of characters in a buffer exceeds this threshold,
     (variable-pitch-mode t)
     (org-indent-mode t)
     (org-superstar-mode t)
-    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-super-capf #'cape-dict #'cape-dabbrev))))
+    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-capf-super #'cape-dict #'cape-dabbrev))))
   (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
@@ -2256,7 +2253,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
-    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev (cape-capf-buster #'lsp-completion-at-point) #'cape-dict))
+    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
     (yaml-pro-mode nil)))
 (use-package json-ts-mode
   :straight nil
@@ -2416,7 +2413,7 @@ When the number of characters in a buffer exceeds this threshold,
     (hungry-delete-backward 1))
   ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
   (defun aaronzinhoo--web-mode-hook ()
-    (setq-local completion-at-point-functions (list #'lsp-completion-at-point #'cape-file (cape-super-capf (cape-company-to-capf #'company-web-html) #'css-completion-at-point) #'cape-dabbrev #'cape-dict)))
+    (setq-local completion-at-point-functions (list #'lsp-completion-at-point #'cape-file (cape-capf-super (cape-company-to-capf #'company-web-html) #'css-completion-at-point) #'cape-dabbrev #'cape-dict)))
   :custom
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
