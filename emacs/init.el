@@ -1665,6 +1665,9 @@ When the number of characters in a buffer exceeds this threshold,
      ("rc" verb-send-request-on-point "Current Window"))
     "Kill"
     (("k" verb-kill-all-response-buffers "All Response Buffers")))))
+(use-package swagg
+  :straight (:type git :host github :repo "isamert/swagg.el" :branch "main")
+  :commands (swagg-request swagg-request-with-rest-block))
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo--org-setup)
