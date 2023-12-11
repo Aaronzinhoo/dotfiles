@@ -25,11 +25,6 @@ export NVM_DIR="$XDG_CONFIG_HOME/nvm"
 # golang
 export PATH="/usr/local/go/bin:$PATH"
 
-# if using wsl
-# if [ ! -z "$WSL_DISTRO_NAME" ]; then
-# source $ZSH_CUSTOM_SETUP_DIR/os/wsl.zsh
-# fi
-
 # OS speific setup
 if [[ "$OSTYPE" =~ "^darwin" ]]; then
     source $ZSH_CUSTOM_SETUP_DIR/os/mac.zsh

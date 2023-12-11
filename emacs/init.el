@@ -1034,6 +1034,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :init
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
   :config
+  (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
   (push 'rustic-clippy flycheck-checkers)
   (push '(web-mode . "html") lsp-language-id-configuration)
   (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
@@ -1656,6 +1657,10 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package verb
   :bind (:map org-mode-map
               ("s-v" . verb-hydra/body))
+  :preface
+  (defun aaronzinhoo--verb-kill-this-buffer ()
+    (interactive)
+    (kill-buffer (buffer-file-name)))
   :pretty-hydra
   (verb-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-web" "Verb Mode" 1 -0.05))
@@ -1664,7 +1669,8 @@ When the number of characters in a buffer exceeds this threshold,
      ("ro" verb-send-request-on-point-other-window "Other Window")
      ("rc" verb-send-request-on-point "Current Window"))
     "Kill"
-    (("k" verb-kill-all-response-buffers "All Response Buffers")))))
+    (("k" aaronzinhoo--verb-kill-this-buffer  "This Response Buffers")
+     ("K" verb-kill-all-response-buffers  "All Response Buffers and Windows")))))
 (use-package swagg
   :straight (:type git :host github :repo "isamert/swagg.el" :branch "main")
   :commands (swagg-request swagg-request-with-rest-block))
@@ -2848,11 +2854,10 @@ When the number of characters in a buffer exceeds this threshold,
   :demand t
   :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
   :custom
-  (moe-theme-highlight-buffer-id t))
-(use-package moe-theme-switcher
-  :after (moe-theme)
-  :demand t
-  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev"))
+  (moe-theme-highlight-buffer-id t)
+  :config
+  (require 'moe-theme-switcher)
+  (moe-theme-auto-switch))
 (message "Done loading packages")
 
 ;;; init.el ends here
