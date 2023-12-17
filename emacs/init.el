@@ -2214,6 +2214,8 @@ When the number of characters in a buffer exceeds this threshold,
   :demand t)
 (use-package yaml-ts-mode
   :straight nil
+  :bind ((:map yaml-ts-mode-map
+           ("s-h" . yaml-hydra/body)))
   :hook ((yaml-ts-mode . yaml-pro-mode)
          (docker-compose-mode . yaml-ts-mode)
          (yaml-pro-mode . yaml-pro-ts-mode)
@@ -2227,7 +2229,22 @@ When the number of characters in a buffer exceeds this threshold,
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
-    (yaml-pro-mode nil)))
+    (yaml-pro-mode nil))
+  :pretty-hydra
+  (yaml-hydra
+    (:hint nil :title (with-faicon "nf-fa-yen" "Yaml Commands" 1 -0.05) :quit-key "q" :color red)
+    ("Indent"
+      (("i" yaml-pro-ts-indent-subtree "Indent")
+        ("u" yaml-pro-ts-unindent-subtree "Unindent"))
+      "Navigation"
+      (("j" combobulate-avy-jump "Jump")
+        ("n" yaml-pro-ts-next-subtree "Next Sibling Node")
+        ("p" yaml-pro-ts-prev-subtree "Previous Sibling Node")
+        ("N" block-nav-next-indentation-level "Next Child Node")
+        ("P" yaml-pro-ts-up-level "Previous Parent Node"))
+      "Fold"
+      (("f" yaml-pro-fold-at-point "Fold")
+        ("F" yaml-pro-unfold-at-point "Unfold")))))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
