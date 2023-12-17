@@ -2826,6 +2826,13 @@ When the number of characters in a buffer exceeds this threshold,
   :commands (elisp-autofmt-mode elisp-autofmt-buffer)
   :hook (emacs-lisp-mode . elisp-autofmt-mode))
 
+;;;
+(use-package bash-ts-mode
+  :straight nil
+  :hook (bash-ts-mode . aaronzinhoo--setup-bash-ts-mode)
+  :preface
+  (defun aaronzinhoo--setup-bash-ts-mode ()
+    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'lsp-completion-at-point #'sh-completion-at-point-function #'comint-completion-at-point #'cape-dabbrev) #'cape-dict))))
 
 ;;; Theme
 (use-package doom-modeline
