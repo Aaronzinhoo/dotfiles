@@ -52,7 +52,7 @@
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (tab-always-indent 'complete)
   :preface
-  (defun uuid-create ()
+  (defun create-uuid ()
     "Return a newly generated UUID. This uses a simple hashing of variable data."
     (let ((s (md5 (format "%s%s%s%s%s%s%s%s%s%s"
                           (user-uid)
@@ -71,10 +71,10 @@
               (substring s 13 16)
               (substring s 16 20)
               (substring s 20 32))))
-  (defun uuid-insert ()
+  (defun insert-uuid ()
     "Inserts a new UUID at the point."
     (interactive)
-    (insert (uuid-create)))
+    (insert (create-uuid)))
   :config
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
@@ -175,21 +175,21 @@
     (unless (treesit-language-available-p (car lang))
       (treesit-install-language-grammar (car lang))))
   (dolist (mapping '((sh-mode . bash-ts-mode)
-                     (c-mode . c-ts-mode)
-                     (cc-mode . c++-ts-mode)
-                     (c++-mode . c++-ts-mode)
-                     (c-or-c++-mode . c-or-c++-ts-mode)
-                     (css-mode . css-ts-mode)
-                     (dockerfile-mode . dockerfile-ts-mode)
-                     (go-dot-mod-mode . go-mod-ts-mode)
-                     (go-mode . go-ts-mode)
-                     (java-mode . java-ts-mode)
-                     (json-mode . json-ts-mode)
-                     (js-mode . js-ts-mode)
-                     (python-mode . python-ts-mode)
-                     (typescript-mode . tsx-ts-mode)
-                     (toml-mode . toml-ts-mode)
-                     (yaml-mode . yaml-ts-mode)))
+                      (c-mode . c-ts-mode)
+                      (cc-mode . c++-ts-mode)
+                      (c++-mode . c++-ts-mode)
+                      (c-or-c++-mode . c-or-c++-ts-mode)
+                      (css-mode . css-ts-mode)
+                      (dockerfile-mode . dockerfile-ts-mode)
+                      (go-dot-mod-mode . go-mod-ts-mode)
+                      (go-mode . go-ts-mode)
+                      (java-mode . java-ts-mode)
+                      (json-mode . json-ts-mode)
+                      (js-mode . js-ts-mode)
+                      (python-mode . python-ts-mode)
+                      (typescript-mode . tsx-ts-mode)
+                      (toml-mode . toml-ts-mode)
+                      (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
   :custom
   (treesit-load-name-override-list
@@ -207,7 +207,16 @@
     (setq system-packages-package-manager 'brew)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package s :straight t)
+(use-package s :straight t
+  :preface
+  (defun snake-case-word (start end)
+    "Change selected text to snake case format"
+    (interactive "r")
+    (if (use-region-p)
+      (let ((camel-case-str (buffer-substring start end)))
+        (delete-region start end)
+        (insert (s-snake-case camel-case-str)))
+      (message "No region selected"))))
 (if (version< emacs-version "27.1")
     (use-package cl))
 ;; garbage collector magic
@@ -2431,6 +2440,8 @@ When the number of characters in a buffer exceeds this threshold,
   :commands (vmd-mode)
   :custom
   (vmd-binary-path (concat nvm-home-folder "/versions/node/v14.19.0/bin/vmd")))
+
+
 ;; JS/react/angular config
 ;; completetion: lsp+company
 ;; refactor: js-prettier
@@ -2614,6 +2625,7 @@ When the number of characters in a buffer exceeds this threshold,
               ("M-*" . pop-tag-mark))
   :config
   (setq-local compilation-scroll-output t))
+
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
 ;; configuration: use set(CMAKE_EXPORT_COMPILE_COMMANDS ON) in cmake file
@@ -2689,6 +2701,18 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package sqlformat
   :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
   :hook (sql-mode . sqlformat-on-save-mode))
+
+;;; Emacs Lisp Mode
+(use-package emacs-lisp-mode
+  :straight nil
+  :hook (emacs-lisp-mode . aaronzinhoo--setup-elisp-mode)
+  :preface
+  (defun aaronzinhoo--setup-elisp-mode ()
+    (setq-local lisp-indent-offset 2)
+    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'elisp-completion-at-point #'cape-dabbrev) #'cape-dict))))
+(use-package elisp-autofmt
+  :commands (elisp-autofmt-mode elisp-autofmt-buffer)
+  :hook (emacs-lisp-mode . elisp-autofmt-mode))
 
 
 ;;; Theme
