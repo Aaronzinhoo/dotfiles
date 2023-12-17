@@ -888,11 +888,38 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (beginning-of-line-text)
     (open-line 1))
   :bind (([remap open-line] . aaronzinhoo-open-line)
-         ([remap kill-ring-save] . easy-kill)))
+          ([remap kill-ring-save] . easy-kill)))
+(use-package combobulate
+  :after (expand-region)
+  :commands (aaronzinhoo--mark-region-dwim)
+  :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
+  :bind* (("M-2" . aaronzinhoo--mark-region-dwim)
+          :map combobulate-proffer-map
+          ("2" . next))
+  :preface
+  ;; You can customize Combobulate's key prefix here.
+  ;; Note that you may have to restart Emacs for this to take effect!
+  (setq combobulate-key-prefix "C-c o")
+
+  ;; Optional, but recommended.
+  ;;
+  ;; You can manually enable Combobulate with `M-x
+  ;; combobulate-mode'.
+  (defun aaronzinhoo--mark-region-dwim ()
+    (interactive)
+    (unless (ignore-errors (or (combobulate-mark-node-dwim) t))
+      (er/expand-region 1)))
+  :hook ((python-ts-mode . combobulate-mode)
+          (js-ts-mode . combobulate-mode)
+          (css-ts-mode . combobulate-mode)
+          (yaml-ts-mode . combobulate-mode)
+          (json-ts-mode . combobulate-mode)
+          (typescript-ts-mode . combobulate-mode)
+          (tsx-ts-mode . combobulate-mode)))
 (use-package expand-region
+  :demand t
   :commands (er/mark-symbol)
-  :bind (("M-2" . er/expand-region)
-         ("M-3" . er/mark-outside-pairs))
+  :bind (("M-3" . er/mark-outside-pairs))
   :preface
   (defun aaronzinhoo-mark-line ()
     "Mark the current line."
@@ -939,6 +966,87 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (use-package yasnippet-snippets)
   (yas-reload-all))
+
+;;; Debugger Support
+(use-package dap-mode
+  :after (lsp-mode lsp-docker)
+  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
+  :hook ((lsp-mode . dap-auto-configure-mode)
+         ;; dap-stopped called after breakpoint hit
+         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
+  :custom
+  (dap-python-debugger 'debugpy)
+  :config
+  (dap-register-debug-template "My Runner"
+                             (list :type "java"
+                                   :request "launch"
+                                   :args ""
+                                   :vmArgs "-ea -Dtileaccessservice.instance.name=tileaccessservice_1"
+                                   :projectName "tileaccessservice"
+                                   :mainClass "com.linquest.tileaccessservice.TileAccessServiceApplication"
+                                   :env '(("DEV" . "1"))))
+  (dap-register-debug-template "Python :: Test TileAccessService"
+  (list :type "python"
+        :args "-i"
+        :cwd nil
+        :env '(("DEBUG" . "1"))
+        :target-module (expand-file-name "~/development/work/kahless/backend/user-management-service/main.py")
+        :request "launch"
+        :name "My App"))
+  (dap-ui-controls-mode nil)
+  (dap-ui-mode nil)
+  (dap-tooltip-mode nil)
+  (require 'dap-python)
+  (require 'dap-dlv-go)
+  (require 'dap-lldb)
+  (require 'dap-gdb-lldb))
+(use-package dap-java
+  :after (lsp-java dap)
+  :straight (dap-java :type git :host github :repo "emacs-lsp/lsp-java" :branch "master"))
+(use-package dape
+  :straight (:type git :host github :repo "svaante/dape" :branch "master")
+  :commands (dape)
+  ;; To use window configuration like gud (gdb-mi)
+  :custom
+  (dape-buffer-window-arrangment 'gud)
+  (dape-cwd-fn 'projectile-project-root)
+  :config
+  (add-to-list 'dape-configs
+               '(test-python
+                 modes (python-ts-mode python-mode)
+                 command "python -i "
+                 command-args ("-m" "debugpy")
+                 :type "executable"
+                 :request "launch"
+                 :module ""
+                 :cwd dape-cwd-fn
+                 :args ["-i" "run" dape-find-file-buffer-default]
+                  ))
+
+  ;; To not display info and/or buffers on startup
+  ;; (remove-hook 'dape-on-start-hooks 'dape-info)
+  ;; (remove-hook 'dape-on-start-hooks 'dape-repl)
+
+  ;; To display info and/or repl buffers on stopped
+  (add-hook 'dape-on-stopped-hooks 'dape-info)
+  (add-hook 'dape-on-stopped-hooks 'dape-repl)
+
+  ;; By default dape uses gdb keybinding prefix
+  ;; (setq dape-key-prefix "\C-x\C-a")
+
+  ;; Kill compile buffer on build success
+  (add-hook 'dape-compile-compile-hooks 'kill-buffer)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  ;; (add-hook 'dape-on-start-hooks
+  ;;           (defun dape--save-on-start ()
+  ;;             (save-some-buffers t t)))
+
+  ;; Projectile users
+  )
+
+;;; LSP
+
 (use-package lsp-mode
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
@@ -1053,19 +1161,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   )
 (use-package lsp-docker
+  :after (lsp-mode)
   :requires (lsp-mode)
   :after (lsp-mode)
   :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
-(use-package dap-mode
-  :requires (lsp-mode lsp-docker)
-  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
-  :hook ((lsp-mode . dap-auto-configure-mode)
-         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
-  :custom
-  (dap-ui-controls-mode t)
-  :config
-  (require 'dap-lldb)
-  (require 'dap-gdb-lldb))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list))
 (use-package lsp-ui
@@ -1087,9 +1186,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     ;; current VSCode defaults
     (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
   (require 'lsp-java-boot))
-(use-package dap-java
-  :after (lsp-java dap)
-  :straight (dap-java :type git :host github :repo "emacs-lsp/lsp-java" :branch "master"))
 
 (use-package lsp-pyright
   :requires (lsp pyvenv)
