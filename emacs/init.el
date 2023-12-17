@@ -601,6 +601,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package matching-paren-overlay
   :straight (:type git :host codeberg :repo "acdw/matching-paren-overlay.el" :branch "main")
   :hook (prog-mode . matching-paren-overlay-mode))
+(use-package emojify
+  :if (display-graphic-p)
+  :hook ((prog-mode . (lambda () (emojify-mode 0)))
+          (vterm-mode . emojify-mode)))
 (use-package better-defaults
   :defer t)
 (use-package grep
@@ -927,11 +931,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
   (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions)
   (er/enable-mode-expansions 'rust-ts-mode 'er/add-rust-mode-expansions))
-(use-package emojify
-  :if (display-graphic-p)
-  :hook (prog-mode . (lambda () (emojify-mode 0)))
-  :config
-  (global-emojify-mode))
 (use-package yasnippet
   :defer t
   :diminish yas-minor-mode
@@ -944,20 +943,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :hook ((lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
-         (c-ts-mode . lsp-deferred)
-         (c++-ts-mode . lsp-deferred)
-         (go-ts-mode . lsp-deferred)
-         (sql-mode . lsp-deferred)
-         (web-mode . lsp-deferred)
-         (typescript-ts-mode . lsp-deferred)
-         (rust-ts-mode . lsp-deferred)
-         (dockerfile-ts-mode . lsp-deferred)
-         (sh-mode . lsp-deferred)
-         (yaml-ts-mode . lsp-deferred)
-         (python-ts-mode . lsp-deferred)
-         (conf-javaprop-mode . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration)
-         (lsp-mode . yas-minor-mode))
+          (c-ts-mode . lsp-deferred)
+          (c++-ts-mode . lsp-deferred)
+          (go-ts-mode . lsp-deferred)
+          (sql-mode . lsp-deferred)
+          (web-mode . lsp-deferred)
+          (typescript-ts-mode . lsp-deferred)
+          (rust-ts-mode . lsp-deferred)
+          (dockerfile-ts-mode . lsp-deferred)
+          (sh-mode . lsp-deferred)
+          (bash-ts-mode . lsp-deferred)
+          (yaml-ts-mode . lsp-deferred)
+          (python-ts-mode . lsp-deferred)
+          (conf-javaprop-mode . lsp-deferred)
+          (lsp-mode . lsp-enable-which-key-integration)
+          (lsp-mode . yas-minor-mode))
   :bind (:map lsp-mode-map
               ("s-l" . lsp-hydra/body))
   :pretty-hydra
@@ -2181,8 +2181,8 @@ When the number of characters in a buffer exceeds this threshold,
 ;;; Languages Support
 
 ;; folding
-(use-package ts-fold
-  :straight (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold"))
+;; (use-package ts-fold
+;;   :straight (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold"))
 
 ;; Indent Guides
 (use-package highlight-indent-guides)
@@ -2371,8 +2371,7 @@ When the number of characters in a buffer exceeds this threshold,
      ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
      ("f" web-mode-fold-or-unfold "fold/unfold"))
     "Edit"
-    (("r" unibeautify "refactor HTML")
-     ("d" aaronzinhoo-delete-tag "delete tag"))
+    (("d" aaronzinhoo-delete-tag "delete tag"))
     "Error"
     (("v" html-check-frag-next "next html error")
      ("E" web-mode-dom-errors-show "show errors"))
