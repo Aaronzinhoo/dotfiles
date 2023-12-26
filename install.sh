@@ -4,7 +4,6 @@
 
 echo_with_prompt "Initializing..."
 
-export PYENV_ROOT="${HOME}/.pyenv"
 PATH_TO_ORG="${HOME}/development/org"
 PATH_TO_DEVELOPMENT="${HOME}/development"
 

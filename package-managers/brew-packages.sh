@@ -165,6 +165,7 @@ brew install yamllint
 echo_with_prompt "installing pyenv dependencies";
 brew install pyenv
 brew install pyenv-virtualenv
+brew install jawshooah/pyenv/pyenv-default-packages
 
 ## golang
 echo_with_prompt "installing golang"
