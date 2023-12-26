@@ -44,6 +44,8 @@
 (use-package emacs
   :straight nil
   :hook (minibuffer-setup . cursor-intangible-mode)
+  :bind* (("M-<up>" . move-text-up)
+           ("M-<down>" . move-text-down))
   :custom
   (delete-selection-mode t)
   (pixel-scroll-precision-mode t)
@@ -1079,7 +1081,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       ("b" xref-pop-marker-stack "pop back" :color red))
      "Refactor"
      (("f" lsp-format-buffer "format")
-      ("n" lsp-rename "rename"))
+       ("n" lsp-rename "rename")
+       ("o" lsp-organize-imports "organize imports")
+       ("c" lsp-execute-code-action "code action"))
      "UI"
      (("p" lsp-ui-peek-mode "peek-mode")
       ("R" lsp-ui-peek-find-references "peek-refs" :color red)
@@ -2282,9 +2286,6 @@ When the number of characters in a buffer exceeds this threshold,
 
 ;; Indent Guides
 (use-package highlight-indent-guides)
-(use-package combobulate
-  :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
-  :commands (combobulate-mode))
 
 ;; Code Coverage
 (use-package cov
