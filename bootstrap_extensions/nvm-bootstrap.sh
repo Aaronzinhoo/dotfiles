@@ -27,6 +27,7 @@ echo_with_prompt "NVM home dir: $NVM_DIR"
     echo -n "yaml-language-server -g"
     echo -n "tsun -g"
     echo -n "dockerfile-language-server-nodejs -g"
+    echo -n "@ansible/ansible-language-server -g"
 } > "$NVM_DIR/default-packages"
 
 nvm install --lts
