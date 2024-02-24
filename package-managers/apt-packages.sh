@@ -162,6 +162,13 @@ chmod +x ./aws-iam-authenticator
 mv ./aws-iam-authenticator /usr/local/bin
 #----------------------
 
+#----------------------
+# postgres
+#----------------------
+apt-get install pgformatter -y
+apt install postgresql -y
+#----------------------
+
 
 #---------------------
 # qutebrowser

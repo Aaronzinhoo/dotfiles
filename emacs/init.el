@@ -108,6 +108,28 @@
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?' . ?'))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   :init
+  (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
+  "Try to parse bytecode instead of json."
+  (or
+   (when (equal (following-char) ?#)
+     (let ((bytecode (read (current-buffer))))
+       (when (byte-code-function-p bytecode)
+         (funcall bytecode))))
+   (apply old-fn args)))
+
+  (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+            lsp-use-plists
+            (not (functionp 'json-rpc-connection))  ;; native json-rpc
+            (executable-find "emacs-lsp-booster")
+            (not (member 'ansible minor-mode-list)))
+        (progn
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
   ;; disable <> auto pairing in electric-pair-mode for org-mode
   (add-hook 'org-mode-hook
             (lambda ()
@@ -873,15 +895,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (require 'flycheck-swagger-cli))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
-(use-package aggressive-indent
-  :straight t
-  :diminish
-  :config
-  (global-aggressive-indent-mode 1)
-  (setq aggressive-indent-excluded-modes (append aggressive-indent-excluded-modes '(web-mode dockerfile-mode docker-compose-mode))))
+;; (use-package aggressive-indent
+;;   :straight t
+;;   :diminish
+;;   :config
+;;   (global-aggressive-indent-mode 1)
+;;   (setq aggressive-indent-excluded-modes (append aggressive-indent-excluded-modes '(web-mode dockerfile-mode docker-compose-mode))))
 (use-package fix-word
   :bind (([remap capitalize-word] . fix-word-capitalize)
-         ([remap upcase-word] . fix-word-upcase)))
+          ([remap upcase-word] . fix-word-upcase)))
 (use-package easy-kill
   :preface
   (defun aaronzinhoo-open-line ()
@@ -969,6 +991,162 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (use-package yasnippet-snippets)
   (yas-reload-all))
 
+;;; LSP
+
+(use-package lsp-mode
+  :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
+  :commands (lsp lsp-deferred)
+  :hook ((lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
+          (c-ts-mode . lsp-deferred)
+          (c++-ts-mode . lsp-deferred)
+          (go-ts-mode . lsp-deferred)
+          (sql-mode . lsp-deferred)
+          (web-mode . lsp-deferred)
+          (typescript-ts-mode . lsp-deferred)
+          (rust-ts-mode . lsp-deferred)
+          (dockerfile-ts-mode . lsp-deferred)
+          (sh-mode . lsp-deferred)
+          (bash-ts-mode . lsp-deferred)
+          (yaml-ts-mode . lsp-deferred)
+          (python-ts-mode . lsp-deferred)
+          (conf-javaprop-mode . lsp-deferred)
+          (lsp-mode . lsp-enable-which-key-integration)
+          (lsp-mode . yas-minor-mode))
+  :bind (:map lsp-mode-map
+              ("s-l" . lsp-hydra/body))
+  :pretty-hydra
+  (lsp-hydra
+    (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "LSP" 1 -0.05))
+    ("Goto"
+     (("r" lsp-find-references "refs")
+      ("d" lsp-find-definition "defs")
+      ("i" lsp-goto-implementation "implementation (interface)")
+      ("t" lsp-find-type-definition "type-def")
+      ("b" xref-pop-marker-stack "pop back" :color red))
+     "Refactor"
+     (("f" lsp-format-buffer "format")
+       ("n" lsp-rename "rename")
+       ("o" lsp-organize-imports "organize imports")
+       ("c" lsp-execute-code-action "code action"))
+     "UI"
+     (("p" lsp-ui-peek-mode "peek-mode")
+      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
+      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
+      ("m" lsp-ui-imenu "peek-menu"))
+     "Server"
+     (("s" lsp-describe-session "session")
+      ("I" lsp-install-server "install")
+      ("S" lsp-workspace-restart "restart"))))
+  :preface
+  (defun aaronzinhoo--lsp-mode-setup-completion ()
+    "Replace the default `lsp-completion-at-point' with its
+`cape-capf-buster' version. Also add `cape-file' and
+`company-yasnippet' backends."
+    (setq-local completion-at-point-functions
+            (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict))
+    (bind-key (kbd "TAB") 'corfu-next corfu-map)
+    (setq-local completion-styles '(flex basic))
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(flex))) ;; Configure flex
+  (defun lsp-go-hooks ()
+    (add-hook 'before-save-hook 'lsp-format-buffer nil t)
+    (add-hook 'before-save-hook 'lsp-organize-imports nil t)
+    (setq-local lsp-gopls-staticcheck t)
+    (setq-local lsp-eldoc-render-all t)
+    (setq-local lsp-gopls-complete-unimported t))
+  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
+  ;; used to help pyright find venv folders
+  (defun aaronzinhoo-lsp-python-setup ()
+    (when (buffer-file-name)
+      (let* ((python-version ".python-version")
+             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
+        (when project-dir
+	      (progn
+	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
+	        (lsp-workspace-folders-add project-dir)
+	        (pyvenv-workon
+             (with-temp-buffer
+               (insert-file-contents (expand-file-name python-version project-dir))
+               (car (split-string (buffer-string))))))))))
+  :custom
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-eldoc-render-all t)
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-completion-provider :none) ;; we use Corfu!
+  (lsp-treemacs-sync-mode t)
+  (lsp-auto-guess-root t)
+  (lsp-log-io nil)
+  (lsp-enable-indentation nil)
+  (lsp-headerline-breadcrumb-enable nil)
+  (lsp-enable-on-type-formatting nil)
+  (lsp-prefer-flymake nil)
+  (lsp-enable-symbol-highlighting t)
+  (lsp-signature-auto-activate nil)
+  (lsp-keymap-prefix nil)
+  (lsp-completion-enable t)
+  (lsp-yaml-schemas
+   `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
+     (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
+     (kubernetes . ["*.yaml"])))
+  (lsp-clients-angular-language-server-command
+   `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
+     "--ngProbeLocations"
+     ,(concat node-home-folder "lib/node_modules")
+     "--tsProbeLocations"
+     ,(concat node-home-folder "lib/node_modules")
+     "--stdio"))
+  :init
+  (setenv "LSP_USE_PLISTS" "true")
+  (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
+  :config
+  (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
+  (push 'rustic-clippy flycheck-checkers)
+  (push '(web-mode . "html") lsp-language-id-configuration)
+  (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
+  (push '(yaml-ts-mode . "yaml") lsp-language-id-configuration)
+  (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
+  (setq gc-cons-threshold  100000000)
+  (setq read-process-output-max (* 1024 1024)) ;;1MB
+  )
+(use-package lsp-docker
+  :after (lsp-mode)
+  :requires (lsp-mode)
+  :after (lsp-mode)
+  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
+(use-package lsp-treemacs
+  :commands (treemacs lsp-treemacs-errors-list))
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :bind (:map lsp-ui-mode-map
+              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+              ([remap xref-find-references] . lsp-ui-peek-find-references))
+  :custom
+  (lsp-ui-sideline-show-code-actions nil)
+  (lsp-ui-peek-enable t)
+  (lsp-ui-doc-use-webkit t)
+  (lsp-ui-doc-enable nil))
+(use-package lsp-java
+  :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
+  :hook ((java-ts-mode . lsp-deferred)
+         (java-ts-mode . lsp-java-boot-lens-mode))
+  :config
+  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.26.jar")))
+    ;; current VSCode defaults
+    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
+  (require 'lsp-java-boot))
+
+(use-package lsp-pyright
+  :requires (lsp pyvenv)
+  :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
+  :if (executable-find "pyright")
+  :custom
+  (lsp-pyright-venv-path (concat user-home-directory ".pyenv/versions"))
+  (lsp-pyright-python-executable-cmd "python3")
+  :hook
+  (python-mode . (lambda ()
+                   (require 'lsp-pyright))))
+
 ;;; Debugger Support
 (use-package dap-mode
   :after (lsp-mode lsp-docker)
@@ -1046,161 +1224,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
   ;; Projectile users
   )
-
-;;; LSP
-
-(use-package lsp-mode
-  :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
-  :commands (lsp lsp-deferred)
-  :hook ((lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
-          (c-ts-mode . lsp-deferred)
-          (c++-ts-mode . lsp-deferred)
-          (go-ts-mode . lsp-deferred)
-          (sql-mode . lsp-deferred)
-          (web-mode . lsp-deferred)
-          (typescript-ts-mode . lsp-deferred)
-          (rust-ts-mode . lsp-deferred)
-          (dockerfile-ts-mode . lsp-deferred)
-          (sh-mode . lsp-deferred)
-          (bash-ts-mode . lsp-deferred)
-          (yaml-ts-mode . lsp-deferred)
-          (python-ts-mode . lsp-deferred)
-          (conf-javaprop-mode . lsp-deferred)
-          (lsp-mode . lsp-enable-which-key-integration)
-          (lsp-mode . yas-minor-mode))
-  :bind (:map lsp-mode-map
-              ("s-l" . lsp-hydra/body))
-  :pretty-hydra
-  (lsp-hydra
-    (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "LSP" 1 -0.05))
-    ("Goto"
-     (("r" lsp-find-references "refs")
-      ("d" lsp-find-definition "defs")
-      ("i" lsp-goto-implementation "implementation (interface)")
-      ("t" lsp-find-type-definition "type-def")
-      ("b" xref-pop-marker-stack "pop back" :color red))
-     "Refactor"
-     (("f" lsp-format-buffer "format")
-       ("n" lsp-rename "rename")
-       ("o" lsp-organize-imports "organize imports")
-       ("c" lsp-execute-code-action "code action"))
-     "UI"
-     (("p" lsp-ui-peek-mode "peek-mode")
-      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
-      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
-      ("m" lsp-ui-imenu "peek-menu"))
-     "Server"
-     (("s" lsp-describe-session "session")
-      ("I" lsp-install-server "install")
-      ("S" lsp-workspace-restart "restart"))))
-  :preface
-  (defun aaronzinhoo--lsp-mode-setup-completion ()
-    "Replace the default `lsp-completion-at-point' with its
-`cape-capf-buster' version. Also add `cape-file' and
-`company-yasnippet' backends."
-    (setq-local completion-at-point-functions
-            (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev)))
-    (bind-key (kbd "TAB") 'corfu-next corfu-map)
-    (setq-local completion-styles '(flex basic))
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(flex))) ;; Configure flex
-  (defun lsp-go-hooks ()
-    (add-hook 'before-save-hook 'lsp-format-buffer nil t)
-    (add-hook 'before-save-hook 'lsp-organize-imports nil t)
-    (setq-local lsp-gopls-staticcheck t)
-    (setq-local lsp-eldoc-render-all t)
-    (setq-local lsp-gopls-complete-unimported t))
-  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
-  ;; used to help pyright find venv folders
-  (defun aaronzinhoo-lsp-python-setup ()
-    (when (buffer-file-name)
-      (let* ((python-version ".python-version")
-             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
-        (when project-dir
-	      (progn
-	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
-	        (lsp-workspace-folders-add project-dir)
-	        (pyvenv-workon
-             (with-temp-buffer
-               (insert-file-contents (expand-file-name python-version project-dir))
-               (car (split-string (buffer-string))))))))))
-  :custom
-  (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-eldoc-render-all t)
-  (lsp-rust-analyzer-display-chaining-hints t)
-  (lsp-rust-analyzer-display-closure-return-type-hints t)
-  (lsp-completion-provider :none) ;; we use Corfu!
-  (lsp-treemacs-sync-mode t)
-  (lsp-auto-guess-root t)
-  (lsp-log-io nil)
-  (lsp-enable-indentation nil)
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-enable-on-type-formatting nil)
-  (lsp-prefer-flymake nil)
-  (lsp-enable-symbol-highlighting t)
-  (lsp-signature-auto-activate nil)
-  (lsp-keymap-prefix nil)
-  (lsp-completion-enable t)
-  (lsp-yaml-schemas
-   `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
-     (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
-     (kubernetes . ["*.yaml"])))
-  (lsp-clients-angular-language-server-command
-   `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
-     "--ngProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--tsProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--stdio"))
-  :init
-  (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
-  :config
-  (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
-  (push 'rustic-clippy flycheck-checkers)
-  (push '(web-mode . "html") lsp-language-id-configuration)
-  (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
-  (push '(yaml-ts-mode . "yaml") lsp-language-id-configuration)
-  (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
-  (setq gc-cons-threshold  100000000)
-  (setq read-process-output-max (* 1024 1024)) ;;1MB
-  )
-(use-package lsp-docker
-  :after (lsp-mode)
-  :requires (lsp-mode)
-  :after (lsp-mode)
-  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
-(use-package lsp-treemacs
-  :commands (treemacs lsp-treemacs-errors-list))
-(use-package lsp-ui
-  :commands lsp-ui-mode
-  :bind (:map lsp-ui-mode-map
-              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-              ([remap xref-find-references] . lsp-ui-peek-find-references))
-  :custom
-  (lsp-ui-sideline-show-code-actions nil)
-  (lsp-ui-peek-enable t)
-  (lsp-ui-doc-use-webkit t)
-  (lsp-ui-doc-enable nil))
-(use-package lsp-java
-  :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
-  :hook ((java-ts-mode . lsp-deferred)
-         (java-ts-mode . lsp-java-boot-lens-mode))
-  :config
-  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.26.jar")))
-    ;; current VSCode defaults
-    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
-  (require 'lsp-java-boot))
-
-(use-package lsp-pyright
-  :requires (lsp pyvenv)
-  :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
-  :if (executable-find "pyright")
-  :custom
-  (lsp-pyright-venv-path (concat user-home-directory ".pyenv/versions"))
-  (lsp-pyright-python-executable-cmd "python3")
-  :hook
-  (python-mode . (lambda ()
-                   (require 'lsp-pyright))))
 
 ;;; Minibuffer Compleitions
 
@@ -1656,7 +1679,8 @@ When the number of characters in a buffer exceeds this threshold,
   ;; configuration already has pre-prepared). Necessary for manual corfu usage with
   ;; orderless, otherwise first component is ignored, unless `corfu-separator'
   ;; is inserted.
-  ;; (corfu-quit-at-boundary nil)
+  (corfu-quit-at-boundary nil)
+  (corfu-quit-no-match t)
   (corfu-cycle t)                 ; Allows cycling through candidates
   (corfu-auto t)                  ; Enable auto completion
   (corfu-auto-prefix 1)
@@ -1786,59 +1810,58 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo--org-setup)
-         (org-mode . aaronzinhoo--org-font-setup))
+          (org-mode . aaronzinhoo--org-font-setup))
   :bind
   ("C-c l" . org-store-link)
   ("C-c A" . org-agenda)
   ("C-c c" . org-capture)
   (:map org-mode-map
-        ("C-M-<return>" . org-insert-subheading)
-        ("s-h". hydra-org-nav/body))
+    ("C-M-<return>" . org-insert-subheading)
+    ("s-h". hydra-org-nav/body))
   :preface
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
     (cl-case command
       (interactive (company-begin-backend 'org-keyword-backend))
       (prefix (and (eq major-mode 'org-mode)
-                   (cons (company-grab-line "#\\+\\(\\w*\\)" 1)
-                         t)))
+                (cons (company-grab-line "#\\+\\(\\w*\\)" 1)
+                  t)))
       (candidates (mapcar #'upcase
-                          (cl-remove-if-not
-                           (lambda (c) (string-prefix-p arg c))
-                           (pcomplete-completions))))
+                    (cl-remove-if-not
+                      (lambda (c) (string-prefix-p arg c))
+                      (pcomplete-completions))))
       (ignore-case t)
       (duplicates t)))
   (defun aaronzinhoo-org-inline-css-hook (exporter)
     "Insert custom inline css"
     (when (eq exporter 'html)
       (let* ((dir (ignore-errors (file-name-directory (buffer-file-name))))
-             (path (concat dir "style.css"))
-             (homestyle (or (null dir) (null (file-exists-p path))))
-             (final (if homestyle (concat user-init-dir "org/sakura-dark-theme.css") path)))
+              (path (concat dir "style.css"))
+              (homestyle (or (null dir) (null (file-exists-p path))))
+              (final (if homestyle (concat user-init-dir "org/sakura-dark-theme.css") path)))
         (setq org-html-head-include-default-style nil)
         (setq org-html-head (concat
-                             "<style type=\"text/css\">\n"
-                             "<!--/*--><![CDATA[/*><!--*/\n"
-                             (with-temp-buffer
-                               (insert-file-contents final)
-                               (buffer-string))
-                             "/*]]>*/-->\n"
-                             "</style>\n")))))
+                              "<style type=\"text/css\">\n"
+                              "<!--/*--><![CDATA[/*><!--*/\n"
+                              (with-temp-buffer
+                                (insert-file-contents final)
+                                (buffer-string))
+                              "/*]]>*/-->\n"
+                              "</style>\n")))))
   (defun aaronzinhoo--org-setup ()
     (variable-pitch-mode t)
     (org-indent-mode t)
-    (org-superstar-mode t)
     (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-capf-super #'cape-dict #'cape-dabbrev))))
   (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
-                    (org-level-2 . 1.5)
-                    (org-level-3 . 1.25)
-                    (org-level-4 . 1.15)
-                    (org-level-5 . 1.1)
-                    (org-level-6 . 1.1)
-                    (org-level-7 . 1.1)
-                    (org-level-8 . 1.1)))
+                     (org-level-2 . 1.5)
+                     (org-level-3 . 1.25)
+                     (org-level-4 . 1.15)
+                     (org-level-5 . 1.1)
+                     (org-level-6 . 1.1)
+                     (org-level-7 . 1.1)
+                     (org-level-8 . 1.1)))
       (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
     ;; Ensure that anything that should be fixed-pitch in Org files appears that way
@@ -1852,24 +1875,24 @@ When the number of characters in a buffer exceeds this threshold,
   :custom
   (org-directory (concat (getenv "HOME") "/development/org"))
   (org-publish-project-alist
-   `(("blog-pages"
-      :base-directory ,(concat org-directory "/personal/blog/src")
-      :base-extension "org"
-      :publishing-directory ,(concat org-directory "/personal/blog/public")
-      :publishing-function org-html-publish-to-html
-      :recursive t
-      :auto-sitemap t
-      :sitemap-title "Blog Posts"
-      :sitemap-filename "index.org"
-      :sitemap-sort-files anti-chronologically)
-     ("blog-static"
-      :base-directory ,(concat org-directory "/personal/blog/src/assets/")
-      :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
-      :publishing-directory ,(concat org-directory "/personal/blog/public/assets/")
-      :recursive t
-      :publishing-function org-publish-attachment)
-     ("blog"
-      :components ("blog-pages" "blog-static"))))
+    `(("blog-pages"
+        :base-directory ,(concat org-directory "/personal/blog/src")
+        :base-extension "org"
+        :publishing-directory ,(concat org-directory "/personal/blog/public")
+        :publishing-function org-html-publish-to-html
+        :recursive t
+        :auto-sitemap t
+        :sitemap-title "Blog Posts"
+        :sitemap-filename "index.org"
+        :sitemap-sort-files anti-chronologically)
+       ("blog-static"
+         :base-directory ,(concat org-directory "/personal/blog/src/assets/")
+         :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
+         :publishing-directory ,(concat org-directory "/personal/blog/public/assets/")
+         :recursive t
+         :publishing-function org-publish-attachment)
+       ("blog"
+         :components ("blog-pages" "blog-static"))))
   (org-default-notes-file (concat org-directory "/references/articles.org"))
   (org-agenda-files (list org-directory))
   ;; TODO: look to make refile easier to use (refile and delete)
@@ -1879,10 +1902,10 @@ When the number of characters in a buffer exceeds this threshold,
   ;; Allow refile to create parent tasks with confirmation
   (org-refile-allow-creating-parent-nodes 'confirm)
   (org-refile-targets
-   '(("~/development/org/notebook/programming/web-development.org" :maxlevel . 2)
-     (nil :maxlevel . 4)
-     (org-agenda-files :maxlevel . 3)
-     ))
+    '(("~/development/org/notebook/programming/web-development.org" :maxlevel . 2)
+       (nil :maxlevel . 4)
+       (org-agenda-files :maxlevel . 3)
+       ))
   ;; single key press for certain movements when at first * in a heading
   (org-use-speed-commands t)
   ;;hide the leading stars in org mode
@@ -1895,55 +1918,73 @@ When the number of characters in a buffer exceeds this threshold,
   (org-export-use-babel t)
   ;; use python-3 in org mode
   (org-babel-python-command "python3")
-  ;; change ... to down arrow
-  (org-ellipsis " ▾")
   (org-export-headline-levels 5)
   (org-export-with-section-numbers nil)
   (org-export-with-toc nil)
   (org-html-postamble t)
   (org-html-postamble-format
-   '(("en" "<p class=\"footer\">%a &nbsp; | &nbsp; %e | &nbsp; %C</p>")))
+    '(("en" "<p class=\"footer\">%a &nbsp; | &nbsp; %e | &nbsp; %C</p>")))
   (org-html-link-home "/")
   (org-html-link-up ".")
   (org-html-use-infojs t)
   (org-html-infojs-options
-   '((path . "/js/org-info.js")
-     (view . "showall")
-     (toc . "0")
-     (ftoc . "0")
-     (tdepth . "max")
-     (sdepth . "max")
-     (mouse . "underline")
-     (buttons . "nil")
-     (ltoc . "0")
-     (up . :html-link-up)
-     (home . :html-link-home)))
+    '((path . "/js/org-info.js")
+       (view . "showall")
+       (toc . "0")
+       (ftoc . "0")
+       (tdepth . "max")
+       (sdepth . "max")
+       (mouse . "underline")
+       (buttons . "nil")
+       (ltoc . "0")
+       (up . :html-link-up)
+       (home . :html-link-home)))
   (org-plantuml-exec-mode "plantuml")
+  (org-auto-align-tags nil)
+  (org-tags-column 0)
+  (org-catch-invisible-edits 'show-and-error)
+  (org-special-ctrl-a/e t)
+  (org-insert-heading-respect-content t)
+
+  ;; Org styling, hide markup etc.
+  ;; (org-hide-emphasis-markers t)
+  (org-pretty-entities t)
+  (org-ellipsis "…")
+
+  ;; Agenda styling
+  (org-agenda-tags-column 0)
+  (org-agenda-block-separator ?─)
+  (org-agenda-time-grid
+    '((daily today require-timed)
+       (800 1000 1200 1400 1600 1800 2000)
+       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
+  (org-agenda-current-time-string
+    "◀── now ─────────────────────────────────────────────────")
   :init
   ;; view items using emacs browser
   (if my/wsl
-      (progn
-        (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
+    (progn
+      (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
   (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
   :config
   (define-key org-mode-map (kbd "s-v") verb-command-map)
   (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (python     . t)
-     (C          . t)
-     (typescript . t)
-     (plantuml   . t)
-     (js         . t)
-     (browser    . t)
-     (verb       . t)
-     (shell      . t)))
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+       (python     . t)
+       (C          . t)
+       (typescript . t)
+       (plantuml   . t)
+       (js         . t)
+       (browser    . t)
+       (verb       . t)
+       (shell      . t)))
   (setq org-file-apps
-        (quote
-         ((auto-mode . emacs)
-          ("\\.mm\\'" . default)
-          ("\\.x?html?\\'" . default)
-          ("\\.pdf\\'" . default))))
+    (quote
+      ((auto-mode . emacs)
+        ("\\.mm\\'" . default)
+        ("\\.x?html?\\'" . default)
+        ("\\.pdf\\'" . default))))
   ;; add modes to the src languages for org-mode blocks
   (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
   (add-to-list 'org-src-lang-modes '("js" . js2))
@@ -1964,21 +2005,23 @@ When the number of characters in a buffer exceeds this threshold,
   (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
 
   (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline "~/development/org/gtd.org" "Tasks")
-           "* TODO %?\n  %i\n  %a")
-          ("j" "Journal" entry (file+datetree "~/development/org/journal.org")
-           "* %?\nEntered on %U\n  %i\n  %a")
-          ("a"                          ; key
-           "Article"                    ; name
-           entry                        ; type
-           (file+headline "~/development/org/references/articles.org" "Article") ; target
-           "* %^{Title} %(org-set-tags)  :article: \n:PROPERTIES:\n:Created: %U\n:Linked: %a\n:END:\n%i\nBrief description:\n%?" ; template
-           :prepend t                   ; properties
-           :empty-lines 1               ; properties
-           :created t                   ; properties
-           )))
+    '(("t" "Todo" entry (file+headline "~/development/org/gtd.org" "Tasks")
+        "* TODO %?\n  %i\n  %a")
+       ("j" "Journal" entry (file+datetree "~/development/org/journal.org")
+         "* %?\nEntered on %U\n  %i\n  %a")
+       ("a"                          ; key
+         "Article"                    ; name
+         entry                        ; type
+         (file+headline "~/development/org/references/articles.org" "Article") ; target
+         "* %^{Title} %(org-set-tags)  :article: \n:PROPERTIES:\n:Created: %U\n:Linked: %a\n:END:\n%i\nBrief description:\n%?" ; template
+         :prepend t                   ; properties
+         :empty-lines 1               ; properties
+         :created t                   ; properties
+         )))
   (require 'ox-publish)
   )
+(use-package org-modern
+  :hook (org-mode . org-modern-mode))
 (use-package org-contrib
   :after org)
 (use-package org-ref
@@ -2120,9 +2163,6 @@ When the number of characters in a buffer exceeds this threshold,
   )
 (use-package org-sidebar
   :straight (org-sidebar :type git :host github :repo "alphapapa/org-sidebar"))
-(use-package org-superstar
-  :custom
-  (org-superstar-remove-leading-stars t))
 ;; autoload html files org
 (use-package org-preview-html
   :straight t)
@@ -2325,6 +2365,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
+    (setq-local eldoc-mode nil)
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
     (yaml-pro-mode nil))
   :pretty-hydra
@@ -2609,7 +2650,7 @@ When the number of characters in a buffer exceeds this threshold,
 ;;angular setup
 (use-package typescript-mode
   :delight " Ts"
-  :hook ((typescript-mode . typescript-ts-mode)))
+  :hook ((typescript-ts-mode . subword-mode)))
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
@@ -2715,7 +2756,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package go-ts-mode
   :straight nil
   :mode ("\\.go\\'" . go-ts-mode)
-  :hook ((go-mode . go-ts-mode)
+  :hook ((go-ts-mode . subword-mode)
          (go-ts-mode . yas-minor-mode))
   :custom
   (go-ts-mode-indent-offset 4)
@@ -2779,7 +2820,8 @@ When the number of characters in a buffer exceeds this threshold,
   :demand t
   :straight nil
   :mode (("\\.java\\'" . java-ts-mode))
-  :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4))))
+  :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
+          (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
   :bind (:map java-ts-mode-map
               ("s-h" . java-hydra/body))
@@ -2813,7 +2855,9 @@ When the number of characters in a buffer exceeds this threshold,
 ;;; SQL Mode
 (use-package sqlformat
   :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
-  :hook (sql-mode . sqlformat-on-save-mode))
+  :hook (sql-mode . sqlformat-on-save-mode)
+  :custom
+  (sqlformat-command 'pgformatter))
 
 ;;; Emacs Lisp Mode
 (use-package emacs-lisp-mode
@@ -2834,6 +2878,9 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo--setup-bash-ts-mode ()
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'lsp-completion-at-point #'sh-completion-at-point-function #'comint-completion-at-point #'cape-dabbrev) #'cape-dict))))
+
+(use-package ansible
+  :hook (yaml-ts-mode . ansible))
 
 ;;; Theme
 (use-package doom-modeline
