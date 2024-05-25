@@ -2631,7 +2631,7 @@ When the number of characters in a buffer exceeds this threshold,
          (rjsx-mode . prettier-mode)
          (typescript-ts-mode . prettier-mode))
   :custom
-  (prettier-mode-sync-config-flag nil))
+  (prettier-mode-sync-config-flag t))
 (use-package js-comint
   :defer t
   :init
