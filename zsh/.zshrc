@@ -82,7 +82,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip golang zsh-completions command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-sdkman zsh-syntax-highlighting )
+plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip golang zsh-completions command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-syntax-highlighting )
 
 zstyle ':omz:plugins:nvm' lazy yes
 source $ZSH/oh-my-zsh.sh

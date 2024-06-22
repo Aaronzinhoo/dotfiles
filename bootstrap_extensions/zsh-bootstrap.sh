@@ -36,8 +36,6 @@ git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUG
 
 git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}"/kubetail
 
-git clone https://github.com/matthieusb/zsh-sdkman.git "${CUSTOM_PLUGINS}"/zsh-sdkman
-
 
 echo_with_prompt "adding necessary symlinks"
 # link batcat to bat on local
