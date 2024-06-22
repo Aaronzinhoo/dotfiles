@@ -22,6 +22,9 @@ EDITOR="emacs"
 export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
 export GOPATH="${XDG_CONFIG_HOME}/go"
 export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
+export PYTHON_VERSION="3.12.4"
+export NODE_VERSION="20.15.0"
+export EMACS_VERSION="30"
 
 echo_with_prompt "Making needed folders"
 

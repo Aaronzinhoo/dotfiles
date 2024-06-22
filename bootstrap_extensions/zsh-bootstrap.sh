@@ -38,17 +38,12 @@ git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}"/kubeta
 
 git clone https://github.com/matthieusb/zsh-sdkman.git "${CUSTOM_PLUGINS}"/zsh-sdkman
 
-echo_with_prompt "adding poetry completion to zsh"
-check_and_mkdir "${CUSTOM_PLUGINS}/poetry"
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
-
-echo_with_prompt "setting up poetry for current shell"
-. "${HOME}/.poetry/env"
-poetry completions zsh > "${CUSTOM_PLUGINS}/poetry/_poetry"
 
 echo_with_prompt "adding necessary symlinks"
 # link batcat to bat on local
 ln -s /usr/bin/batcat $HOME/.local/bin/bat
 
-echo_with_prompt "changing shell to ZSH lovliness"
-chsh -s $(which zsh)
+if [ -n "$WSL_DISTRO_NAME" ]; then
+    echo_with_prompt "changing shell to ZSH lovliness"
+    chsh -s $(which zsh)
+fi

@@ -21,7 +21,7 @@ brew update
 # necessary packages
 #--------------------
 echo_with_prompt "installing necessary packages\n";
-brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config
+brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass
 #--------------------
 
 #--------------------
@@ -39,7 +39,7 @@ brew tap d12frosted/emacs-plus
 if command -v emacs &> /dev/null; then
     brew uninstall emacs-plus
 fi
-brew install emacs-plus@28 --with-ctags --with-dbus --with-xwidgets --with-imagemagick --with-native-comp --with-no-titlebar --with-mailutils
+brew install emacs-plus@$EMACS_VERSION --with-ctags --with-dbus --with-xwidgets --with-imagemagick --with-native-comp --with-mailutils --with-poll
 #--------------------
 
 

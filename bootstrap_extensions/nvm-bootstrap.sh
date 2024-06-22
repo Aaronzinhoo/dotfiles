@@ -30,5 +30,5 @@ echo_with_prompt "NVM home dir: $NVM_DIR"
     echo -n "@ansible/ansible-language-server -g"
 } > "$NVM_DIR/default-packages"
 
-nvm install --lts
-nvm alias default lts
+nvm install $NODE_VERSION
+nvm alias default node

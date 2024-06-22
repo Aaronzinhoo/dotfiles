@@ -6,7 +6,7 @@
 (message "Loading fonts")
 (add-to-list 'default-frame-alist '(font . "-SRC-Hack-normal-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
+;;(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 ;; UTF-8 as default encoding
 (prefer-coding-system 'utf-8)
 (set-default-coding-systems 'utf-8)
