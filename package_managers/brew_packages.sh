@@ -67,7 +67,7 @@ brew install gh
 #---------------------
 echo_with_prompt "installing docker\n"
 brew install ca-certificates
-brew install homebrew/cask/docker
+brew install docker
 brew install docker-compose
 brew install lazydocker
 #---------------------
@@ -145,7 +145,6 @@ brew install --cask chromedriver
 echo_with_prompt "installing misc. packages\n"
 brew install tree
 brew install tmux
-brew tap homebrew/cask-fonts
 brew install --cask font-hack-nerd-font
 # psycopg2 M1 support
 brew install libpq --build-from-source
@@ -164,13 +163,14 @@ brew install yamllint
 
 ## python
 echo_with_prompt "installing pyenv dependencies";
-brew install pyenv
-brew install pyenv-virtualenv
-brew install jawshooah/pyenv/pyenv-default-packages
+brew install python-tk
+curl https://pyenv.run | bash
+git clone https://github.com/jawshooah/pyenv-default-packages.git $(pyenv root)/plugins/pyenv-default-packages
 
 ## golang
 echo_with_prompt "installing golang"
 brew install go
+brew install goenv
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 ## C++
@@ -189,6 +189,8 @@ echo_with_prompt "installing Java dependencies";
 brew tap spring-io/tap
 brew install maven
 brew install gradle
+brew install spring-boot
+curl -s "https://get.sdkman.io" | bash
 
 # ------------------
 ## Dockerfile
@@ -200,6 +202,7 @@ brew install hadolint
 # ------------------
 # networking
 # ------------------
+echo_with_prompt "installing Networking dependencies";
 brew install mtr
 brew install dnsmap
 brew install nmap
@@ -209,6 +212,7 @@ brew install nmap
 # ------------------
 # kafka
 # ------------------
+echo_with_prompt "installing Kafka dependencies";
 brew install openssl
 brew install librdkafka
 brew install pkg-config

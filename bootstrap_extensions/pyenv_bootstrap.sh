@@ -11,17 +11,16 @@ export PATH="/usr/local/opt/openssl@3/bin:$PATH"
 export LDFLAGS="-L/usr/local/opt/openssl@3/lib"
 export CPPFLAGS="-I/usr/local/opt/openssl@3/include"
 
-eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 
-{
-    echo -n "ipython"
-    echo -n "ruff-lsp"
-    echo -n "matplotlib"
-} > "$(pyenv root)/default-packages"
+cat >"$(pyenv root)/default-packages"<<EOF
+ipython
+ruff-lsp
+matplotlib
+EOF
 
 pyenv install "${PYTHON_VERSION}"
 pyenv global "${PYTHON_VERSION}"
 
-eval "$(pyenv init --path)"
-
+pip install --upgrade pip
 pip install virtualenvwrapper

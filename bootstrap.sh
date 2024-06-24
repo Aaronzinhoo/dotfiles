@@ -22,7 +22,7 @@ link () {
 }
 
 # TODO rewrite this to check for os=unknown, use the execute_func_with_prompt wrapper, etc
-install_tools () {
+install_packages () {
     case $OSTYPE in
 	    darwin*)
             echo_with_prompt "Detected OS macOS"
@@ -32,7 +32,7 @@ install_tools () {
 	        # TODO - regex here?
 	        if [ "$resp" = 'y' ] || [ "$resp" = 'Y' ] ; then
 	            echo_with_prompt "Installing useful stuff using brew. This may take a while..."
-	            sh $( pwd )/package-managers/brew-packages.sh
+	            sh $( pwd )/package_managers/brew_packages.sh
 	        else
 		        echo_with_prompt "Brew installation cancelled by user"
 	        fi
@@ -46,7 +46,7 @@ install_tools () {
 	        # TODO - regex here?
 	        if [ "$resp" = 'y' ] || [ "$resp" = 'Y' ] ; then
 	            echo_with_prompt "Installing useful stuff using apt. This may take a while..."
-	            sudo sh $( pwd )/package-managers/apt-packages.sh
+	            sudo sh $( pwd )/package_managers/apt_packages.sh
 	        else
 		        echo_with_prompt "Apt installation cancelled by user"
 	        fi
@@ -58,14 +58,14 @@ install_tools () {
 }
 
 execute_func_with_prompt link "symlink all needed files"
-install_tools
+install_packages
 
-echo_with_prompt "applying zsh bootstrap to installation"
-apply_bootstrap_extension "$( pwd )/bootstrap_extensions/zsh-bootstrap.sh"
-zsh -c 'source $( pwd )/zsh/.zshenv; source $( pwd )/zsh/.zshrc'
+echo_with_prompt "applying zsh bootstrap to installation; errors may be experienced for packages that have not been setup yet"
+apply_bootstrap_extension "$( pwd )/bootstrap_extensions/zsh_bootstrap.sh"
+zsh -c 'source $( pwd )/zsh/.zshrc'
 
 for BOOTSTRAP in ./bootstrap_extensions/*; do
-    if [ "$BOOTSTRAP" = "./bootstrap_extensions/zsh-bootstrap.sh" ]; then
+    if [ "$BOOTSTRAP" = "./bootstrap_extensions/zsh_bootstrap.sh" ]; then
 	    continue
     fi
     echo_with_prompt "applying ${BOOTSTRAP} to installation"

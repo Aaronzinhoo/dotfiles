@@ -11,8 +11,6 @@ if [ "$(whoami)" != "root" ]; then
     return 1;
 fi
 
-GO_VERSION=1.18.1
-
 # mandatory setup for installing other packages
 apt update -y
 apt upgrade -y
@@ -228,13 +226,12 @@ apt-get install --no-install-recommends make \
         libxmlsec1-dev \
         libffi-dev \
         liblzma-dev -y;
+curl https://pyenv.run | bash
+git clone https://github.com/jawshooah/pyenv-default-packages.git $(pyenv root)/plugins/pyenv-default-packages
 
 ## golang
 echo_with_prompt "installing golang"
-wget -q -O - "https://dl.google.com/go/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz"
-rm -rf /usr/local/go && tar -C /usr/local -xzf "go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz"
-rm "go${GO_VERSION}.linux-amd64.tar.gz"
-
+git clone https://github.com/go-nv/goenv.git ~/.goenv
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 ## C++
@@ -249,6 +246,7 @@ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 
 ## Java
 echo_with_prompt "installing Java dependencies";
+curl -s "https://get.sdkman.io" | bash
 
 # ------------------
 ## Dockerfile

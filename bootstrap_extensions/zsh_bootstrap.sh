@@ -45,3 +45,5 @@ if [ -n "$WSL_DISTRO_NAME" ]; then
     echo_with_prompt "changing shell to ZSH lovliness"
     chsh -s $(which zsh)
 fi
+
+echo_with_prompt "Completed OMZ bootstrapping"
