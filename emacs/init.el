@@ -56,26 +56,49 @@
   (defun create-uuid ()
     "Return a newly generated UUID. This uses a simple hashing of variable data."
     (let ((s (md5 (format "%s%s%s%s%s%s%s%s%s%s"
-                          (user-uid)
-                          (emacs-pid)
-                          (system-name)
-                          (user-full-name)
-                          user-mail-address
-                          (current-time)
-                          (emacs-uptime)
-                          (garbage-collect)
-                          (random)
-                          (recent-keys)))))
+                    (user-uid)
+                    (emacs-pid)
+                    (system-name)
+                    (user-full-name)
+                    user-mail-address
+                    (current-time)
+                    (emacs-uptime)
+                    (garbage-collect)
+                    (random)
+                    (recent-keys)))))
       (format "%s-%s-3%s-%s-%s"
-              (substring s 0 8)
-              (substring s 8 12)
-              (substring s 13 16)
-              (substring s 16 20)
-              (substring s 20 32))))
+        (substring s 0 8)
+        (substring s 8 12)
+        (substring s 13 16)
+        (substring s 16 20)
+        (substring s 20 32))))
   (defun insert-uuid ()
     "Inserts a new UUID at the point."
     (interactive)
     (insert (create-uuid)))
+  :init
+  (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
+    "Try to parse bytecode instead of json."
+    (or
+      (when (equal (following-char) ?#)
+        (let ((bytecode (read (current-buffer))))
+          (when (byte-code-function-p bytecode)
+            (funcall bytecode))))
+      (apply old-fn args)))
+
+  (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+            lsp-use-plists
+            (not (functionp 'json-rpc-connection))  ;; native json-rpc
+            (executable-find "emacs-lsp-booster")
+            (not (member 'ansible minor-mode-list)))
+        (progn
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
   :config
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
@@ -107,35 +130,12 @@
     (setq-local electric-pair-pairs (append electric-pair-pairs '((?' . ?'))))
     (setq-local electric-pair-text-pairs electric-pair-pairs))
   :init
-  (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
-  "Try to parse bytecode instead of json."
-  (or
-   (when (equal (following-char) ?#)
-     (let ((bytecode (read (current-buffer))))
-       (when (byte-code-function-p bytecode)
-         (funcall bytecode))))
-   (apply old-fn args)))
-
-  (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
-    "Prepend emacs-lsp-booster command to lsp CMD."
-    (let ((orig-result (funcall old-fn cmd test?)))
-      (if (and (not test?)                             ;; for check lsp-server-present?
-            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-            lsp-use-plists
-            (not (functionp 'json-rpc-connection))  ;; native json-rpc
-            (executable-find "emacs-lsp-booster")
-            (not (member 'ansible minor-mode-list)))
-        (progn
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-        orig-result)))
   ;; disable <> auto pairing in electric-pair-mode for org-mode
   (add-hook 'org-mode-hook
             (lambda ()
               (setq-local electric-pair-inhibit-predicate
                           `(lambda (c)
                              (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
-  :init
   (electric-pair-mode t))
 (use-package paren
   :straight nil
@@ -213,7 +213,7 @@
                       (json-mode . json-ts-mode)
                       (js-mode . js-ts-mode)
                       (python-mode . python-ts-mode)
-                      (typescript-mode . tsx-ts-mode)
+                      (typescript-mode . typescript-ts-mode)
                       (toml-mode . toml-ts-mode)
                       (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
@@ -996,13 +996,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;; LSP
 
 (use-package lsp-mode
-  :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
+  ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook ((lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
-          (c-ts-mode . lsp-deferred)
+  :hook ((c-ts-mode . lsp-deferred)
           (c++-ts-mode . lsp-deferred)
           (go-ts-mode . lsp-deferred)
           (sql-mode . lsp-deferred)
+          (html-ts-mode . lsp-deferred)
           (web-mode . lsp-deferred)
           (typescript-ts-mode . lsp-deferred)
           (rust-ts-mode . lsp-deferred)
@@ -1013,6 +1013,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (python-ts-mode . lsp-deferred)
           (conf-javaprop-mode . lsp-deferred)
           (lsp-mode . lsp-enable-which-key-integration)
+          (lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
           (lsp-mode . yas-minor-mode))
   :bind (:map lsp-mode-map
               ("s-l" . lsp-hydra/body))
@@ -2058,84 +2059,84 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package asoc
   :after org
   :straight (asoc :type git :host github :repo "troyp/asoc.el"))
-(use-package org-capture-ref
-  :after asoc
-  :straight (org-capture-ref :type git :host github :repo "yantar92/org-capture-ref")
-  :init
-  ;; create doct group of category Browser link
-  (let ((templates (doct '( :group "Browser link"
- 			                       :type entry
- 			                       :file "~/development/org/references/articles.org"
- 			                       :fetch-bibtex (lambda () (org-capture-ref-process-capture)) ; this must run first
-			                       :bibtex (lambda () (org-capture-ref-get-bibtex-field :bibtex-string))
-                                   :url (lambda () (org-capture-ref-get-bibtex-field :url))
-                                   :type-tag (lambda () (org-capture-ref-get-bibtex-field :type))
-			                       :title (lambda () (format "%s%s%s%s"
-					                                         (or (when (org-capture-ref-get-bibtex-field :author)
-                                                                   (let* ((authors (s-split " *and *" (org-capture-ref-get-bibtex-field :author)))
-							                                              (author-surnames (mapcar (lambda (author)
-										                                                             (car (last (s-split " +" author))))
-										                                                           authors)))
-                                                                     (unless (string= "article" (org-capture-ref-get-bibtex-field :type))
-                                                                       (setq author-surnames authors))
-						                                             (if (= 1 (length author-surnames))
-                                                                         (format "%s " (car author-surnames))
-                                                                       (format "%s, %s " (car author-surnames) (car (last author-surnames))))))
-                                                                 "")
-                                                             (or (when (org-capture-ref-get-bibtex-field :journal)
-						                                           (format "[%s] " (org-capture-ref-get-bibtex-field :journal)))
-                                                                 (when (org-capture-ref-get-bibtex-field :howpublished)
-                                                                   (format "[%s] " (org-capture-ref-get-bibtex-field :howpublished)))
-                                                                 "")
-                                                             (or (when (org-capture-ref-get-bibtex-field :year)
-                                                                   (format "(%s) " (org-capture-ref-get-bibtex-field :year)))
-                                                                 "")
-                                                             (or (org-capture-ref-get-bibtex-field :title)
-                                                                 "")))
-			                       :id (lambda () (org-capture-ref-get-bibtex-field :key))
-                                   :extra (lambda () (if (org-capture-ref-get-bibtex-field :journal)
-					                                     (s-join "\n"
-						                                         '("- [ ] download and attach pdf"
-						                                           "- [ ] check if bibtex entry has missing fields"
-						                                           "- [ ] read paper"
-						                                           "- [ ] check citing articles"
-						                                           "- [ ] check related articles"
-						                                           "- [ ] check references"))
-                                                       ""))
-			                       :template
-			                       ("%{fetch-bibtex}* TODO %? %{title} :BOOKMARK:%{type-tag}:"
-			                        ":PROPERTIES:"
-			                        ":ID: %{id}"
-			                        ":CREATED: %U"
-			                        ":Source: [[%{url}]]"
-			                        ":END:"
-                                    ":BIBTEX:"
-			                        "#+begin_src bibtex"
-			                        "%{bibtex}"
-			                        "#+end_src"
-                                    ":END:"
-                                    "%i"
-                                    "%{extra}")
-			                       :children (("Interactive link"
-				                               :keys "b"
-				                               )
-				                              ("Silent link"
-				                               :keys "B"
-				                               :immediate-finish t))))))
-    (dolist (template templates)
-      (asoc-put! org-capture-templates
-	             (car template)
-	             (cdr  template)
-	             'replace)))
-  :config
-  (defun aaronzinhoo--org-capture-finalize-hook ()
-    (let ((key  (plist-get org-capture-plist :key))
-          (desc (plist-get org-capture-plist :description)))
-      (if org-note-abort
-          (message "Template with key %s and description “%s” aborted" key desc)
-        (delete-frame))))
-  (add-hook 'org-capture-after-finalize-hook 'aaronzinhoo--org-capture-finalize-hook)
-  )
+;; (use-package org-capture-ref
+;;   :after asoc
+;;   :straight (org-capture-ref :type git :host github :repo "yantar92/org-capture-ref")
+;;   :init
+;;   ;; create doct group of category Browser link
+;;   (let ((templates (doct '( :group "Browser link"
+;;  			                       :type entry
+;;  			                       :file "~/development/org/references/articles.org"
+;;  			                       :fetch-bibtex (lambda () (org-capture-ref-process-capture)) ; this must run first
+;; 			                       :bibtex (lambda () (org-capture-ref-get-bibtex-field :bibtex-string))
+;;                                    :url (lambda () (org-capture-ref-get-bibtex-field :url))
+;;                                    :type-tag (lambda () (org-capture-ref-get-bibtex-field :type))
+;; 			                       :title (lambda () (format "%s%s%s%s"
+;; 					                                         (or (when (org-capture-ref-get-bibtex-field :author)
+;;                                                                    (let* ((authors (s-split " *and *" (org-capture-ref-get-bibtex-field :author)))
+;; 							                                              (author-surnames (mapcar (lambda (author)
+;; 										                                                             (car (last (s-split " +" author))))
+;; 										                                                           authors)))
+;;                                                                      (unless (string= "article" (org-capture-ref-get-bibtex-field :type))
+;;                                                                        (setq author-surnames authors))
+;; 						                                             (if (= 1 (length author-surnames))
+;;                                                                          (format "%s " (car author-surnames))
+;;                                                                        (format "%s, %s " (car author-surnames) (car (last author-surnames))))))
+;;                                                                  "")
+;;                                                              (or (when (org-capture-ref-get-bibtex-field :journal)
+;; 						                                           (format "[%s] " (org-capture-ref-get-bibtex-field :journal)))
+;;                                                                  (when (org-capture-ref-get-bibtex-field :howpublished)
+;;                                                                    (format "[%s] " (org-capture-ref-get-bibtex-field :howpublished)))
+;;                                                                  "")
+;;                                                              (or (when (org-capture-ref-get-bibtex-field :year)
+;;                                                                    (format "(%s) " (org-capture-ref-get-bibtex-field :year)))
+;;                                                                  "")
+;;                                                              (or (org-capture-ref-get-bibtex-field :title)
+;;                                                                  "")))
+;; 			                       :id (lambda () (org-capture-ref-get-bibtex-field :key))
+;;                                    :extra (lambda () (if (org-capture-ref-get-bibtex-field :journal)
+;; 					                                     (s-join "\n"
+;; 						                                         '("- [ ] download and attach pdf"
+;; 						                                           "- [ ] check if bibtex entry has missing fields"
+;; 						                                           "- [ ] read paper"
+;; 						                                           "- [ ] check citing articles"
+;; 						                                           "- [ ] check related articles"
+;; 						                                           "- [ ] check references"))
+;;                                                        ""))
+;; 			                       :template
+;; 			                       ("%{fetch-bibtex}* TODO %? %{title} :BOOKMARK:%{type-tag}:"
+;; 			                        ":PROPERTIES:"
+;; 			                        ":ID: %{id}"
+;; 			                        ":CREATED: %U"
+;; 			                        ":Source: [[%{url}]]"
+;; 			                        ":END:"
+;;                                     ":BIBTEX:"
+;; 			                        "#+begin_src bibtex"
+;; 			                        "%{bibtex}"
+;; 			                        "#+end_src"
+;;                                     ":END:"
+;;                                     "%i"
+;;                                     "%{extra}")
+;; 			                       :children (("Interactive link"
+;; 				                               :keys "b"
+;; 				                               )
+;; 				                              ("Silent link"
+;; 				                               :keys "B"
+;; 				                               :immediate-finish t))))))
+;;     (dolist (template templates)
+;;       (asoc-put! org-capture-templates
+;; 	             (car template)
+;; 	             (cdr  template)
+;; 	             'replace)))
+;;   :config
+;;   (defun aaronzinhoo--org-capture-finalize-hook ()
+;;     (let ((key  (plist-get org-capture-plist :key))
+;;           (desc (plist-get org-capture-plist :description)))
+;;       (if org-note-abort
+;;           (message "Template with key %s and description “%s” aborted" key desc)
+;;         (delete-frame))))
+;;   (add-hook 'org-capture-after-finalize-hook 'aaronzinhoo--org-capture-finalize-hook)
+;;   )
 (use-package bibtex-completion
   :defer t
   :custom
@@ -2181,44 +2182,6 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package pdf-tools
   :custom
   (pdf-view-display-size 'fit-width))
-
-;;; Application Framework
-;; (use-package eaf
-;;   :straight (:type git
-;;                    :host github
-;;                    :repo "manateelazycat/emacs-application-framework"
-;;                    :files ("*"))
-;;   ;; :load-path (concat user-emacs-directory "/eaf/git/emacs-application-framework")
-;;   :custom
-;;   (browse-url-browser-function 'eaf-open-browser) ;; Make EAF Browser my default browser
-;;   (eaf-browser-continue-where-left-off t)
-;;   :config
-;;   (require 'eaf-org)
-;;   (defalias 'browse-web #'eaf-open-browser)
-;;   (eaf-setq eaf-browser-default-zoom "1.25")
-;;   (eaf-setq eaf-browser-dark-mode "false")
-;;   (eaf-setq eaf-browser-enable-adblocker "true")
-;;   (eaf-setq eaf-pdf-dark-mode "false")
-;;   (eaf-setq eaf-browser-enable-autofill "true")
-;;   ;; I already bind "RET", "<mouse-2>", "^" to `dired-find-alternate-file' in `init-dired.el'.
-;;   ;; Comment this line out of you don't want to use EAF to open available files in dired.
-;;   ;; (global-set-key [remap dired-find-alternate-file] #'eaf-file-open-in-dired)
-;;   (eaf-bind-key nil "M-q" eaf-browser-keybinding)
-;;   (eaf-bind-key open_link "C-M-s" eaf-browser-keybinding)
-;;   (eaf-bind-key clear_cookies "C-M-q" eaf-browser-keybinding)
-;;   (eaf-bind-key insert_or_recover_prev_close_page "X" eaf-browser-keybinding)
-;;   (eaf-bind-key scroll_up "RET" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_down_page "DEL" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_down_page "u" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_up_page "d" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key quit-window "q" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key zoom_in "C-=" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key zoom_out "C--" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
-;;   (eaf-bind-key eaf-send-key-sequence "M-]" eaf-terminal-keybinding)
-;;   )
 
 ;; Environment | Shell
 (use-package exec-path-from-shell
@@ -2497,8 +2460,8 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package web-mode
   :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo--web-mode-hook)
-  :mode (("\\.html\\'" . web-mode)
-         ("\\.component.html\\'" . web-mode))
+  :mode (("\\.html\\'" . html-ts-mode)
+         ("\\.component.html\\'" . html-ts-mode))
   :bind ((:map web-mode-map
                ("s-h" . web-mode-hydra/body)))
   :pretty-hydra
@@ -2650,9 +2613,13 @@ When the number of characters in a buffer exceeds this threshold,
               (local-set-key (kbd "C-c C-b") 'js-send-buffer-and-go)))
   )
 ;;angular setup
-(use-package typescript-mode
+(use-package typescript-ts-mode
   :delight " Ts"
-  :hook ((typescript-ts-mode . subword-mode)))
+  :hook ((typescript-ts-mode . subword-mode)
+          (typescript-ts-mode . aaronzinhoo--typescript-mode-hook))
+  :preface
+  (defun aaronzinhoo--typescript-mode-hook ()
+    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))))
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
