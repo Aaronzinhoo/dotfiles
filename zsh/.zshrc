@@ -153,26 +153,13 @@ load-nvmrc() {
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
-export PATH="$HOME/.gobrew/current/bin:$HOME/.gobrew/bin:$PATH"
-export GOROOT="$HOME/.gobrew/current/go"
-
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
 [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
 
-_gobrew()
-{
-    COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
-    case "$COMP_CWORD" in
-        1)
-            COMMANDS="ls ls-remote use install uninstall self-update prune version help"
-            ;;
-        2)
-            COMMANDS=`gobrew ls |sed '/*/d'| sed '/current/d' |awk NF`
-            ;;
-    esac
-    COMPREPLY=(`compgen -W "$COMMANDS" -- "${COMP_WORDS[COMP_CWORD]}"`)
-    return 0
-}
-
-complete -F _gobrew gobrew
+# go vars
+export GOENV_ROOT="${XDG_CONFIG_HOME}/goenv"
+export PATH="$GOENV_ROOT/bin:$PATH"
+eval "$(goenv init -)"
+export PATH="$GOROOT/bin:$PATH"
+export PATH="$PATH:$GOPATH/bin"
