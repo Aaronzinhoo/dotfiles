@@ -2544,7 +2544,7 @@ When the number of characters in a buffer exceeds this threshold,
      ("ic" markdown-insert-code-block "code block")
      ("id" markdown-insert-gfm-checkbox "checkbox"))
     "Preview"
-    (("p" vmd-mode "Preview" :toggle t))
+    (("p" impatient-showdown-mode "Preview" :toggle t))
     "Action"
     (("o" markdown-open "Open" :color blue))
     ))
@@ -2554,10 +2554,10 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package ox-gfm
   :after org)
 ;; markdown visualization
-(use-package vmd-mode
-  :commands (vmd-mode)
+(use-package impatient-showdown
+  :after (markdown-mode)
   :custom
-  (vmd-binary-path (concat nvm-home-folder "/versions/node/v14.19.0/bin/vmd")))
+  (impatient-showdown-flavor 'github))
 
 
 ;; JS/react/angular config
