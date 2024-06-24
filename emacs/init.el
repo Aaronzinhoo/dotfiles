@@ -306,14 +306,13 @@
 
 ;; SSH Config
 (use-package ssh-agency
-  :if (string-equal system-type "windows-nt"))
+  :if (memq window-system '(ns)))
 (use-package ssh-config-mode
-  :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook)
-         (ssh-config-mode . er/add-ssh-config-mode-expansions))
+  :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
   :preface
   (defun aaronzinhoo--ssh-config-mode-hook ()
     (setq-local completion-at-point-functions
-                (list #'ssh-config-completion-at-point #'cape-file #'cape-dabbrev))))
+                (list #'cape-file #'ssh-config-completion-at-point #'cape-dabbrev))))
 (use-package x509-mode
   :straight t
   :commands (x509-mode)
@@ -2816,6 +2815,7 @@ When the number of characters in a buffer exceeds this threshold,
 
 ;; protobuf
 (use-package protobuf-ts-mode
+  :straight (:type git :host github :repo "emacsattic/protobuf-ts-mode" :branch "master")
   :mode (("\\.proto\\'" . protobuf-ts-mode)))
 (use-package flycheck-buf-lint
   :straight t
