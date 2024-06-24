@@ -25,6 +25,7 @@
 (defconst calendar-longitude -118.352575)
 (defconst node-home-folder (file-name-directory (getenv "NVM_BIN")) "Path to currently used nvm node version with trailing slash.")
 (defconst nvm-home-folder (getenv "NVM_DIR") "Path to currently used nvm node version with trailing slash.")
+(defconst pyenv-root-folder (getenv "PYENV_ROOT") "Path to pyenv root folder without trailing slash.")
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
 (message "Done loading constants")
 

@@ -14,8 +14,6 @@
 ;;; Code:
 (message "Loading defaults")
 (setq message-log-max 16384
-      auto-window-vscroll nil
-      scroll-margin 4
       delete-pair-blink-delay 0
       ad-redefinition-action 'accept
       create-lockfiles nil
@@ -40,9 +38,7 @@
  compilation-scroll-output t
  indent-tabs-mode nil
  tab-width 4
- tab-stop-list (number-sequence 4 120 4)
- scroll-preserve-screen-position t
- scroll-conservatively 10000)
+ tab-stop-list (number-sequence 4 120 4))
 
 ;; delete whitespace always... can use whitespace-mode to make efficient
 (add-hook 'before-save-hook 'delete-trailing-whitespace)

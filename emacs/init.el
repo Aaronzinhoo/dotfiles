@@ -48,7 +48,6 @@
            ("M-<down>" . move-text-down))
   :custom
   (delete-selection-mode t)
-  (pixel-scroll-precision-mode t)
   (enable-recursive-minibuffers t)
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
@@ -1141,7 +1140,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
   :if (executable-find "pyright")
   :custom
-  (lsp-pyright-venv-path (concat user-home-directory ".pyenv/versions"))
+  (lsp-pyright-venv-path (concat pyenv-root-folder "versions"))
   (lsp-pyright-python-executable-cmd "python3")
   :hook
   (python-mode . (lambda ()
@@ -2715,10 +2714,10 @@ When the number of characters in a buffer exceeds this threshold,
   :custom
   (python-check-command "flake8")
   :init
-  (setenv "WORKON_HOME" "~/.pyenv/versions")
-  (setenv "VIRTUALENVWRAPPER_PYTHON" "~/.pyenv/shims/python")
-  (setenv "VIRTUALENVWRAPPER_VIRTUALENV" "~/.pyenv/shims/python")
-  (setenv "PIPENV_PYTHON" "~/.pyenv/shims/python")
+  (setenv "WORKON_HOME" (concat pyenv-root-folder "/versions"))
+  (setenv "VIRTUALENVWRAPPER_PYTHON" (concat pyenv-root-folder "/shims/python"))
+  (setenv "VIRTUALENVWRAPPER_VIRTUALENV" (concat pyenv-root-folder "/shims/python"))
+  (setenv "PIPENV_PYTHON" (concat pyenv-root-folder "/shims/python"))
   (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
   (with-eval-after-load 'python (defun temp () (aaronzinhoo--activate-python-shell-complettion))))
 (use-package pyvenv
