@@ -148,7 +148,7 @@ brew install tmux
 # psycopg2 M1 support
 brew install libpq --build-from-source
 # fonts
-cp "$( pwd )/fonts/Hack/*.ttf" ~/Library/Fonts/
+find -E $( pwd ) -regex ".*\.ttf" | xargs -I % -n 2 cp % ~/Library/Fonts/
 
 
 
