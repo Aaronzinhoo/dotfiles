@@ -47,6 +47,7 @@
   :bind* (("M-<up>" . move-text-up)
            ("M-<down>" . move-text-down))
   :custom
+  (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
   (enable-recursive-minibuffers t)
   ;; Do not allow the cursor in the minibuffer prompt
