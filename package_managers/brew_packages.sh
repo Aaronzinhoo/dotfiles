@@ -141,13 +141,16 @@ brew install --cask chromedriver
 #---------------------
 # misc
 #---------------------
-## Show directory structure with excellent formatting
 echo_with_prompt "installing misc. packages\n"
+# show directory structure with formatting
 brew install tree
 brew install tmux
-brew install --cask font-hack-nerd-font
 # psycopg2 M1 support
 brew install libpq --build-from-source
+# fonts
+cp "$( pwd )/fonts/Hack/*.ttf" ~/Library/Fonts/
+
+
 
 
 ## Htop
