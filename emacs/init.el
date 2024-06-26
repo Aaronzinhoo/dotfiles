@@ -307,7 +307,7 @@
 
 ;; SSH Config
 (use-package ssh-agency
-  :if (memq window-system '(ns)))
+  :if (not (memq window-system '(ns))))
 (use-package ssh-config-mode
   :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
   :preface
@@ -589,7 +589,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("I" . git-identity-info))
   :custom
   (git-identity-list
-   '(("aaron.gonzales@linquest.com"
+   '(("aaron.gonzales.ctr@linquest.com"
       :domains ("github.km.spaceforce.mil")
       :dirs ("~/development/work")
       :username )
@@ -2307,7 +2307,9 @@ When the number of characters in a buffer exceeds this threshold,
   :hook ((openapi-yaml-mode . yas-minor-mode)))
 (use-package openapi-preview
   :commands (openapi-preview)
-  :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main"))
+  :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main")
+  :init
+  (openapi-preview-redoc-command "redoc-cli"))
 (use-package yaml-pro
   :commands (yaml-pro-mode yaml-pro-ts-mode)
   :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")

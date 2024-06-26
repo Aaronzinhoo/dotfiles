@@ -27,6 +27,7 @@ yaml-language-server
 tsun
 dockerfile-language-server-nodejs
 @ansible/ansible-language-server
+redoc-cli
 EOF
 
 nvm install "$NODE_VERSION"
