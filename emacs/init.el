@@ -2308,7 +2308,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package openapi-preview
   :commands (openapi-preview)
   :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main")
-  :init
+  :custom
   (openapi-preview-redoc-command "redoc-cli"))
 (use-package yaml-pro
   :commands (yaml-pro-mode yaml-pro-ts-mode)
