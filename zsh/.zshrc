@@ -127,10 +127,9 @@ complete -F __start_kubectl k
 
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
-
-# Load Angular CLI autocompletion.
-# source <(ng completion script)
-# export PATH="$PATH:/opt/homebrew/opt/node@16/bin"
+# env vars to install confluent kafka on M1
+export LIBRARY_PATH=/opt/homebrew/Cellar/librdkafka/2.4.0/lib
+export C_INCLUDE_PATH=/opt/homebrew/Cellar/librdkafka/2.4.0/include
 
 # place this after nvm initialization!
 autoload -U add-zsh-hook
