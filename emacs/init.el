@@ -307,7 +307,7 @@
 
 ;; SSH Config
 (use-package ssh-agency
-  :if (not (memq window-system '(ns))))
+  :if (memq window-system '(windows)))
 (use-package ssh-config-mode
   :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
   :preface
