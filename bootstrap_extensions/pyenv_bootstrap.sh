@@ -17,6 +17,9 @@ cat >"$(pyenv root)/default-packages"<<EOF
 ipython
 ruff-lsp
 matplotlib
+autopep8
+isort
+pyflakes
 EOF
 
 pyenv install "${PYTHON_VERSION}"
