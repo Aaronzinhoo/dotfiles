@@ -1134,18 +1134,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((java-ts-mode . lsp-deferred)
          (java-ts-mode . lsp-java-boot-lens-mode))
   :config
+  (require 'lsp-java-boot)
   (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.26.jar")))
     ;; current VSCode defaults
-    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file))))
-  (require 'lsp-java-boot))
+    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file)))))
+
 
 (use-package lsp-pyright
   :requires (lsp pyvenv)
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
   :if (executable-find "pyright")
-  :custom
-  (lsp-pyright-venv-path (concat pyenv-root-folder "versions"))
-  (lsp-pyright-python-executable-cmd "python3")
+  :init
+  (setq lsp-pyright-venv-directory (concat pyenv-root-folder "/versions"))
+  (setq lsp-pyright-venv-path (concat pyenv-root-folder "/versions"))
+  (setq lsp-pyright-python-executable-cmd "python3")
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright))))
@@ -1810,6 +1812,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package swagg
   :straight (:type git :host github :repo "isamert/swagg.el" :branch "main")
   :commands (swagg-request swagg-request-with-rest-block))
+;; add agenda commands to hydra
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo--org-setup)
@@ -1822,6 +1825,7 @@ When the number of characters in a buffer exceeds this threshold,
     ("C-M-<return>" . org-insert-subheading)
     ("s-h". hydra-org-nav/body))
   :preface
+  ;; TODO get this to work with cape
   (defun org-keyword-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
     (cl-case command
@@ -1948,7 +1952,8 @@ When the number of characters in a buffer exceeds this threshold,
   (org-catch-invisible-edits 'show-and-error)
   (org-special-ctrl-a/e t)
   (org-insert-heading-respect-content t)
-
+  (org-todo-keywords
+    '((sequence "TODO" "IN PROGRESS" "DONE" "DELEGATED")))
   ;; Org styling, hide markup etc.
   ;; (org-hide-emphasis-markers t)
   (org-pretty-entities t)
@@ -1963,6 +1968,16 @@ When the number of characters in a buffer exceeds this threshold,
        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
   (org-agenda-current-time-string
     "◀── now ─────────────────────────────────────────────────")
+  (org-agenda-custom-commands
+    '(("n" "Agenda and all TODOs" ((agenda "") (alltodo "")))
+       ("z" ;key
+         "TODO Agenda"           ;description
+         agenda                   ;type
+         ""                       ;match - empty string for agenda type
+         ;; local settings...
+         ((org-agenda-files '("~/development/org/gtd.org"))
+           (org-deadline-warning-days 5))))
+    )
   :init
   ;; view items using emacs browser
   (if my/wsl
@@ -2008,8 +2023,12 @@ When the number of characters in a buffer exceeds this threshold,
   (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
 
   (setq org-capture-templates
-    '(("t" "Todo" entry (file+headline "~/development/org/gtd.org" "Tasks")
+    '(("t" "TODO" entry (file+headline "~/development/org/gtd.org" "Tasks")
         "* TODO %?\n  %i\n  %a")
+       ("s" "TODO Item to be scheduled" entry (file+headline "~/development/org/gtd.org" "Tasks")
+         "* TODO %?\n SCHEDULED: %t")
+       ("d" "TODO item with a deadline" entry (file+headline "~/development/org/gtd.org" "Tasks")
+         "* TODO %?\n DEADLINE: %t")
        ("j" "Journal" entry (file+datetree "~/development/org/journal.org")
          "* %?\nEntered on %U\n  %i\n  %a")
        ("a"                          ; key
@@ -2059,84 +2078,6 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package asoc
   :after org
   :straight (asoc :type git :host github :repo "troyp/asoc.el"))
-;; (use-package org-capture-ref
-;;   :after asoc
-;;   :straight (org-capture-ref :type git :host github :repo "yantar92/org-capture-ref")
-;;   :init
-;;   ;; create doct group of category Browser link
-;;   (let ((templates (doct '( :group "Browser link"
-;;  			                       :type entry
-;;  			                       :file "~/development/org/references/articles.org"
-;;  			                       :fetch-bibtex (lambda () (org-capture-ref-process-capture)) ; this must run first
-;; 			                       :bibtex (lambda () (org-capture-ref-get-bibtex-field :bibtex-string))
-;;                                    :url (lambda () (org-capture-ref-get-bibtex-field :url))
-;;                                    :type-tag (lambda () (org-capture-ref-get-bibtex-field :type))
-;; 			                       :title (lambda () (format "%s%s%s%s"
-;; 					                                         (or (when (org-capture-ref-get-bibtex-field :author)
-;;                                                                    (let* ((authors (s-split " *and *" (org-capture-ref-get-bibtex-field :author)))
-;; 							                                              (author-surnames (mapcar (lambda (author)
-;; 										                                                             (car (last (s-split " +" author))))
-;; 										                                                           authors)))
-;;                                                                      (unless (string= "article" (org-capture-ref-get-bibtex-field :type))
-;;                                                                        (setq author-surnames authors))
-;; 						                                             (if (= 1 (length author-surnames))
-;;                                                                          (format "%s " (car author-surnames))
-;;                                                                        (format "%s, %s " (car author-surnames) (car (last author-surnames))))))
-;;                                                                  "")
-;;                                                              (or (when (org-capture-ref-get-bibtex-field :journal)
-;; 						                                           (format "[%s] " (org-capture-ref-get-bibtex-field :journal)))
-;;                                                                  (when (org-capture-ref-get-bibtex-field :howpublished)
-;;                                                                    (format "[%s] " (org-capture-ref-get-bibtex-field :howpublished)))
-;;                                                                  "")
-;;                                                              (or (when (org-capture-ref-get-bibtex-field :year)
-;;                                                                    (format "(%s) " (org-capture-ref-get-bibtex-field :year)))
-;;                                                                  "")
-;;                                                              (or (org-capture-ref-get-bibtex-field :title)
-;;                                                                  "")))
-;; 			                       :id (lambda () (org-capture-ref-get-bibtex-field :key))
-;;                                    :extra (lambda () (if (org-capture-ref-get-bibtex-field :journal)
-;; 					                                     (s-join "\n"
-;; 						                                         '("- [ ] download and attach pdf"
-;; 						                                           "- [ ] check if bibtex entry has missing fields"
-;; 						                                           "- [ ] read paper"
-;; 						                                           "- [ ] check citing articles"
-;; 						                                           "- [ ] check related articles"
-;; 						                                           "- [ ] check references"))
-;;                                                        ""))
-;; 			                       :template
-;; 			                       ("%{fetch-bibtex}* TODO %? %{title} :BOOKMARK:%{type-tag}:"
-;; 			                        ":PROPERTIES:"
-;; 			                        ":ID: %{id}"
-;; 			                        ":CREATED: %U"
-;; 			                        ":Source: [[%{url}]]"
-;; 			                        ":END:"
-;;                                     ":BIBTEX:"
-;; 			                        "#+begin_src bibtex"
-;; 			                        "%{bibtex}"
-;; 			                        "#+end_src"
-;;                                     ":END:"
-;;                                     "%i"
-;;                                     "%{extra}")
-;; 			                       :children (("Interactive link"
-;; 				                               :keys "b"
-;; 				                               )
-;; 				                              ("Silent link"
-;; 				                               :keys "B"
-;; 				                               :immediate-finish t))))))
-;;     (dolist (template templates)
-;;       (asoc-put! org-capture-templates
-;; 	             (car template)
-;; 	             (cdr  template)
-;; 	             'replace)))
-;;   :config
-;;   (defun aaronzinhoo--org-capture-finalize-hook ()
-;;     (let ((key  (plist-get org-capture-plist :key))
-;;           (desc (plist-get org-capture-plist :description)))
-;;       (if org-note-abort
-;;           (message "Template with key %s and description “%s” aborted" key desc)
-;;         (delete-frame))))
-;;   (add-hook 'org-capture-after-finalize-hook 'aaronzinhoo--org-capture-finalize-hook)
-;;   )
 (use-package bibtex-completion
   :defer t
   :custom
@@ -2415,8 +2356,7 @@ When the number of characters in a buffer exceeds this threshold,
   :straight (:type git :host github :repo "PommesSchranke/apache-mode" :branch "customizable-faces")
   :mode (("apache2\\.conf\\'" . apache-mode)
          ("httpd\\.conf\\'" . apache-mode))
-  :hook ((apache-mode . aaronzinhoo-apache2-company-mode-setup)
-         (apache-mode . aggressive-indent-mode))
+  :hook ((apache-mode . aaronzinhoo-apache2-company-mode-setup))
   :preface
   (defun aaronzinhoo-apache2-company-mode-setup ()
     (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict))))
