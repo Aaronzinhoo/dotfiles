@@ -22,6 +22,8 @@ EMACS_INSTALL_DIR="${HOME}/.emacs.d"
 export EDITOR="emacs"
 
 export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
+export RUSTUP_HOME="${XDG_CONFIG_HOME}/multirust"
+export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
 export GOENV_ROOT="${XDG_CONFIG_HOME}/goenv"
 export GOENV_GOPATH_PREFIX="${XDG_CONFIG_HOME}/go"
 export PYENV_ROOT="${XDG_CONFIG_HOME}/pyenv"
@@ -30,7 +32,7 @@ export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
 export PYTHON_VERSION="3.12.4"
 export NODE_VERSION="20.15.0"
 export GO_VERSION="1.22.4"
-export EMACS_VERSION="30"
+export EMACS_VERSION="31"
 
 echo_with_prompt "Making needed folders"
 
@@ -46,6 +48,7 @@ check_and_mkdir "$XDG_CACHE_HOME"
 check_and_mkdir "$XDG_DATA_HOME"
 check_and_mkdir "$HOME/.ssh/github"
 check_and_mkdir "${XDG_CONFIG_HOME}/emacs/backups"
+check_and_mkdir "$NVM_DIR"
 
 echo_with_prompt "Installing Packages and Bootstrapping..."
 
