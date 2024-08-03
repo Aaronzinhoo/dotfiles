@@ -4,9 +4,10 @@
 
 PROMPT='[ Bootstrap ]: '
 
-# TODO : Delete symlinks to deleted files
-# Is this where rsync shines?
-# TODO - add support for -f and --force
+get_symlink_files(){
+    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|fonts|os|.*.md|.*\.sh|.*.emacs/|windows'
+}
+
 link () {
     symlink_files=($(get_symlink_files))
     for path in "${symlink_files[@]}";
@@ -14,9 +15,9 @@ link () {
         # Silently ignore errors here because the files may already exist
         path=${path#./}
         if [ -d "$path" ]  && [ "$path" = "emacs" ]; then
-            ln -s "$( pwd )/$path" "$EMACS_INSTALL_DIR"
+            ln -fhs "$( pwd )/$path" "$EMACS_INSTALL_DIR"
         elif [ -f "$( pwd )/$path" ]; then
-            ln -s "$( pwd )/$path" "$HOME"
+            ln -fhs "$( pwd )/$path" "$HOME"
         fi
     done
 }
@@ -27,7 +28,7 @@ install_packages () {
 	    darwin*)
             echo_with_prompt "Detected OS macOS"
 	        echo_with_prompt "This utility will install useful utilities using Homebrew"
-	        echo_with_prompt "Proceed? (y/n)"
+	        echo_with_prompt "Proceed? (y/n): "
 	        read resp
 	        # TODO - regex here?
 	        if [ "$resp" = 'y' ] || [ "$resp" = 'Y' ] ; then
@@ -62,7 +63,6 @@ install_packages
 
 echo_with_prompt "applying zsh bootstrap to installation; errors may be experienced for packages that have not been setup yet"
 apply_bootstrap_extension "$( pwd )/bootstrap_extensions/zsh_bootstrap.sh"
-zsh -c 'source $( pwd )/zsh/.zshrc'
 
 for BOOTSTRAP in ./bootstrap_extensions/*; do
     if [ "$BOOTSTRAP" = "./bootstrap_extensions/zsh_bootstrap.sh" ]; then

@@ -12,10 +12,6 @@ check_and_mkdir(){
     fi
 }
 
-get_symlink_files(){
-    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|os|.*.md|.*\.sh|.*.emacs/|windows'
-}
-
 apply_bootstrap_extension(){
     if [ -f "$1" ]; then
         "$1"
