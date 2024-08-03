@@ -103,9 +103,6 @@ fi
 # custom key binding CTRL+SPC for accepting
 bindkey '^ ' autosuggest-accept
 
-# Load environment aliases
-. "${HOME}/.alias"
-
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
@@ -152,9 +149,6 @@ load-nvmrc() {
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
-[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
 
 # go vars
 export GOENV_ROOT="${XDG_CONFIG_HOME}/goenv"
@@ -162,3 +156,12 @@ export PATH="$GOENV_ROOT/bin:$PATH"
 eval "$(goenv init -)"
 export PATH="$GOROOT/bin:$PATH"
 export PATH="$PATH:$GOPATH/bin"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+export PATH="/Users/aaron.gonzales/.homebrew/opt/rustup/bin:$PATH"
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"

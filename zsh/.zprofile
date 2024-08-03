@@ -1,9 +1,11 @@
 . "$HOME/.cargo/env"
 . "$HOME/.alias"
+eval "$($HOME/.homebrew/bin/brew shellenv)"
 export EDITOR="emacs"
 export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_CACHE_HOME="${XDG_CONFIG_HOME}/cache"
 export XDG_DATA_HOME="${XDG_CONFIG_HOME}/local/share"
+export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
 
 FILE_NAME=".zprofile"
 case $OSTYPE in
@@ -28,8 +30,11 @@ export NVM_COMPLETION=true
 export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
+# sdkman setup 
+export SDKMAN_DIR="${XDG_CONFIG_HOME}/sdkman"
+
 # pyenv vars
-export PYENV_ROOT="$HOME/.config/pyenv"
+export PYENV_ROOT="${XDG_CONFIG_HOME}/pyenv"
 export PIPENV_PYTHON="$PYENV_ROOT/shims/python"
 export PYENV_VIRTUALENVWRAPPER_PREFER_PYVENV="TRUE"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
@@ -40,9 +45,16 @@ eval "$(pyenv virtualenv-init -)"
 export GOENV_ROOT="${XDG_CONFIG_HOME}/goenv"
 export GOENV_GOPATH_PREFIX="${XDG_CONFIG_HOME}/go"
 
+# sdkman / java
+export SDKMAN_DIR="${XDG_CONFIG_HOME}/sdkman"
+
 # emacs vars
 export ORG_ROOT="${HOME}/org"
 export EMACS_DIR="${XDG_CONFIG_HOME}/emacs"
+
+# rust vars
+export RUSTUP_HOME="${XDG_CONFIG_HOME}/multirust"
+export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
 
 # docker is not running properly without this
 export DOCKER_BUILDKIT=0
@@ -59,4 +71,4 @@ if [ -d "${HOME}/.local/bin" ] ; then
     PATH="${HOME}/.local/bin:$PATH"
 fi
 
-[[ $OSTYPE =~ darwin* ]] && PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+[[ $OSTYPE =~ darwin* ]] && PATH="$(brew --prefix)/bin:$(brew --prefix)/sbin:$PATH"
