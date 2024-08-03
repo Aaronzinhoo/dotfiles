@@ -2,7 +2,19 @@
 
 PROMPT="[ NodeExtensionLoader ]: "
 
-echo_with_prompt "bootstrapping nvm setup"
+if [ -f $NVM_DIR/nvm.sh ]; then
+    echo_with_prompt "Bootstrapping for nvm seems to be complete already."
+    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
+    read resp      
+    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
+	echo_with_prompt "Skipping nvm bootstrapping!"
+        exit 0;
+    fi
+fi
+
+echo_with_prompt "Installing nvm at $NVM_DIR"
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 
 echo_with_prompt "NVM home dir: $NVM_DIR"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

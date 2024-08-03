@@ -1,12 +1,22 @@
 . "$( pwd )/utils.sh"
 
 PROMPT="[ ZSHExtensionLoader ]: "
-PACKAGE_TO_CHECK="git"
 
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    echo_with_prompt "Bootstrapping for omz seems to be complete already."
+    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
+    read resp      
+    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
+	echo_with_prompt "Skipping omz bootstrapping!"
+        exit 0;
+    fi
+fi
+
+PACKAGE_TO_CHECK="git"
 check_system_package_installed $PACKAGE_TO_CHECK
 if [ $? -eq 1 ];then
     echo_with_prompt "[FAIL] ${PACKAGE_TO_CHECK} not installed"
-    return 1
+    exit 1
 fi
 
 CUSTOM_PLUGINS="$HOME/.oh-my-zsh/custom/plugins"
@@ -38,8 +48,10 @@ git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}"/kubeta
 
 
 echo_with_prompt "adding necessary symlinks"
-# link batcat to bat on local
-ln -s /usr/bin/batcat $HOME/.local/bin/bat
+if [ ! -L $HOME/.local/bin/bat ]; then
+    echo_with_prompt "linking batcat"
+    ln -s /usr/bin/batcat $HOME/.local/bin/bat
+fi
 
 if [ -n "$WSL_DISTRO_NAME" ]; then
     echo_with_prompt "changing shell to ZSH lovliness"
