@@ -10,7 +10,7 @@ export PROMPT='[ BrewInstaller ]: '
 echo_with_prompt "Verifying HomeBrew is installed"
 if [ -f "$HOME/.homebrew/bin/brew" ]; then
     echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
-    eval "$($HOME/.homebrew/bin/brew shellenv)
+    eval "$($HOME/.homebrew/bin/brew shellenv)"
 else
     echo_with_prompt "HomeBrew NOT installed! Installing now!"
     mkdir $HOME/.homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C $HOME/.homebrew
@@ -58,7 +58,8 @@ brew install gh
 #---------------------
 echo_with_prompt "installing docker\n"
 brew install ca-certificates
-brew install docker
+# install GUI version of docker desktop
+brew install --cask docker
 brew install docker-compose
 brew install lazydocker
 #---------------------
