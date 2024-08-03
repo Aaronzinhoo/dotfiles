@@ -45,7 +45,9 @@
   :straight nil
   :hook (minibuffer-setup . cursor-intangible-mode)
   :bind* (("M-<up>" . move-text-up)
-           ("M-<down>" . move-text-down))
+           ("M-<down>" . move-text-down)
+           ("M-q" . yank)
+           ("C-j" . avy-goto-char-timer))
   :custom
   (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
