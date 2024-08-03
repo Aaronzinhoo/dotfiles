@@ -222,11 +222,20 @@
     (add-to-list 'major-mode-remap-alist mapping))
   :custom
   (treesit-load-name-override-list
-   '((c++ "libtree-sitter-cpp"))))
+    '((c++ "libtree-sitter-cpp"))))
+(use-package which-key
+  :straight nil
+  :diminish
+  :custom
+  (which-key-use-C-h-commands nil)
+  :config
+  (which-key-setup-side-window-right-bottom)
+  (which-key-mode t))
 (use-package winner
   :straight nil
   :config
   (winner-mode 1))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package system-packages
   :straight t
   :custom
@@ -234,8 +243,6 @@
   :init
   (when (eq system-type 'darwin)
     (setq system-packages-package-manager 'brew)))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (use-package s :straight t
   :preface
   (defun snake-case-word (start end)
@@ -279,6 +286,11 @@
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+(use-package auto-compile
+  :straight (:type git :host github :repo "emacscollective/auto-compile" :branch "main")
+  :config
+  (auto-compile-on-load-mode)
+  (auto-compile-on-save-mode))
 ;; for hydra check hydra config
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package no-littering
@@ -821,14 +833,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                   eshell-mode-hook))
     (add-hook mode (lambda () (beacon-mode 0))))
   (beacon-mode 1))
-(use-package which-key
-  :straight t
-  :diminish
-  :custom
-  (which-key-use-C-h-commands nil)
-  :config
-  (which-key-setup-side-window-right-bottom)
-  (which-key-mode t))
 (use-package default-text-scale
   :defer 2
   :bind (("C--" . text-scale-decrease)
