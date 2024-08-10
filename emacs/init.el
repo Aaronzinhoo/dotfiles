@@ -183,12 +183,12 @@
        (go "https://github.com/tree-sitter/tree-sitter-go")
        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
        (gosum "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")
-       (html "https://github.com/tree-sitter/tree-sitter-html")
        (java "https://github.com/tree-sitter/tree-sitter-java")
        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
        (json "https://github.com/tree-sitter/tree-sitter-json")
        (make "https://github.com/alemuller/tree-sitter-make")
-       (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown")
+       (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown/src")
+       (markdown-inline "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown-inline/src")
        (proto "https://github.com/mitchellh/tree-sitter-proto" "main")
        (python "https://github.com/tree-sitter/tree-sitter-python")
        (rust "https://github.com/tree-sitter/tree-sitter-rust")
@@ -749,7 +749,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (recentf-mode 1))
 (use-package crux
-  :bind (("C-a" . crux-move-beginning-of-line)
+  :bind* (("C-a" . crux-move-beginning-of-line)
          ("C-c I" . crux-find-user-init-file))
   :preface
   (defun aaronzinho-delete-line ()
