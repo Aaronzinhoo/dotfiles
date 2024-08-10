@@ -1356,9 +1356,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("s-s f" . consult-fd)
-         ("s-s p" . consult-ripgrep-thing-at-point)
+          ;; M-s bindings in `search-map'
+          ;; these should be using S not s, probably want better mapping before turning them on again
+         ;; ("s-s f" . consult-fd)
+         ;; ("s-s p" . consult-ripgrep-thing-at-point)
          ;; ("M-s D" . consult-locate)
          ;; ("M-s g" . consult-grep)
          ;; ("M-s G" . consult-git-grep)
