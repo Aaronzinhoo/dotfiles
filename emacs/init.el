@@ -2201,14 +2201,29 @@ When the number of characters in a buffer exceeds this threshold,
   :commands (list-environment))
 ;; NOTE C-c C-t vterm-copy-mode for copying vterm text!
 (use-package vterm
+  :straight (:type git :host github :repo "akermu/emacs-libvterm" :branch "master")
   :commands vterm
-  :preface
+  :bind (:map vterm-mode-map
+          ("M-q" . aaronzinhoo--vterm-yank))
+  :init
   (setq vterm-install t)
   :custom
   (vterm-kill-buffer-on-exit t)
   (vterm-max-scrollback 10000)
   (confirm-kill-processes nil)
-  (hscroll-margin 0))
+  (hscroll-margin 0)
+  :preface
+  (defun aaronzinhoo--vterm-yank ()
+    (interactive "p")
+    (consult-yank))
+  (defun vterm-directory-sync ()
+  "Synchronize current working directory."
+  (interactive)
+  (when vterm--process
+    (let* ((pid (process-id vterm--process))
+           (dir (file-truename (format "/proc/%d/cwd/" pid))))
+      (setq default-directory dir))))
+  )
 (use-package multi-vterm
   :commands multi-vterm)
 (use-package ansi-color
