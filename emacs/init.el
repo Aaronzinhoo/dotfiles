@@ -939,37 +939,37 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (([remap open-line] . aaronzinhoo-open-line)
           ([remap kill-ring-save] . easy-kill)))
 (use-package combobulate
-  :after (expand-region)
-  :commands (aaronzinhoo--mark-region-dwim)
+  :commands (combobulate-avy-jump)
   :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
-  :bind* (("M-2" . aaronzinhoo--mark-region-dwim)
-          :map combobulate-proffer-map
-          ("2" . next))
-  :preface
+  :config
   ;; You can customize Combobulate's key prefix here.
   ;; Note that you may have to restart Emacs for this to take effect!
-  (setq combobulate-key-prefix "C-c o")
-
-  ;; Optional, but recommended.
-  ;;
-  ;; You can manually enable Combobulate with `M-x
-  ;; combobulate-mode'.
-  (defun aaronzinhoo--mark-region-dwim ()
-    (interactive)
-    (unless (ignore-errors (or (combobulate-mark-node-dwim) t))
-      (er/expand-region 1)))
-  :hook ((python-ts-mode . combobulate-mode)
-          (js-ts-mode . combobulate-mode)
-          (css-ts-mode . combobulate-mode)
-          (yaml-ts-mode . combobulate-mode)
-          (json-ts-mode . combobulate-mode)
-          (typescript-ts-mode . combobulate-mode)
-          (tsx-ts-mode . combobulate-mode)))
+  (setq combobulate-key-prefix "C-c o"))
 (use-package expand-region
   :demand t
-  :commands (er/mark-symbol)
-  :bind (("M-3" . er/mark-outside-pairs))
+  :commands (er/expand-region)
+  :bind* (("M-2" . er/expand-region)
+          ("M-3" . er/mark-outside-pairs))
   :preface
+  (defun aaronzinhoo--treesit-node-bounds-match-region-p (node beg end)
+    """Returns `t' if the bounds of the region marked `beg' `end' match the bounds of `node'."""
+    (and
+      (= beg (treesit-node-start node))
+      (= end (treesit-node-end node))))
+  (defun er/treesit-mark-bigger-node ()
+    (interactive)
+    (let* ((root (treesit-buffer-root-node))
+            (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
+            (node-start (treesit-node-start node))
+            (node-end (treesit-node-end node)))
+      ;; Node fits the region exactly. Try its parent node instead.
+      (when (aaronzinhoo--treesit-node-bounds-match-region-p node (region-beginning) (region-end))
+        (when-let ((node (treesit-parent-until node
+                           (lambda (n) (not (aaronzinhoo--treesit-node-bounds-match-region-p n (region-beginning) (region-end)))))))
+          (setq node-start (treesit-node-start node)
+            node-end (treesit-node-end node))))
+      (set-mark node-end)
+      (goto-char node-start)))
   (defun aaronzinhoo-mark-line ()
     "Mark the current line."
     (interactive)
@@ -998,15 +998,27 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 aaronzinhoo-mark-line
                                 er/mark-html-attribute
                                 er/mark-inner-tag
-                                er/mark-outer-tag))))
+                                 er/mark-outer-tag))))
+  (defun er/add-treesitter-mode-expansions ()
+    (make-variable-buffer-local 'er/try-expand-list)
+    (setq er/try-expand-list '(er/mark-word
+                                er/mark-symbol
+                                er/mark-symbol-with-prefix
+                                er/treesit-mark-bigger-node)))
   :config
-  (eval-after-load 'yaml-ts-mode '(require 'yaml-mode-expansions))
-  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-yaml-mode-expansions)
-  (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'bash-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'css-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'html-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'java-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'js-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'python-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'rust-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'tsx-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'typescript-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
-  (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions)
-  (er/enable-mode-expansions 'rust-ts-mode 'er/add-rust-mode-expansions))
+  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-treesitter-mode-expansions)
+  )
 (use-package yasnippet
   :defer t
   :diminish yas-minor-mode
@@ -1761,7 +1773,7 @@ When the number of characters in a buffer exceeds this threshold,
 ;; TODO add fix for mark outer-tag
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
-  :bind (("M-m" . multiple-cursors-hydra/body))
+  :bind* (("M-m" . multiple-cursors-hydra/body))
   :hook ((prog-mode . multiple-cursors-mode)
          (text-mode . multiple-cursors-mode))
   :pretty-hydra
@@ -1791,7 +1803,36 @@ When the number of characters in a buffer exceeds this threshold,
      crux-smart-delete-line
      hungry-delete-backward
      hungry-delete-forward))
-  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion hydra-multiple-cursors/body hydra-multiple-cursors/mc-hide-unmatched-lines-mode hydra-multiple-cursors/mc/edit-lines-and-exit hydra-multiple-cursors/mc/mark-all-dwim hydra-multiple-cursors/mc/mark-all-like-this hydra-multiple-cursors/mc/mark-all-like-this-and-exit hydra-multiple-cursors/mc/mark-next-like-this hydra-multiple-cursors/mc/mark-previous-like-this hydra-multiple-cursors/mc/nil hydra-multiple-cursors/mc/skip-to-next-like-this hydra-multiple-cursors/mc/skip-to-previous-like-this hydra-multiple-cursors/mc/unmark-next-like-this hydra-multiple-cursors/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
+  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra/mc-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/mc/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
+;; (use-package macrursors
+;;   :straight (:type git :host github :repo "corytertel/macrursors" :branch "main")
+;;   :bind* ("M-Q" . macrursors-hydra/body)
+;;   :pretty-hydra
+;;   (macrursors-hydra
+;;     (:hint nil :color red :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
+;;     ("Up"
+;;       (("p" macrursors-mark-previous-instance-of "Prev")
+;;         ("P" macrursors-mark-previous-line "Prev Line"))
+;;       "Down"
+;;       (("n" macrursors-mark-next-instance-of "Next")
+;;         ("N" macrursors-mark-next-line "Next Line"))
+;;       "Mark All"
+;;       (("a" macrursors-mark-all-lines-or-instances "Mark All"))))
+;;   :config
+;;   (dolist (mode '(corfu-mode goggles-mode))
+;;     (add-hook 'macrursors-pre-finish-hook mode)
+;;     (add-hook 'macrursors-post-finish-hook mode))
+;;   ;; (define-prefix-command 'macrursors-mark-map)
+;;   ;; (global-set-key (kbd "C-c SPC") #'macrursors-select)
+;;   ;; (global-set-key (kbd "C-;") 'macrursors-mark-map)
+;;   ;; (define-key macrursors-mark-map (kbd "l") #'macrursors-mark-all-lists)
+;;   ;; (define-key macrursors-mark-map (kbd "s") #'macrursors-mark-all-symbols)
+;;   ;; (define-key macrursors-mark-map (kbd "e") #'macrursors-mark-all-sexps)
+;;   ;; (define-key macrursors-mark-map (kbd "f") #'macrursors-mark-all-defuns)
+;;   ;; (define-key macrursors-mark-map (kbd "n") #'macrursors-mark-all-numbers)
+;;   ;; (define-key macrursors-mark-map (kbd ".") #'macrursors-mark-all-sentences)
+;;   ;; (define-key macrursors-mark-map (kbd "r") #'macrursors-mark-all-lines)
+;;   )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Creating Diagrams
@@ -2486,7 +2527,7 @@ When the number of characters in a buffer exceeds this threshold,
   (web-mode-enable-block-face t)
   (web-mode-enable-current-column-highlight t)
   (web-mode-enable-current-element-highlight t)
-  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word hydra-multiple-cursors/nil hydra-web/body hydra-multiple-cursors/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
+  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word multiple-cursors-hydra/nil hydra-web/body multiple-cursors-hydra/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
 
 ;;; Markdown Support
 (use-package markdown-mode
@@ -2754,7 +2795,6 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package java-ts-mode
   :demand t
   :straight nil
-  :mode (("\\.java\\'" . java-ts-mode))
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
           (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
