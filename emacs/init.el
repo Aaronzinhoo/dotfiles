@@ -15,7 +15,6 @@
   (require 'init-straight (concat default-directory "init/init-straight.elc"))
   (require 'init-fonts (concat default-directory "init/init-fonts.elc"))
   (require 'init-utils (concat default-directory "init/init-utils.elc"))
-  (require 'init-keybindings (concat default-directory "init/init-keybindings.elc"))
   (require 'pair-navigator (concat default-directory "pair-navigation/pair-navigator.elc")))
 (require 'custom)
 
@@ -71,7 +70,8 @@
            ;; will activate scroll-lock
            ("<Scroll_Lock>" . 'ignore)
            ("s-<tab>" . 'iflipb-next-buffer)
-           ("s-S-<tab>" . 'iflipb-previous-buffer))
+           ("s-S-<tab>" . 'iflipb-previous-buffer)
+           )
   :custom
   (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
@@ -104,6 +104,10 @@
     (interactive)
     (insert (create-uuid)))
   :init
+  (when (memq window-system '(mac ns))
+    (setq mac-command-modifier 'meta)
+    (setq mac-right-command-modifier 'control)
+    (setq mac-option-modifier 'super))
   (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
@@ -133,7 +137,7 @@
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
   :straight nil
-  :hook ((git-commit-mode . git-commit-add-electric-pairs)
+  :hook ((git-commit-setup . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
          (markdown-mode . markdown-add-electric-pairs)
          (go-ts-mode . go-add-electric-pairs)
