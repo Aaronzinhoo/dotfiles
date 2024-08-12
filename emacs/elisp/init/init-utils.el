@@ -58,18 +58,6 @@ If FRAME is omitted or nil, use currently selected frame."
   "Load FILE-PATH if it exists otherwise do nothing."
   (when (file-exists-p file-path) (load file-path)))
 
-;;; display overlay when parens is out of screen
-(defun display-line-overlay+ (pos str &optional face)
-  "Display line at POS as STR with FACE.  FACE defaults to inheriting from default and highlight."
-  (let ((ol (save-excursion
-              (goto-char pos)
-              (make-overlay (line-beginning-position)
-                            (line-end-position)))))
-    (overlay-put ol 'display str)
-    (overlay-put ol 'face
-                 (or face '(:inherit default :inherit highlight)))
-    ol))
-
 ;; we will call `blink-matching-open` ourselves...
 (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
 ;; center and maximize frame at start

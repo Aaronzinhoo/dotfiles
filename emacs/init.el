@@ -2272,7 +2272,7 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package projectile
   :after (major-mode-hydra)
   :hook (dashboard-mode . projectile-mode)
-  :bind ("s-p" . projectile-hydra/body)
+  :bind* ("s-p" . projectile-hydra/body)
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
    ("Buffers"
