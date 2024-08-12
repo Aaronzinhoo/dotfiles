@@ -58,18 +58,26 @@ install_packages () {
     esac
 }
 
-execute_func_with_prompt link "symlink all needed files"
+execute_func_with_prompt link "Attempting to symlink all needed files"
 install_packages
 
 echo_with_prompt "applying zsh bootstrap to installation; errors may be experienced for packages that have not been setup yet"
-apply_bootstrap_extension "$( pwd )/bootstrap_extensions/zsh_bootstrap.sh"
+if [ -f "$( pwd )/bootstrap_extensions/zsh_bootstrap.sh" ]; then
+        "$( pwd )/bootstrap_extensions/zsh_bootstrap.sh"
+    else
+        echo_with_prompt "failed to execute file ${1}."
+    fi
 
-for BOOTSTRAP in ./bootstrap_extensions/*; do
-    if [ "$BOOTSTRAP" = "./bootstrap_extensions/zsh_bootstrap.sh" ]; then
+for BOOTSTRAP_FILE in ./bootstrap_extensions/*; do
+    if [ "$BOOTSTRAP_FILE" = "./bootstrap_extensions/zsh_bootstrap.sh" ]; then
 	    continue
     fi
-    echo_with_prompt "applying ${BOOTSTRAP} to installation"
-    apply_bootstrap_extension $BOOTSTRAP
+    echo_with_prompt "applying ${BOOTSTRAP_FILE} to installation"
+    if [ -f "$BOOTSTRAP_FILE" ]; then
+        "$BOOTSTRAP_FILE"
+    else
+        echo_with_prompt "failed to execute file ${1}."
+    fi
 done
 
 # Hack to make sure this script always exits successfully

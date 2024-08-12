@@ -28,6 +28,6 @@ Host github.com
   IdentityFile ${GITHUB_SSH_KEY_PATH}/id_ed25519
 EOF
 
-execute_func_with_prompt create_github_ssh_key "create ssh key for github if needed"
+execute_func_with_prompt create_github_ssh_key "Attempting to create ssh key for github if needed"
 
 echo_with_prompt "Bootstrapping complete! Ensure to add public key to Github account if needed!"

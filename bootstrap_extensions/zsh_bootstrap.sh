@@ -5,7 +5,7 @@ PROMPT="[ ZSHExtensionLoader ]: "
 if [ -d "$HOME/.oh-my-zsh" ]; then
     echo_with_prompt "Bootstrapping for omz seems to be complete already."
     echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp      
+    read -r resp
     if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
 	echo_with_prompt "Skipping omz bootstrapping!"
         exit 0;
@@ -13,8 +13,7 @@ if [ -d "$HOME/.oh-my-zsh" ]; then
 fi
 
 PACKAGE_TO_CHECK="git"
-check_system_package_installed $PACKAGE_TO_CHECK
-if [ $? -eq 1 ];then
+if ! command -v "$PACKAGE_TO_CHECK" > /dev/null; then
     echo_with_prompt "[FAIL] ${PACKAGE_TO_CHECK} not installed"
     exit 1
 fi
