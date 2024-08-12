@@ -47,7 +47,31 @@
   :bind* (("M-<up>" . move-text-up)
            ("M-<down>" . move-text-down)
            ("M-q" . yank)
-           ("C-j" . avy-goto-char-timer))
+           ("C-j" . avy-goto-char-timer)
+           ("<pinch>" . 'ignore)
+           ("<C-wheel-up>" . 'ignore)
+           ("<C-wheel-down>" . 'ignore)
+           ("M-h" . 'backward-char)
+           ("M-j" . 'next-line)
+           ("M-k" . 'previous-line)
+           ("M-l" . 'forward-char)
+           ("M-q" . 'yank)
+           ("M-4" . 'pop-local-mark-ring)
+           ("C-x k" . 'kill-current-buffer)
+           ("C-x C-k" . 'kill-buffer-and-window)
+           ("C-x 2" . 'split-and-follow-horizontally)
+           ("C-x 3" . 'split-and-follow-vertically)
+           ("C-<" . 'previous-buffer)
+           ("C->" . 'next-buffer)
+           ("M-[" . 'backward-up-list)
+           ("M-]" . 'up-list)
+           ;; delete pair of items
+           ("s-p" . 'delete-pair)
+           ;; need this otherwise on windows M-<tab> (changing windows)
+           ;; will activate scroll-lock
+           ("<Scroll_Lock>" . 'ignore)
+           ("s-<tab>" . 'iflipb-next-buffer)
+           ("s-S-<tab>" . 'iflipb-previous-buffer))
   :custom
   (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
@@ -80,6 +104,9 @@
     (interactive)
     (insert (create-uuid)))
   :init
+  (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
+  (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
+  (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
   (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
     "Try to parse bytecode instead of json."
     (or
@@ -819,20 +846,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package beacon
-  :straight t
+  :commands (beacon-blink)
   :diminish
   :custom
-  (beacon-color "#111FFF")
-  :config
-  (dolist (mode '(term-mode-hook
-                  dashboard-mode-hook
-                  shell-mode-hook
-                  treemacs-mode-hook
-                  compilation-mode-hook
-                  vterm-mode-hook
-                  eshell-mode-hook))
-    (add-hook mode (lambda () (beacon-mode 0))))
-  (beacon-mode 1))
+  (beacon-color "#111FFF"))
 (use-package default-text-scale
   :defer 2
   :bind (("C--" . text-scale-decrease)
