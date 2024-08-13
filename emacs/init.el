@@ -1327,24 +1327,38 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file))
   :preface
-  (defun consult-dir--tramp-docker-hosts ()
-  "Get a list of hosts from Docker."
-  (when (require 'tramp-container nil t)
-    (mapcar (lambda (e)
-	    (concat "/docker:" (format "%s" (cadr e)) ":/"))
-	  (tramp-docker--completion-function))))
+  (defcustom consult-dir--tramp-container-executable "docker"
+    "Default executable to use for querying container hosts."
+    :group 'consult-dir
+    :type 'string)
+
+  (defcustom consult-dir--tramp-container-args nil
+    "Optional list of arguments to pass when querying container hosts."
+    :group 'consult-dir
+    :type '(repeat string))
+
+  (defun consult-dir--tramp-container-hosts ()
+    "Get a list of hosts from a container host."
+    (cl-loop for line in (cdr
+                           (ignore-errors
+                             (apply #'process-lines consult-dir--tramp-container-executable
+                               (append consult-dir--tramp-container-args (list "ps")))))
+      for cand = (split-string line "[[:space:]]+" t)
+      collect (let ((user (unless (string-empty-p (car cand))
+                            (concat (car cand) "@")))
+                     (hostname (car (last cand))))
+                (format "/docker:%s%s:/" user hostname))))
+  (defvar consult-dir--source-tramp-docker
+    `(:name     "Docker"
+       :narrow   ?d
+       :category file
+       :face     consult-file
+       :history  file-name-history
+       :items    ,#'consult-dir--tramp-container-hosts)
+    "Docker candiadate source for `consult-dir'.")
   :custom
   (consult-dir-project-list-function #'consult-dir-projectile-dirs)
   :config
-  (defvar consult-dir--source-tramp-docker
-    `(:name     "Docker"
-                :narrow   ?d
-                :category file
-                :face     consult-file
-                :history  file-name-history
-                :items    ,#'consult-dir--tramp-docker-hosts)
-    "Docker candiadate source for `consult-dir'.")
-
   ;; Adding to the list of consult-dir sources
   (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-docker t)
   (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-ssh t))
@@ -1381,14 +1395,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
          ;; M-g bindings in `goto-map'
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
          ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
          ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
+         ("M-g M" . consult-global-mark)
          ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
+          ("M-g I" . consult-imenu-multi)
+          ;; Search
+         ("C-s" . aaronzinhoo--consult-ripgrep-dwim)
           ;; M-s bindings in `search-map'
           ;; these should be using S not s, probably want better mapping before turning them on again
          ;; ("s-s f" . consult-fd)
@@ -1396,7 +1411,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ;; ("M-s D" . consult-locate)
          ;; ("M-s g" . consult-grep)
          ;; ("M-s G" . consult-git-grep)
-         ("C-s" . aaronzinhoo--consult-ripgrep-or-line)
          ;; ("M-s L" . consult-line-multi)
          ;; ("M-s k" . consult-keep-lines)
          ;; ("M-s u" . consult-focus-lines)
@@ -1418,10 +1432,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (completion-in-region-function #'consult-completion-in-region)
   :preface
-  (defun consult-ripgrep-thing-at-point (&optional dir given-initial)
-  "Pass the region to consult-ripgrep if available.
-
-DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
+  (defun aaronzinhoo--consult-ripgrep-dwim (&optional given-initial)
+    """Pass the region to aaronzinhoo--consult-ripgrep-or-line if available, otherwise just do a plain aaronzinhoo--consult-ripgrep-or-line. DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
+    (interactive "P")
+    (let ((initial
+            (cond
+              ((not (null given-initial)) given-initial)
+              ((use-region-p)
+                (buffer-substring-no-properties (region-beginning) (region-end)))
+              (t ""))))
+      (aaronzinhoo--consult-ripgrep-or-line initial)))
+  (defun consult-ripgrep-thing-at-point (&optional given-initial)
+    """Pass the region to consult-ripgrep if available, DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
   (interactive "P")
   (let ((initial
          (or given-initial
@@ -1431,7 +1453,7 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
                    ((use-region-p)
                     (buffer-substring-no-properties (region-beginning) (region-end)))))))
     (deactivate-mark)
-    (consult-ripgrep (file-name-directory buffer-file-name) initial)))
+    (aaronzinhoo--consult-ripgrep-or-line initial)))
   (defun consult--fd-builder (input)
   (let ((fd-command
          (if (eq 0 (process-file-shell-command "fdfind"))
@@ -1459,7 +1481,7 @@ When the number of characters in a buffer exceeds this threshold,
 `consult-ripgrep' will be used instead of `consult-line'."
   :type 'integer)
 
-  (defun aaronzinhoo--consult-ripgrep-or-line ()
+  (defun aaronzinhoo--consult-ripgrep-or-line (&optional given-initial)
     "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
     (interactive)
     (if (or (not buffer-file-name)
@@ -1469,8 +1491,10 @@ When the number of characters in a buffer exceeds this threshold,
             (jka-compr-get-compression-info buffer-file-name)
             (<= (buffer-size)
                 (/ aaronzinhoo--consult-ripgrep-or-line-limit
-                   (if (eq major-mode 'org-mode) 4 1))))
+                  (if (eq major-mode 'org-mode) 4 1))))
+      (if (null given-initial)
         (consult-line)
+        (consult-line given-initial))
       (when (file-writable-p buffer-file-name)
         (save-buffer))
       (let ((consult-ripgrep-command
@@ -1489,12 +1513,12 @@ When the number of characters in a buffer exceeds this threshold,
                      "--with-filename "
                      ;; defaults
                      "-e ARG OPTS "
-                     (shell-quote-argument buffer-file-name))))
-        (consult-ripgrep))))
-
-  ;; The :init configuration is always executed (Not lazy)
+               (shell-quote-argument buffer-file-name))))
+        (if (null given-initial)
+          (consult-ripgrep)
+          (consult-ripgrep (file-name-directory buffer-file-name) given-initial))))
+    )
   :init
-
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register', `consult-register-load',
   ;; `consult-register-store' and the Emacs built-ins.
