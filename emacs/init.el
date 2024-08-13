@@ -2619,7 +2619,7 @@ When the number of characters in a buffer exceeds this threshold,
     (("it" markdown-insert-table "table")
      ("ii" markdown-insert-image "image")
      ("ib" markdown-insert-uri "uri")
-     ("ic" markdown-insert-code-block "code block")
+     ("ic" markdown-insert-gfm-code-block "code block")
      ("id" markdown-insert-gfm-checkbox "checkbox"))
     "Preview"
     (("p" impatient-showdown-mode "Preview" :toggle t))
