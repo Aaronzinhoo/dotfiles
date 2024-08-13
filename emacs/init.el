@@ -876,8 +876,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
      "Errors"
      (("p" flycheck-previous-error "previous" :color pink)
       ("n" flycheck-next-error "next" :color pink)
-      ("l" flycheck-projectile-list-errors "list errors (proj)")
-      ("L" flycheck-list-errors "list errors"))
+      ("l" consult-flycheck "list errors (buffer)")
+      ("L" flycheck-projectile-list-errors "list errors (proj)"))
      "Other"
      (("r" recenter-top-bottom "recenter" :color pink)
       ("M" flycheck-manual "manual")
@@ -1369,9 +1369,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ;; C-x bindings in `ctl-x-map'
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x r" . consult-recent-file)            ;; orig. bookmark-jump
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
          ;; Custom M-# bindings for fast register access
          ("M-#" . consult-register-load)
@@ -1572,8 +1572,8 @@ When the number of characters in a buffer exceeds this threshold,
   :bind (:map vertico-map
               ("<tab>" . vertico-insert)
               ;; NOTE 2022-02-05: Cycle through candidate groups
-              ("C-M-n" . vertico-next-group)
-              ("C-M-p" . vertico-previous-group)
+              ("C-M-n" . vertico-previous-group)
+              ("C-M-p" . vertico-next-group)
               ;; Multiform toggles
               ("<backspace>" . vertico-directory-delete-char)
               ("M-<backspace>" . vertico-directory-delete-word)
@@ -1630,6 +1630,7 @@ When the number of characters in a buffer exceeds this threshold,
       (embark-act arg)))
   :custom
   (vertico-scroll-margin 0)
+  (vertico-cycle t)
   (vertico-count 20)                    ; Number of candidates to display
   (vertico-resize t)
   (vertico-grid-separator "       ")
@@ -1689,14 +1690,15 @@ When the number of characters in a buffer exceeds this threshold,
   :straight (corfu :type git :host github :repo "minad/corfu" :files (:defaults "extensions/*"))
   ;; Optionally use TAB for cycling, default is `corfu-complete'.
   :bind (:map corfu-map
-              ("M-SPC"      . corfu-insert-separator)
-              ("TAB"        . corfu-complete-common-or-next)
-              ([tab]        . corfu-complete-common-or-next)
-              ("S-TAB"      . corfu-previous)
-              ([backtab]    . corfu-previous)
-              ("<return>"   . corfu-insert)
-              ("M-p"        . corfu-popupinfo-scroll-up)
-              ("M-n"        . corfu-popupinfo-scroll-down))
+          ("M-SPC"      . corfu-insert-separator)
+          ("TAB"        . corfu-complete-common-or-next)
+          ([tab]        . corfu-complete-common-or-next)
+          ("S-TAB"      . corfu-previous)
+          ([backtab]    . corfu-previous)
+          ("<return>"   . corfu-insert)
+          ("C-i"        . corfu-insert)
+          ("M-p"        . corfu-popupinfo-scroll-up)
+          ("M-n"        . corfu-popupinfo-scroll-down))
   :hook ((vterm-mode . (lambda () (setq-local corfu-quit-at-boundary t
                                                corfu-quit-no-match t
                                                corfu-auto nil)
