@@ -1805,65 +1805,91 @@ When the number of characters in a buffer exceeds this threshold,
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
   :bind* (("M-m" . multiple-cursors-hydra/body))
   :hook ((prog-mode . multiple-cursors-mode)
-         (text-mode . multiple-cursors-mode))
+          (text-mode . multiple-cursors-mode))
+  :init
+  (defvar aaronzinhoo--mc-completion-candidate nil)
   :pretty-hydra
   (multiple-cursors-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
     ("Up"
-     (("p" mc/mark-previous-like-this "Prev")
-      ("P" mc/skip-to-previous-like-this "Skip Prev")
-      ("M-p" mc/unmark-previous-like-this "Unmark Prev"))
-     "Down"
-     (("n" mc/mark-next-like-this "Next")
-      ("N" mc/skip-to-next-like-this "Skip Next")
-      ("M-n" mc/unmark-next-like-this "Unmark Next"))
-     "Cycle"
-     (("c" mc/cycle-forward "next cursor")
-      ("C" mc/cycle-back "previous cursor"))
-     "Mark All"
-     (("a" mc/mark-all-like-this "Mark All")
-      ("d" mc/mark-all-dwim "Mark All DWIM"))
-     "Misc."
-     (("2" er/expand-region "Expand Region")
-      ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
-      ("RET" newline-and-indent "New Line"))))
+      (("p" mc/mark-previous-like-this "Prev")
+        ("P" mc/skip-to-previous-like-this "Skip Prev")
+        ("M-p" mc/unmark-previous-like-this "Unmark Prev"))
+      "Down"
+      (("n" mc/mark-next-like-this "Next")
+        ("N" mc/skip-to-next-like-this "Skip Next")
+        ("M-n" mc/unmark-next-like-this "Unmark Next"))
+      "Cycle"
+      (("f" mc/cycle-forward "next cursor")
+        ("b" mc/cycle-back "previous cursor"))
+      "Mark All"
+      (("a" mc/mark-all-like-this "Mark All")
+        ("d" mc/mark-all-dwim "Mark All DWIM"))
+      "Misc."
+      (("2" er/expand-region "Expand Region")
+        ("c" mc/complete-in-region "Autocomplete")
+        ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
+        ("RET" newline-and-indent "New Line"))))
+  :preface
+  (defun aaronzinhoo--complete-in-region-minibuffer ()
+    (interactive)
+    (let ((res (run-hook-wrapped 'completion-at-point-functions
+                 #'completion--capf-wrapper 'all)))
+      (pcase res
+        (`(,hookfun . (,start ,end ,collection . ,plist))
+          (let* ((initial (buffer-substring-no-properties start end))
+                  (predicate (plist-get plist :predicate))
+                  (metadata (completion-metadata initial collection predicate))
+                  ;; TODO: `minibuffer-completing-file-name' is mostly deprecated, but
+                  ;; still in use. Packages should instead use the completion metadata.
+                  (minibuffer-completing-file-name
+                    (eq 'file (completion-metadata-get metadata 'category)))
+                  (threshold (completion--cycle-threshold metadata))
+                  (all (completion-all-completions initial collection predicate (length initial)))
+                  (exit-fun (plist-get completion-extra-properties :exit-function)))
+            (let* ((limit (car (completion-boundaries initial collection predicate "")))
+                    (completion
+                      (cond
+                        ((atom all) nil)
+                        ((and (consp all) (atom (cdr all)))
+                          (concat (substring initial 0 limit) (car all)))
+                        ;; reuse aaronzinhoo--mc-completion-candidate value if already selected
+                        ;; this occurs when the user has initially selected a candidate with the real cursor
+                        ((not (null aaronzinhoo--mc-completion-candidate)) aaronzinhoo--mc-completion-candidate)
+                        ;; list completion candidates in dropdown list if aaronzinhoo--mc-completion-candidate if null
+                        (t
+                          ;; Evaluate completion table in the original buffer.
+                          ;; This is a reasonable thing to do and required by
+                          ;; some completion tables in particular by lsp-mode.
+                          ;; See gh:minad/vertico#61.
+                          (completing-read "Completion: " all predicate nil)))))
+
+              (if completion
+                (setq-local aaronzinhoo--mc-completion-candidate completion)
+                (message "No completion")))
+            (progn
+              (completion--replace start end (concat aaronzinhoo--mc-completion-candidate))
+              (when exit-fun
+                (funcall exit-fun completion
+                  ;; If completion is finished and cannot be further
+                  ;; completed, return `finished'.  Otherwise return
+                  ;; `exact'.
+                  (if (eq (try-completion completion collection predicate) t)
+                    'finished 'exact)))
+              t)))))
+    )
+  (defun mc/complete-in-region ()
+    (interactive)
+    (setq-local aaronzinhoo--mc-completion-candidate nil)
+    (mc/execute-command-for-all-cursors 'aaronzinhoo--complete-in-region-minibuffer)
+    (setq-local aaronzinhoo--mc-completion-candidate nil))
   :custom
-  (mc/cmds-to-run-for-all
+  (mc/cmds-to-run-for-al
    '(abbrev-prefix-mark
      crux-smart-delete-line
      hungry-delete-backward
      hungry-delete-forward))
   (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra/mc-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/mc/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
-;; (use-package macrursors
-;;   :straight (:type git :host github :repo "corytertel/macrursors" :branch "main")
-;;   :bind* ("M-Q" . macrursors-hydra/body)
-;;   :pretty-hydra
-;;   (macrursors-hydra
-;;     (:hint nil :color red :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
-;;     ("Up"
-;;       (("p" macrursors-mark-previous-instance-of "Prev")
-;;         ("P" macrursors-mark-previous-line "Prev Line"))
-;;       "Down"
-;;       (("n" macrursors-mark-next-instance-of "Next")
-;;         ("N" macrursors-mark-next-line "Next Line"))
-;;       "Mark All"
-;;       (("a" macrursors-mark-all-lines-or-instances "Mark All"))))
-;;   :config
-;;   (dolist (mode '(corfu-mode goggles-mode))
-;;     (add-hook 'macrursors-pre-finish-hook mode)
-;;     (add-hook 'macrursors-post-finish-hook mode))
-;;   ;; (define-prefix-command 'macrursors-mark-map)
-;;   ;; (global-set-key (kbd "C-c SPC") #'macrursors-select)
-;;   ;; (global-set-key (kbd "C-;") 'macrursors-mark-map)
-;;   ;; (define-key macrursors-mark-map (kbd "l") #'macrursors-mark-all-lists)
-;;   ;; (define-key macrursors-mark-map (kbd "s") #'macrursors-mark-all-symbols)
-;;   ;; (define-key macrursors-mark-map (kbd "e") #'macrursors-mark-all-sexps)
-;;   ;; (define-key macrursors-mark-map (kbd "f") #'macrursors-mark-all-defuns)
-;;   ;; (define-key macrursors-mark-map (kbd "n") #'macrursors-mark-all-numbers)
-;;   ;; (define-key macrursors-mark-map (kbd ".") #'macrursors-mark-all-sentences)
-;;   ;; (define-key macrursors-mark-map (kbd "r") #'macrursors-mark-all-lines)
-;;   )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
