@@ -2359,7 +2359,6 @@ When the number of characters in a buffer exceeds this threshold,
   (projectile-enable-caching t)
   (projectile-sort-order 'recentf))
 
-
 ;;; Languages Support
 
 ;; folding
@@ -2613,7 +2612,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo--markdown-mode-hook ()
     (setq-local completion-at-point-functions
-                (list #'cape-file #'cape-dabbrev #'cape-dict)))
+      (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :pretty-hydra
   ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Insert"
@@ -2628,7 +2627,7 @@ When the number of characters in a buffer exceeds this threshold,
     (("o" markdown-open "Open" :color blue))
     ))
   :custom
-  (markdown-command "pandoc"))
+  (markdown-command "pandoc -t html5"))
 ;; org github-esque markdown export
 (use-package ox-gfm
   :after org)
@@ -2718,32 +2717,33 @@ When the number of characters in a buffer exceeds this threshold,
   :straight nil
   :delight " Py"
   :bind (:map python-ts-mode-map
-              ("s-h" . python-hydra/body))
+          ("<backtab>" . combobulate-python-indent-for-tab-command)
+          ("s-h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
          ;; (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
   :pretty-hydra
   (python-hydra
-   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
-   ("Run"
-    (("sh" run-python "Python Shell")
-     ("d" pdb "PDB" :color blue)
-     ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
-     ("v" projectile-run-vterm "run vterm"))
-    "Run in Python Shell"
-    (("rb" python-shell-send-buffer "Run Buffer")
-     ("rf" python-shell-send-file "Run File")
-     ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
-     ("rr" python-shell-send-region "Run Region"))
-    "Formatting"
-    (("i" python-fix-imports "Fix Imports")
-     ("a" python-add-import "Add Import")
-     ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
-    "Navigation/Editing"
-    (("c" combobulate-mode "Combobulate Mode" :toggle t)
-     ("j" combobulate-avy "Jump")
-     ("ed" combobulate-edit "Edit")
-     ("en" combobulate-envelop "Envelop"))))
+    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
+    ("Run"
+      (("sh" run-python "Python Shell")
+        ("d" pdb "PDB" :color blue)
+        ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
+        ("v" projectile-run-vterm "run vterm"))
+      "Run in Python Shell"
+      (("rb" python-shell-send-buffer "Run Buffer")
+        ("rf" python-shell-send-file "Run File")
+        ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
+        ("rr" python-shell-send-region "Run Region"))
+      "Formatting"
+      (("i" python-fix-imports "Fix Imports")
+        ("a" python-add-import "Add Import")
+        ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
+      "Navigation/Editing"
+      (("j" combobulate-avy "Jump")
+        ("ed" combobulate-edit "Edit")
+        ("ei" combobulate-python-indent-for-tab-command "Indent")
+        ("en" combobulate-envelop "Envelop"))))
   :preface
   (defun aaronzinhoo--python-shell-send-current-file ()
     (interactive)
