@@ -1307,16 +1307,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package orderless
   :demand t
   :ensure t
+  :custom
+  (orderless-matching-styles
+    '(orderless-literal
+       orderless-prefixes
+       orderless-initialism
+       orderless-regexp
+       ;; orderless-flex                       ; Basically fuzzy finding. Works by adding ~ in front of search
+       ;; orderless-strict-leading-initialism
+       ;; orderless-strict-initialism
+       ;; orderless-strict-full-initialism
+       ;; orderless-without-literal          ; Recommended for dispatches instead
+       ))
   :config
-  (orderless-define-completion-style orderless+initialism
-    (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
   ;; Define orderless style with initialism by default
-  (setq completion-styles '(orderless basic))
+  (setq completion-styles '(orderless))
   (setq completion-category-defaults nil)
-  (setq completion-category-overrides '((file (styles basic partial-completion))
-                                   (command (styles orderless+initialism))
-                                   (symbol (styles orderless+initialism))
-                                   (variable (styles orderless+initialism)))))
+  (setq completion-category-overrides '((file (styles orderless))
+                                   (command (styles orderless))
+                                   (symbol (styles orderless))
+                                   (variable (styles orderless)))))
 ;; consult
 ;; Example configuration for Consult
 (use-package consult-dir
@@ -1720,6 +1730,7 @@ When the number of characters in a buffer exceeds this threshold,
           ([backtab]    . corfu-previous)
           ("<return>"   . corfu-insert)
           ("C-i"        . corfu-insert)
+          ("M-l"        . corfu-info-location)
           ("M-p"        . corfu-popupinfo-scroll-up)
           ("M-n"        . corfu-popupinfo-scroll-down))
   :hook ((vterm-mode . (lambda () (setq-local corfu-quit-at-boundary t
