@@ -80,6 +80,10 @@
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (tab-always-indent 'complete)
+  ;; compilation customization
+  ;; do not set this to false, raises security issues
+  (compilation-read-command t)
+  (compilation-scroll-output t)
   :preface
   (defun create-uuid ()
     "Return a newly generated UUID. This uses a simple hashing of variable data."
@@ -112,6 +116,10 @@
   (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
+  (defadvice compile (before ad-compile-smart activate)
+    "Advises `compile' so it sets the argument COMINT to t."
+    (ad-set-arg 1 t))
+  ;; commands for improving speed of lsp
   (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
     "Try to parse bytecode instead of json."
     (or
@@ -120,7 +128,6 @@
           (when (byte-code-function-p bytecode)
             (funcall bytecode))))
       (apply old-fn args)))
-
   (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
     "Prepend emacs-lsp-booster command to lsp CMD."
     (let ((orig-result (funcall old-fn cmd test?)))
@@ -2269,14 +2276,14 @@ When the number of characters in a buffer exceeds this threshold,
 ;; NOTE C-c C-t vterm-copy-mode for copying vterm text!
 (use-package vterm
   :straight (:type git :host github :repo "akermu/emacs-libvterm" :branch "master")
-  :commands vterm
+  :commands (vterm project-vterm)
   :bind (:map vterm-mode-map
           ("M-q" . aaronzinhoo--vterm-yank))
   :init
   (setq vterm-install t)
   :custom
   (vterm-kill-buffer-on-exit t)
-  (vterm-max-scrollback 10000)
+  (vterm-max-scrollback 5000)
   (confirm-kill-processes nil)
   (hscroll-margin 0)
   :preface
@@ -2290,6 +2297,22 @@ When the number of characters in a buffer exceeds this threshold,
     (let* ((pid (process-id vterm--process))
            (dir (file-truename (format "/proc/%d/cwd/" pid))))
       (setq default-directory dir))))
+  (defun project-vterm ()
+    "Start an vterm shell in the current project's root directory.
+If a buffer already exists for running a vterm shell in the project's root,
+switch to it.  Otherwise, create a new vterm buffer.
+With \\[universal-argument] prefix arg, create a new inferior vterm buffer even
+if one already exists."
+    (interactive)
+    (require 'comint)
+    (let* ((default-directory (project-root (project-current t)))
+            (default-project-shell-name (project-prefixed-buffer-name "vterm"))
+            (shell-buffer (get-buffer default-project-shell-name)))
+      (if (and shell-buffer (not current-prefix-arg))
+        (if (comint-check-proc shell-buffer)
+          (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
+          (vterm shell-buffer))
+        (vterm (generate-new-buffer-name default-project-shell-name)))))
   )
 (use-package multi-vterm
   :commands multi-vterm)
@@ -2339,23 +2362,22 @@ When the number of characters in a buffer exceeds this threshold,
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
    ("Buffers"
-    (("b" consult-projectile-switch-to-buffer "list")
+    (("b" consult-project-buffer "list")
      ("k" projectile-kill-buffers "kill all")
      ("S" projectile-save-project-buffers "save all"))
     "Find"
-    (("d" consult-projectile-find-dir "directory")
-     ("D" projectile-dired "proj. root")
-     ("f" consult-projectile-find-file "file")
+    (("d" project-find-dir "directory")
+     ("D" project-dired "proj. root")
+     ("f" project-find-file "file")
      ("p" consult-projectile-switch-project "project")
      ("F" projectile-find-file-in-known-projects "file (all proj.)"))
     "Other"
     (("N" projectile-cleanup-known-projects)
      ("i" projectile-invalidate-cache "reset cache")
-     ("c" projectile-compile-project "compile")
-     ("v" projectile-run-vterm "run vterm"))
+     ("c" project-compile "compile")
+     ("v" project-vterm "run vterm"))
     "Search & Replace"
-    (("r" projectile-replace "replace")
-     ("R" projectile-replace-regexp "regexp replace")
+    (("r" project-query-replace-regexp "regexp replace")
      ("s" consult-ripgrep "search"))
     "Tests"
     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
@@ -2828,7 +2850,6 @@ When the number of characters in a buffer exceeds this threshold,
   (go-ts-mode-indent-offset 4)
   :init
   ;;Smaller compilation buffer
-  (setq-local compilation-windowp-height 14)
   (defun my-compilation-hook ()
     (when (not (get-buffer-window "*compilation*"))
       (save-selected-window
@@ -2838,13 +2859,10 @@ When the number of characters in a buffer exceeds this threshold,
             (select-window w)
             (switch-to-buffer "*compilation*")
             (shrink-window (- h compilation-window-height)))))))
-  (setq compilation-read-command nil)
   :bind (:map go-ts-mode-map
               ("M-," . compile)
               ("M-." . godef-jump)
-              ("M-*" . pop-tag-mark))
-  :config
-  (setq-local compilation-scroll-output t))
+              ("M-*" . pop-tag-mark)))
 
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
