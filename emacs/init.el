@@ -2327,13 +2327,14 @@ if one already exists."
       (ansi-color-process-output nil)
       (setq-local comint-last-output-start (point-marker)))))
 ;; Programming/Project Management
-;; commenting
+;; commenting does not have support for native tree sitter yet
 (use-package turbo-log
+  :commands (turbo-log-print-immediately turbo-log-print)
   :straight (:type git :host github :repo "artawower/turbo-log.el")
   :config
   (setq turbo-console--prefix "LOG"))
 (use-package evil-nerd-commenter
-  :bind ("C-;" . evilnc-comment-or-uncomment-lines))
+  :bind* ("C-;" . evilnc-comment-or-uncomment-lines))
 ;; Window|buffer Managers
 (use-package burly
   :straight (burly :type git :host github :repo "alphapapa/burly.el")
