@@ -2,22 +2,12 @@
 
 PROMPT="[ PyenvExtensionLoader ]: "
 
-if [ -f "${PYENV_ROOT}/default-packages" ]; then
-    echo_with_prompt "Bootstrapping for python seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp      
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping python bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -f ${PYENV_ROOT}/default-packages ]" "python" || exit 0;
 
 echo_with_prompt "Installing pyenv dependencies"
-
 brew install python-tk
 
 echo_with_prompt "Installing pyenv"
-
 curl https://pyenv.run | bash
 git clone https://github.com/jawshooah/pyenv-default-packages.git $(pyenv root)/plugins/pyenv-default-packages
 

@@ -2,15 +2,7 @@
 
 PROMPT="[ EmacsExtensionLoader ]: "
 
-if command -v emacs; then
-    echo_with_prompt "Bootstrapping for emacs seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp      
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping emacs bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "command -v emacs > /dev/null" "emacs" || exit 0;
 
 echo_with_prompt "Installing Emacs";
 brew tap d12frosted/emacs-plus

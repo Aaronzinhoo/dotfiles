@@ -1,20 +1,12 @@
 . "$( pwd )/utils.sh"
 
-PROMPT="[ GithubExtensionLoader ]:"
+PROMPT="[ GitExtensionLoader ]:"
 
 echo_with_prompt "Attempting to make an ssh-key"
 
 GITHUB_SSH_KEY_PATH=$HOME/.ssh/github
 
-if [ -f "${GITHUB_SSH_KEY_PATH}/id_ed25519" ];then
-    echo_with_prompt "Bootstrapping for github seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping github bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -f ${GITHUB_SSH_KEY_PATH}/id_ed25519 ]" "git" || exit 0;
 
 create_github_ssh_key () {
     ssh-keygen -t ed25519 -b 4096 -f "${GITHUB_SSH_KEY_PATH}/id_ed25519"

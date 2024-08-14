@@ -2,15 +2,7 @@
 
 PROMPT="[ JavaExtensionLoader ]: "
 
-if [ -f "${SDKMAN_DIR}/bin/sdkman-init.sh" ]; then
-    echo_with_prompt "Bootstrapping for java seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping java bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -f ${SDKMAN_DIR}/bin/sdkman-init.sh ]" "java" || exit 0;
 
 echo_with_prompt "Installing SDKMAN at $SDKMAN_DIR"
 

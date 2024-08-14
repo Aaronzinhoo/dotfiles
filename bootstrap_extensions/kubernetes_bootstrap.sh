@@ -2,15 +2,8 @@
 
 PROMPT="[ KubernetesExtensionLoader ]: "
 
-if kubectl krew > /dev/null; then
-    echo_with_prompt "Bootstrapping for kubernetes seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp      
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping kubernetes bootstrapping!"
-        exit 0;
-    fi
-fi
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+install_bootstrap_check "kubectl krew > /dev/null" "kubernetes" || exit 0;
 
 echo_with_prompt "Installing Krew and friends!"
 
@@ -22,11 +15,11 @@ set -x; cd "$(mktemp -d)" &&
     tar zxvf "${KREW}.tar.gz" &&
     ./"${KREW}" install krew
 
-kubectl krew install ingress-nginx 
-kubectl krew install stern 
-kubectl krew install kurt 
-kubectl krew install ktop 
-kubectl krew install kor 
+kubectl krew install ingress-nginx
+kubectl krew install stern
+kubectl krew install kurt
+kubectl krew install ktop
+kubectl krew install kor
 kubectl krew install cox
 kubectl krew install ns
 kubectl krew install deprecations

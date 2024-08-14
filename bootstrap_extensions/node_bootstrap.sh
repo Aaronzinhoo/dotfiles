@@ -2,15 +2,7 @@
 
 PROMPT="[ NodeExtensionLoader ]: "
 
-if [ -f $NVM_DIR/nvm.sh ]; then
-    echo_with_prompt "Bootstrapping for nvm seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping nvm bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -f $NVM_DIR/nvm.sh ]" "node" || exit 0;
 
 echo_with_prompt "Installing nvm at $NVM_DIR"
 

@@ -2,15 +2,7 @@
 
 PROMPT="[ GoLangExtensionLoader ]: "
 
-if [ -d "$GOROOT/bin" ]; then
-    echo_with_prompt "Bootstrapping for golang seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read resp      
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping golang bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -d $GOROOT/bin ]" "golang" || exit 0;
 
 echo_with_prompt "Installing goenv"
 

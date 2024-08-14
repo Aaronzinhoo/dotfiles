@@ -2,15 +2,7 @@
 
 PROMPT="[ ZSHExtensionLoader ]: "
 
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    echo_with_prompt "Bootstrapping for omz seems to be complete already."
-    echo_with_prompt "Do you wish to proceed with the install process? (y/n): "
-    read -r resp
-    if [ ! "$resp" = 'y' ] || [ ! "$resp" = 'Y' ] ; then
-	echo_with_prompt "Skipping omz bootstrapping!"
-        exit 0;
-    fi
-fi
+install_bootstrap_check "[ -d $HOME/.oh-my-zsh ]" "rust" || exit 0;
 
 PACKAGE_TO_CHECK="git"
 if ! command -v "$PACKAGE_TO_CHECK" > /dev/null; then
@@ -25,29 +17,29 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 
 echo_with_prompt "cloning plugins and themes for OMZ and ZSH"
 
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
-git clone https://github.com/zsh-users/zsh-autosuggestions "${CUSTOM_PLUGINS}"/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions "${CUSTOM_PLUGINS}/zsh-autosuggestions"
 
-git clone https://github.com/mattberther/zsh-pyenv "${CUSTOM_PLUGINS}"/zsh-pyenv
+git clone https://github.com/mattberther/zsh-pyenv "${CUSTOM_PLUGINS}/zsh-pyenv"
 
-git clone https://github.com/zsh-users/zsh-completions "${CUSTOM_PLUGINS}"/zsh-completions
+git clone https://github.com/zsh-users/zsh-completions "${CUSTOM_PLUGINS}/zsh-completions"
 
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${CUSTOM_PLUGINS}/zsh-syntax-highlighting"
 
-git clone https://github.com/agkozak/zsh-z "${CUSTOM_PLUGINS}"/zsh-z
+git clone https://github.com/agkozak/zsh-z "${CUSTOM_PLUGINS}/zsh-z"
 
-git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins "${CUSTOM_PLUGINS}"/autoupdate
+git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins "${CUSTOM_PLUGINS}/autoupdate"
 
-git clone https://github.com/lukechilds/zsh-nvm "${CUSTOM_PLUGINS}"/zsh-nvm
+git clone https://github.com/lukechilds/zsh-nvm "${CUSTOM_PLUGINS}/zsh-nvm"
 
-git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUGINS}"/zsh-better-npm-completion
+git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUGINS}/zsh-better-npm-completion"
 
-git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}"/kubetail
+git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}/kubetail"
 
 
-echo_with_prompt "adding necessary symlinks"
-if [ ! -L $HOME/.local/bin/bat ]; then
+echo_with_prompt "Adding necessary symlinks"
+if [ ! -L "$HOME/.local/bin/bat" ]; then
     echo_with_prompt "linking batcat"
     ln -s /usr/bin/batcat $HOME/.local/bin/bat
 fi
