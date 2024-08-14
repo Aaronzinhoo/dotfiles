@@ -1087,9 +1087,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq-local completion-at-point-functions
             (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict))
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
-    (setq-local completion-styles '(flex basic))
+    ;; (setq-local completion-styles '(flex basic))
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(flex))) ;; Configure flex
+      '(orderless))) ;; Configure orderless which can use flex
   (defun lsp-go-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer nil t)
     (add-hook 'before-save-hook 'lsp-organize-imports nil t)
