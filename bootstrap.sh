@@ -24,14 +24,15 @@ link () {
 
 # TODO rewrite this to check for os=unknown, use the execute_func_with_prompt wrapper, etc
 install_packages () {
+    local response
     case $OSTYPE in
 	    darwin*)
             echo_with_prompt "Detected OS macOS"
 	        echo_with_prompt "This utility will install useful utilities using Homebrew"
-	        echo_with_prompt "Proceed? (y/n): "
-	        read resp
-	        # TODO - regex here?
-	        if [ "$resp" = 'y' ] || [ "$resp" = 'Y' ] ; then
+	        echo_with_no_newline_prompt "Proceed? (y/n): "
+	        read -r response
+            response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+	        if [ "$response" = 'y' ]; then
 	            echo_with_prompt "Installing useful stuff using brew. This may take a while..."
 	            sh $( pwd )/package_managers/brew_packages.sh
 	        else
@@ -42,10 +43,10 @@ install_packages () {
 	    linux-gnu*)
             echo_with_prompt "Detected OS Linux"
 	        echo_with_prompt "This utility will install useful utilities using apt (this has been tested on Debian buster)"
-	        echo_with_prompt "Proceed? (y/n)"
-	        read resp
-	        # TODO - regex here?
-	        if [ "$resp" = 'y' ] || [ "$resp" = 'Y' ] ; then
+	        echo_with_no_newline_prompt "Proceed? (y/n)"
+	        read -r response
+            response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+	        if [ "$response" = 'y' ] ; then
 	            echo_with_prompt "Installing useful stuff using apt. This may take a while..."
 	            sudo sh $( pwd )/package_managers/apt_packages.sh
 	        else
