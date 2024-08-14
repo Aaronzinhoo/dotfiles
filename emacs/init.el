@@ -66,7 +66,7 @@
            ("M-[" . 'backward-up-list)
            ("M-]" . 'up-list)
            ;; delete pair of items
-           ("s-p" . 'delete-pair)
+           ;; ("s-p" . 'delete-pair)
            ;; need this otherwise on windows M-<tab> (changing windows)
            ;; will activate scroll-lock
            ("<Scroll_Lock>" . 'ignore)
