@@ -1,4 +1,2 @@
-[http]
-	sslVerify = false
 [credential]
 	helper = cache

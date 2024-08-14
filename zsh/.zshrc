@@ -154,7 +154,11 @@ export PATH="$GOENV_ROOT/bin:$PATH"
 eval "$(goenv init -)"
 export PATH="$GOROOT/bin:$PATH"
 export PATH="$PATH:$GOPATH/bin"
+
+# krew vars
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+# rust vars
 export PATH="/Users/aaron.gonzales/.homebrew/opt/rustup/bin:$PATH"
 
 export NVM_DIR="$HOME/.config/nvm"

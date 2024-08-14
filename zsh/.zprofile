@@ -30,7 +30,7 @@ export NVM_COMPLETION=true
 export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-# sdkman setup 
+# sdkman setup
 export SDKMAN_DIR="${XDG_CONFIG_HOME}/sdkman"
 
 # pyenv vars
@@ -55,6 +55,9 @@ export EMACS_DIR="${XDG_CONFIG_HOME}/emacs"
 # rust vars
 export RUSTUP_HOME="${XDG_CONFIG_HOME}/multirust"
 export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
+
+# krew
+export KREW_ROOT="${XDG_CONFIG_HOME}/krew"
 
 # docker is not running properly without this
 export DOCKER_BUILDKIT=0
