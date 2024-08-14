@@ -1127,16 +1127,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   (lsp-yaml-schemas
-   `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
-     (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
-     (kubernetes . ["*.yaml"])))
+    `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
+       (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
+       (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
-   `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
-     "--ngProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--tsProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--stdio"))
+    `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
+       "--ngProbeLocations"
+       ,(concat node-home-folder "lib/node_modules")
+       "--tsProbeLocations"
+       ,(concat node-home-folder "lib/node_modules")
+       "--stdio"))
   :init
   (setenv "LSP_USE_PLISTS" "true")
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
@@ -2468,25 +2468,29 @@ When the number of characters in a buffer exceeds this threshold,
     (("b" dockerfile-build-buffer "Build Image")
      ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 ;; kubernetes settings overview
-(use-package kubel
-  :after (vterm)
-  :config (kubel-vterm-setup))
-(use-package kubernetes
-  :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
-  :defer t
-  :commands (kubernetes-overview)
-  :custom
-  (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
-  (kubernetes-default-overview-view 'my-view)
-  :config
-  (setq kubernetes-poll-frequency 5
-        kubernetes-redraw-frequency 5))
-(use-package kele
-  :demand t
-  :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
-  :config
-  (define-key kele-mode-map (kbd "s-k") kele-command-map)
-  (kele-mode t))
+(use-package kubed
+  :straight (:type git :host github :repo "eshelyaron/kubed" :branch "master")
+  :bind* ("s-k" . kubed-transient))
+;; (use-package kubel
+;;   :after (vterm)
+;;   :config (kubel-vterm-setup))
+;; (use-package kubernetes
+;;   :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
+;;   :defer t
+;;   :commands (kubernetes-overview)
+;;   :custom
+;;   (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
+;;   (kubernetes-default-overview-view 'my-view)
+;;   :config
+;;   (setq kubernetes-poll-frequency 5
+;;         kubernetes-redraw-frequency 5))
+;; (use-package kele
+;;   :demand t
+;;   :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
+;;   :config
+;;   (define-key kele-mode-map (kbd "s-k") kele-command-map)
+;;   (kele-mode t))
+
 ;;; WEB-DEV CONFIG
 
 ;; apache
