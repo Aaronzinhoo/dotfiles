@@ -2945,9 +2945,6 @@ When the number of characters in a buffer exceeds this threshold,
   (defun aaronzinhoo--setup-bash-ts-mode ()
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'lsp-completion-at-point #'sh-completion-at-point-function #'comint-completion-at-point #'cape-dabbrev) #'cape-dict))))
 
-(use-package ansible
-  :hook (yaml-ts-mode . ansible))
-
 ;;; Theme
 (use-package doom-modeline
   :custom
