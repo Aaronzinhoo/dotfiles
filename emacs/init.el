@@ -56,6 +56,7 @@
            ("M-l" . 'forward-char)
            ("M-q" . 'yank)
            ("M-4" . 'pop-local-mark-ring)
+           ("M-;" . 'previous-window-any-frame)
            ("C-x k" . 'kill-current-buffer)
            ("C-x C-k" . 'kill-buffer-and-window)
            ("C-x 2" . 'split-and-follow-horizontally)
@@ -2309,7 +2310,7 @@ When the number of characters in a buffer exceeds this threshold,
   :config
   (setq turbo-console--prefix "LOG"))
 (use-package evil-nerd-commenter
-  :bind ("M-;" . evilnc-comment-or-uncomment-lines))
+  :bind ("C-;" . evilnc-comment-or-uncomment-lines))
 ;; Window|buffer Managers
 (use-package burly
   :straight (burly :type git :host github :repo "alphapapa/burly.el")
