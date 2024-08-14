@@ -284,8 +284,6 @@
         (delete-region start end)
         (insert (s-snake-case camel-case-str)))
       (message "No region selected"))))
-(if (version< emacs-version "27.1")
-    (use-package cl))
 ;; garbage collector magic
 (use-package gcmh
   :straight t)
@@ -351,8 +349,8 @@
     (diminish mode)))
 
 ;; SSH Config
-(use-package ssh-agency
-  :if (memq window-system '(windows)))
+;; (use-package ssh-agency
+;;   :if (memq window-system '(windows)))
 (use-package ssh-config-mode
   :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
   :preface
@@ -420,7 +418,7 @@
   (hydra-default-hint nil))
 (use-package major-mode-hydra
   :demand t
-  :after hydra
+  :after (hydra s nerd-icons)
   :preface
   (defun with-faicon (icon str &optional height v-adjust)
     "Displays an icon from Font Awesome icon."
@@ -869,19 +867,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-debug" "Flycheck" 1 -0.05))
     ("Checker"
-     (("?" flycheck-describe-checker "describe")
-      ("d" flycheck-disable-checker "disable")
-      ("m" flycheck-mode "mode")
-      ("s" flycheck-select-checker "select"))
-     "Errors"
-     (("p" flycheck-previous-error "previous" :color pink)
-      ("n" flycheck-next-error "next" :color pink)
-      ("l" consult-flycheck "list errors (buffer)")
-      ("L" flycheck-projectile-list-errors "list errors (proj)"))
-     "Other"
-     (("r" recenter-top-bottom "recenter" :color pink)
-      ("M" flycheck-manual "manual")
-      ("v" flycheck-verify-setup "verify setup"))))
+      (("?" flycheck-describe-checker "describe")
+        ("d" flycheck-disable-checker "disable")
+        ("m" flycheck-mode "mode")
+        ("s" flycheck-select-checker "select"))
+      "Errors"
+      (("f" consult-flycheck "find errors (buffer)")
+        ("p" flycheck-previous-error "previous" :color pink)
+        ("n" flycheck-next-error "next" :color pink)
+        ("l" flycheck-list-errors "list errors (buffer)")
+        ("L" flycheck-projectile-list-errors "list errors (proj)"))
+      "Other"
+      (("r" recenter-top-bottom "recenter" :color pink)
+        ("M" flycheck-manual "manual")
+        ("v" flycheck-verify-setup "verify setup"))))
   :preface
   (defvar-local flycheck-local-checkers nil)
   (defun +flycheck-checker-get(fn checker property)
@@ -1396,7 +1395,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ;; M-g bindings in `goto-map'
          ("M-g e" . consult-compile-error)
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
          ("M-g m" . consult-mark)
          ("M-g M" . consult-global-mark)
@@ -1441,6 +1439,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ((use-region-p)
                 (buffer-substring-no-properties (region-beginning) (region-end)))
               (t ""))))
+      (deactivate-mark)
       (aaronzinhoo--consult-ripgrep-or-line initial)))
   (defun consult-ripgrep-thing-at-point (&optional given-initial)
     """Pass the region to consult-ripgrep if available, DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
@@ -2408,6 +2407,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
+    (setq-local lsp-lens-mode nil)
     (setq-local eldoc-mode nil)
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
     (yaml-pro-mode nil))
@@ -2425,7 +2425,10 @@ When the number of characters in a buffer exceeds this threshold,
         ("P" yaml-pro-ts-up-level "Previous Parent Node"))
       "Fold"
       (("f" yaml-pro-fold-at-point "Fold")
-        ("F" yaml-pro-unfold-at-point "Unfold")))))
+        ("F" yaml-pro-unfold-at-point "Unfold"))
+      "Schema"
+      (("s" lsp-yaml-select-buffer-schema "Buffer Schema")
+       ("d" lsp-yaml-download-schema-store-db "Download Schemastore")))))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
@@ -2619,7 +2622,7 @@ When the number of characters in a buffer exceeds this threshold,
     (("it" markdown-insert-table "table")
      ("ii" markdown-insert-image "image")
      ("ib" markdown-insert-uri "uri")
-     ("ic" markdown-insert-gfm-code-block "code block")
+     ("ic" markdown-insert-gfm-code-block "code block" :color blue)
      ("id" markdown-insert-gfm-checkbox "checkbox"))
     "Preview"
     (("p" impatient-showdown-mode "Preview" :toggle t))
