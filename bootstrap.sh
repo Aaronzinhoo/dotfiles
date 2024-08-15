@@ -5,7 +5,7 @@
 PROMPT='[ Bootstrap ]: '
 
 get_symlink_files(){
-    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|fonts|os|.*.md|.*\.sh|.*.emacs/|windows'
+    find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|fonts|os|.*.md|.*\.sh|.*.emacs/|wsl'
 }
 
 link () {

@@ -14,8 +14,7 @@
   (require 'init-defaults (concat default-directory "init/init-defaults.elc"))
   (require 'init-straight (concat default-directory "init/init-straight.elc"))
   (require 'init-fonts (concat default-directory "init/init-fonts.elc"))
-  (require 'init-utils (concat default-directory "init/init-utils.elc"))
-  (require 'pair-navigator (concat default-directory "pair-navigation/pair-navigator.elc")))
+  (require 'init-utils (concat default-directory "init/init-utils.elc")))
 (require 'custom)
 
 (message "Loading packages")
@@ -491,10 +490,6 @@
      "Avy"
      (("j" avy-goto-char-timer "Jump Char(s)")
       ("g" avy-goto-line "Jump Line"))
-     "Pair"
-     (("[" pair-navigator-backward-left-bracket "Up pair")
-      ("]" pair-navigator-forward-right-bracket "Down pair")
-      ("p" pair-navigator-goto-matching-bracket "Matching pair"))
      "Text"
      (("f" forward-word "Forward Word")
       ("v" backward-word "Backward Word"))
