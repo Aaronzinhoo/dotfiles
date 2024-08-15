@@ -1,11 +1,13 @@
 . "$( pwd )/utils.sh"
 
-PROMPT="[ RustupExtenstionLoader ]: "
+PROMPT="[ RustExtenstionLoader ]: "
 
+install_bootstrap_check "[ -d ${RUSTUP_HOME} ]" "rust" || exit 0;
 echo_with_prompt "installing rustup dependencies for rust development"
 
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup-init
-source $HOME/.cargo/env
+source "${CARGO_HOME}/cargo/env"
 
 rustup component add rls
 rustup component add rust-analysis

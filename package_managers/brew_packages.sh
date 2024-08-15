@@ -6,16 +6,18 @@
 export PROMPT='[ BrewInstaller ]: '
 
 # install brew if needed
-echo_with_prompt "Verifying HomeBrew is installed"
-if which brew > /dev/null; then
-    echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
-else
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
 
-# mandatory setup for installing other packages
-brew update
+echo_with_prompt "Verifying HomeBrew is installed"
+if [ -f "$HOME/.homebrew/bin/brew" ]; then
+    echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
+    eval "$($HOME/.homebrew/bin/brew shellenv)"
+else
+    echo_with_prompt "HomeBrew NOT installed! Installing now!"
+    mkdir $HOME/.homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C $HOME/.homebrew
+    eval "$($HOME/.homebrew/bin/brew shellenv)"
+    brew update --force --quiet
+    chmod -R go-w "$(brew --prefix)/share/zsh"
+fi
 
 #--------------------
 # necessary packages
@@ -29,17 +31,6 @@ brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep p
 #--------------------
 echo_with_prompt "installing shell dependencies\n"
 brew install shellcheck
-#--------------------
-
-#--------------------
-# emacs
-#--------------------
-echo_with_prompt "installing Emacs\n";
-brew tap d12frosted/emacs-plus
-if command -v emacs &> /dev/null; then
-    brew uninstall emacs-plus
-fi
-brew install emacs-plus@$EMACS_VERSION --with-ctags --with-dbus --with-xwidgets --with-imagemagick --with-native-comp --with-mailutils --with-poll
 #--------------------
 
 
@@ -67,7 +58,8 @@ brew install gh
 #---------------------
 echo_with_prompt "installing docker\n"
 brew install ca-certificates
-brew install docker
+# install GUI version of docker desktop
+brew install --cask docker
 brew install docker-compose
 brew install lazydocker
 #---------------------
@@ -100,13 +92,6 @@ brew install helm
 #---------------------
 
 #---------------------
-# kustomize
-#----------------------
-echo_with_prompt "installing kustomize\n"
-brew install kustomize
-#----------------------
-
-#---------------------
 # aws-cli & iam-authenticator
 #----------------------
 echo_with_prompt "installing aws packages\n"
@@ -119,7 +104,9 @@ brew install aws-iam-authenticator
 #----------------------
 brew install postgresql
 brew install pgformatter
-ln -s /opt/homebrew/opt/postgresql@14/lib/postgresql@14/libpq.5.dylib /usr/local/lib/libpq.5.dylib
+if [ ! -L "/usr/local/lib/libpq.5.dylib" ]; then
+    ln -s /opt/homebrew/opt/postgresql@14/lib/postgresql@14/libpq.5.dylib /usr/local/lib/libpq.5.dylib
+fi
 #----------------------
 
 
@@ -131,7 +118,7 @@ brew install --cask qutebrowser
 #---------------------
 
 #---------------------
-# install chrome for web development
+# chrome
 #---------------------
 brew install --cask google-chrome
 brew install --cask chromedriver
@@ -149,54 +136,22 @@ brew install tmux
 brew install libpq --build-from-source
 # fonts
 find -E $( pwd ) -regex ".*\.ttf" | xargs -I % -n 2 cp % ~/Library/Fonts/
-
-
-
-
-## Htop
 brew install htop
 brew install yamllint
 #---------------------
-
 
 
 #--------------------
 # languages
 #--------------------
 
-## python
-echo_with_prompt "installing pyenv dependencies";
-brew install python-tk
-curl https://pyenv.run | bash
-git clone https://github.com/jawshooah/pyenv-default-packages.git $(pyenv root)/plugins/pyenv-default-packages
-
-## golang
-echo_with_prompt "installing golang"
-brew install go
-brew install goenv
-ENV PATH="${PATH}:/usr/local/go/bin"
-
 ## C++
 echo_with_prompt "installing C++ dependencies"
 brew install ccls
 brew install cmake
-# gbd is not compatible on mac
-#brew install gdb
-
-## Rust
-echo_with_prompt "installing Rust dependencies";
-brew install rustup
-
-## Java
-echo_with_prompt "installing Java dependencies";
-brew tap spring-io/tap
-brew install maven
-brew install gradle
-brew install spring-boot
-curl -s "https://get.sdkman.io" | bash
 
 # ------------------
-## Dockerfile
+# Dockerfile
 # ------------------
 echo_with_prompt "Installing Docker dependencies";
 brew install hadolint

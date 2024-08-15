@@ -14,8 +14,14 @@ emacs/auto-save-list
 emacs/.mc-lists.el
 emacs/ac-html-csswatcher
 emacs/eln-cache
+emacs/elpa
+
 # zsh
 zsh/.zcomp*
 zsh/.zhistory
+
 # ctags
 **/TAGS
+
+# mac
+**/.DS_store

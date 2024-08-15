@@ -44,13 +44,6 @@
 
 ;; Always load newer code
 (setq load-prefer-newer t)
-;; load init packages recursively
-(let ((default-directory  (expand-file-name (file-name-directory (or load-file-name buffer-file-name)))))
-  ;; setup auto-compile
-  (add-to-list 'load-path (concat default-directory "deps/auto-compile/auto-compile.el"))
-  (require 'auto-compile (concat default-directory "deps/auto-compile/auto-compile.el"))
-  (auto-compile-on-load-mode)
-  (auto-compile-on-save-mode))
 
 ;; I know what the scratch buffer is for ... or do I?
 (setq initial-scratch-message "")
@@ -58,8 +51,7 @@
 ;; AfterInitHook
 (add-hook 'after-init-hook
           (lambda ()
-            (setq file-name-handler-alist file-name-handler-alist-orginal)
-            ))
+            (setq file-name-handler-alist file-name-handler-alist-orginal)))
 ;; -AfterInitHook
 (defalias 'yes-or-no-p 'y-or-n-p)
 

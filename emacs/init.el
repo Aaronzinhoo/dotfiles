@@ -14,9 +14,7 @@
   (require 'init-defaults (concat default-directory "init/init-defaults.elc"))
   (require 'init-straight (concat default-directory "init/init-straight.elc"))
   (require 'init-fonts (concat default-directory "init/init-fonts.elc"))
-  (require 'init-utils (concat default-directory "init/init-utils.elc"))
-  (require 'init-keybindings (concat default-directory "init/init-keybindings.elc"))
-  (require 'pair-navigator (concat default-directory "pair-navigation/pair-navigator.elc")))
+  (require 'init-utils (concat default-directory "init/init-utils.elc")))
 (require 'custom)
 
 (message "Loading packages")
@@ -45,7 +43,35 @@
   :straight nil
   :hook (minibuffer-setup . cursor-intangible-mode)
   :bind* (("M-<up>" . move-text-up)
-           ("M-<down>" . move-text-down))
+           ("M-<down>" . move-text-down)
+           ("M-q" . yank)
+           ("C-j" . avy-goto-char-timer)
+           ("<pinch>" . 'ignore)
+           ("<C-wheel-up>" . 'ignore)
+           ("<C-wheel-down>" . 'ignore)
+           ("M-h" . 'backward-char)
+           ("M-j" . 'next-line)
+           ("M-k" . 'previous-line)
+           ("M-l" . 'forward-char)
+           ("M-q" . 'yank)
+           ("M-4" . 'pop-local-mark-ring)
+           ("M-;" . 'previous-window-any-frame)
+           ("C-x k" . 'kill-current-buffer)
+           ("C-x C-k" . 'kill-buffer-and-window)
+           ("C-x 2" . 'split-and-follow-horizontally)
+           ("C-x 3" . 'split-and-follow-vertically)
+           ("C-<" . 'previous-buffer)
+           ("C->" . 'next-buffer)
+           ("M-[" . 'backward-up-list)
+           ("M-]" . 'up-list)
+           ;; delete pair of items
+           ;; ("s-p" . 'delete-pair)
+           ;; need this otherwise on windows M-<tab> (changing windows)
+           ;; will activate scroll-lock
+           ("<Scroll_Lock>" . 'ignore)
+           ("s-<tab>" . 'iflipb-next-buffer)
+           ("s-S-<tab>" . 'iflipb-previous-buffer)
+           )
   :custom
   (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
@@ -53,6 +79,10 @@
   ;; Do not allow the cursor in the minibuffer prompt
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (tab-always-indent 'complete)
+  ;; compilation customization
+  ;; do not set this to false, raises security issues
+  (compilation-read-command t)
+  (compilation-scroll-output t)
   :preface
   (defun create-uuid ()
     "Return a newly generated UUID. This uses a simple hashing of variable data."
@@ -78,6 +108,17 @@
     (interactive)
     (insert (create-uuid)))
   :init
+  (when (memq window-system '(mac ns))
+    (setq mac-command-modifier 'meta)
+    (setq mac-right-command-modifier 'control)
+    (setq mac-option-modifier 'super))
+  (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
+  (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
+  (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
+  (defadvice compile (before ad-compile-smart activate)
+    "Advises `compile' so it sets the argument COMINT to t."
+    (ad-set-arg 1 t))
+  ;; commands for improving speed of lsp
   (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
     "Try to parse bytecode instead of json."
     (or
@@ -86,7 +127,6 @@
           (when (byte-code-function-p bytecode)
             (funcall bytecode))))
       (apply old-fn args)))
-
   (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
     "Prepend emacs-lsp-booster command to lsp CMD."
     (let ((orig-result (funcall old-fn cmd test?)))
@@ -104,7 +144,7 @@
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
   :straight nil
-  :hook ((git-commit-mode . git-commit-add-electric-pairs)
+  :hook ((git-commit-setup . git-commit-add-electric-pairs)
          (org-mode . org-add-electric-pairs)
          (markdown-mode . markdown-add-electric-pairs)
          (go-ts-mode . go-add-electric-pairs)
@@ -181,12 +221,12 @@
        (go "https://github.com/tree-sitter/tree-sitter-go")
        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
        (gosum "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")
-       (html "https://github.com/tree-sitter/tree-sitter-html")
        (java "https://github.com/tree-sitter/tree-sitter-java")
        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
        (json "https://github.com/tree-sitter/tree-sitter-json")
        (make "https://github.com/alemuller/tree-sitter-make")
-       (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown")
+       (markdown "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown/src")
+       (markdown-inline "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown-inline/src")
        (proto "https://github.com/mitchellh/tree-sitter-proto" "main")
        (python "https://github.com/tree-sitter/tree-sitter-python")
        (rust "https://github.com/tree-sitter/tree-sitter-rust")
@@ -220,11 +260,20 @@
     (add-to-list 'major-mode-remap-alist mapping))
   :custom
   (treesit-load-name-override-list
-   '((c++ "libtree-sitter-cpp"))))
+    '((c++ "libtree-sitter-cpp"))))
+(use-package which-key
+  :straight nil
+  :diminish
+  :custom
+  (which-key-use-C-h-commands nil)
+  :config
+  (which-key-setup-side-window-right-bottom)
+  (which-key-mode t))
 (use-package winner
   :straight nil
   :config
   (winner-mode 1))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package system-packages
   :straight t
   :custom
@@ -232,8 +281,6 @@
   :init
   (when (eq system-type 'darwin)
     (setq system-packages-package-manager 'brew)))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (use-package s :straight t
   :preface
   (defun snake-case-word (start end)
@@ -244,8 +291,6 @@
         (delete-region start end)
         (insert (s-snake-case camel-case-str)))
       (message "No region selected"))))
-(if (version< emacs-version "27.1")
-    (use-package cl))
 ;; garbage collector magic
 (use-package gcmh
   :straight t)
@@ -277,6 +322,11 @@
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+(use-package auto-compile
+  :straight (:type git :host github :repo "emacscollective/auto-compile" :branch "main")
+  :config
+  (auto-compile-on-load-mode)
+  (auto-compile-on-save-mode))
 ;; for hydra check hydra config
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package no-littering
@@ -306,8 +356,8 @@
     (diminish mode)))
 
 ;; SSH Config
-(use-package ssh-agency
-  :if (memq window-system '(windows)))
+;; (use-package ssh-agency
+;;   :if (memq window-system '(windows)))
 (use-package ssh-config-mode
   :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
   :preface
@@ -375,7 +425,7 @@
   (hydra-default-hint nil))
 (use-package major-mode-hydra
   :demand t
-  :after hydra
+  :after (hydra s nerd-icons)
   :preface
   (defun with-faicon (icon str &optional height v-adjust)
     "Displays an icon from Font Awesome icon."
@@ -440,10 +490,6 @@
      "Avy"
      (("j" avy-goto-char-timer "Jump Char(s)")
       ("g" avy-goto-line "Jump Line"))
-     "Pair"
-     (("[" pair-navigator-backward-left-bracket "Up pair")
-      ("]" pair-navigator-forward-right-bracket "Down pair")
-      ("p" pair-navigator-goto-matching-bracket "Matching pair"))
      "Text"
      (("f" forward-word "Forward Word")
       ("v" backward-word "Backward Word"))
@@ -735,7 +781,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (recentf-mode 1))
 (use-package crux
-  :bind (("C-a" . crux-move-beginning-of-line)
+  :bind* (("C-a" . crux-move-beginning-of-line)
          ("C-c I" . crux-find-user-init-file))
   :preface
   (defun aaronzinho-delete-line ()
@@ -805,28 +851,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package beacon
-  :straight t
+  :commands (beacon-blink)
   :diminish
   :custom
-  (beacon-color "#111FFF")
-  :config
-  (dolist (mode '(term-mode-hook
-                  dashboard-mode-hook
-                  shell-mode-hook
-                  treemacs-mode-hook
-                  compilation-mode-hook
-                  vterm-mode-hook
-                  eshell-mode-hook))
-    (add-hook mode (lambda () (beacon-mode 0))))
-  (beacon-mode 1))
-(use-package which-key
-  :straight t
-  :diminish
-  :custom
-  (which-key-use-C-h-commands nil)
-  :config
-  (which-key-setup-side-window-right-bottom)
-  (which-key-mode t))
+  (beacon-color "#111FFF"))
 (use-package default-text-scale
   :defer 2
   :bind (("C--" . text-scale-decrease)
@@ -842,19 +870,20 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-debug" "Flycheck" 1 -0.05))
     ("Checker"
-     (("?" flycheck-describe-checker "describe")
-      ("d" flycheck-disable-checker "disable")
-      ("m" flycheck-mode "mode")
-      ("s" flycheck-select-checker "select"))
-     "Errors"
-     (("p" flycheck-previous-error "previous" :color pink)
-      ("n" flycheck-next-error "next" :color pink)
-      ("l" flycheck-projectile-list-errors "list errors (proj)")
-      ("L" flycheck-list-errors "list errors"))
-     "Other"
-     (("r" recenter-top-bottom "recenter" :color pink)
-      ("M" flycheck-manual "manual")
-      ("v" flycheck-verify-setup "verify setup"))))
+      (("?" flycheck-describe-checker "describe")
+        ("d" flycheck-disable-checker "disable")
+        ("m" flycheck-mode "mode")
+        ("s" flycheck-select-checker "select"))
+      "Errors"
+      (("f" consult-flycheck "find errors (buffer)")
+        ("p" flycheck-previous-error "previous" :color pink)
+        ("n" flycheck-next-error "next" :color pink)
+        ("l" flycheck-list-errors "list errors (buffer)")
+        ("L" flycheck-projectile-list-errors "list errors (proj)"))
+      "Other"
+      (("r" recenter-top-bottom "recenter" :color pink)
+        ("M" flycheck-manual "manual")
+        ("v" flycheck-verify-setup "verify setup"))))
   :preface
   (defvar-local flycheck-local-checkers nil)
   (defun +flycheck-checker-get(fn checker property)
@@ -916,37 +945,37 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (([remap open-line] . aaronzinhoo-open-line)
           ([remap kill-ring-save] . easy-kill)))
 (use-package combobulate
-  :after (expand-region)
-  :commands (aaronzinhoo--mark-region-dwim)
+  :commands (combobulate-avy-jump)
   :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
-  :bind* (("M-2" . aaronzinhoo--mark-region-dwim)
-          :map combobulate-proffer-map
-          ("2" . next))
-  :preface
+  :config
   ;; You can customize Combobulate's key prefix here.
   ;; Note that you may have to restart Emacs for this to take effect!
-  (setq combobulate-key-prefix "C-c o")
-
-  ;; Optional, but recommended.
-  ;;
-  ;; You can manually enable Combobulate with `M-x
-  ;; combobulate-mode'.
-  (defun aaronzinhoo--mark-region-dwim ()
-    (interactive)
-    (unless (ignore-errors (or (combobulate-mark-node-dwim) t))
-      (er/expand-region 1)))
-  :hook ((python-ts-mode . combobulate-mode)
-          (js-ts-mode . combobulate-mode)
-          (css-ts-mode . combobulate-mode)
-          (yaml-ts-mode . combobulate-mode)
-          (json-ts-mode . combobulate-mode)
-          (typescript-ts-mode . combobulate-mode)
-          (tsx-ts-mode . combobulate-mode)))
+  (setq combobulate-key-prefix "C-c o"))
 (use-package expand-region
   :demand t
-  :commands (er/mark-symbol)
-  :bind (("M-3" . er/mark-outside-pairs))
+  :commands (er/expand-region)
+  :bind* (("M-2" . er/expand-region)
+          ("M-3" . er/mark-outside-pairs))
   :preface
+  (defun aaronzinhoo--treesit-node-bounds-match-region-p (node beg end)
+    """Returns `t' if the bounds of the region marked `beg' `end' match the bounds of `node'."""
+    (and
+      (= beg (treesit-node-start node))
+      (= end (treesit-node-end node))))
+  (defun er/treesit-mark-bigger-node ()
+    (interactive)
+    (let* ((root (treesit-buffer-root-node))
+            (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
+            (node-start (treesit-node-start node))
+            (node-end (treesit-node-end node)))
+      ;; Node fits the region exactly. Try its parent node instead.
+      (when (aaronzinhoo--treesit-node-bounds-match-region-p node (region-beginning) (region-end))
+        (when-let ((node (treesit-parent-until node
+                           (lambda (n) (not (aaronzinhoo--treesit-node-bounds-match-region-p n (region-beginning) (region-end)))))))
+          (setq node-start (treesit-node-start node)
+            node-end (treesit-node-end node))))
+      (set-mark node-end)
+      (goto-char node-start)))
   (defun aaronzinhoo-mark-line ()
     "Mark the current line."
     (interactive)
@@ -975,15 +1004,27 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                 aaronzinhoo-mark-line
                                 er/mark-html-attribute
                                 er/mark-inner-tag
-                                er/mark-outer-tag))))
+                                 er/mark-outer-tag))))
+  (defun er/add-treesitter-mode-expansions ()
+    (make-variable-buffer-local 'er/try-expand-list)
+    (setq er/try-expand-list '(er/mark-word
+                                er/mark-symbol
+                                er/mark-symbol-with-prefix
+                                er/treesit-mark-bigger-node)))
   :config
-  (eval-after-load 'yaml-ts-mode '(require 'yaml-mode-expansions))
-  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-yaml-mode-expansions)
-  (er/enable-mode-expansions 'typescript-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'bash-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'css-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'html-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'java-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'js-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'python-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
+  (er/enable-mode-expansions 'rust-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'tsx-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'typescript-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
-  (er/enable-mode-expansions 'python-ts-mode 'er/add-python-mode-expansions)
-  (er/enable-mode-expansions 'rust-ts-mode 'er/add-rust-mode-expansions))
+  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-treesitter-mode-expansions)
+  )
 (use-package yasnippet
   :defer t
   :diminish yas-minor-mode
@@ -1048,9 +1089,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq-local completion-at-point-functions
             (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict))
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
-    (setq-local completion-styles '(flex basic))
+    ;; (setq-local completion-styles '(flex basic))
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(flex))) ;; Configure flex
+      '(orderless))) ;; Configure orderless which can use flex
   (defun lsp-go-hooks ()
     (add-hook 'before-save-hook 'lsp-format-buffer nil t)
     (add-hook 'before-save-hook 'lsp-organize-imports nil t)
@@ -1089,16 +1130,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   (lsp-yaml-schemas
-   `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
-     (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
-     (kubernetes . ["*.yaml"])))
+    `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
+       (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
+       (kubernetes . ["*.yaml"])))
   (lsp-clients-angular-language-server-command
-   `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
-     "--ngProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--tsProbeLocations"
-     ,(concat node-home-folder "lib/node_modules")
-     "--stdio"))
+    `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
+       "--ngProbeLocations"
+       ,(concat node-home-folder "lib/node_modules")
+       "--tsProbeLocations"
+       ,(concat node-home-folder "lib/node_modules")
+       "--stdio"))
   :init
   (setenv "LSP_USE_PLISTS" "true")
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
@@ -1269,16 +1310,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package orderless
   :demand t
   :ensure t
+  :custom
+  (orderless-matching-styles
+    '(orderless-literal
+       orderless-prefixes
+       orderless-initialism
+       orderless-regexp
+       ;; orderless-flex                       ; Basically fuzzy finding. Works by adding ~ in front of search
+       ;; orderless-strict-leading-initialism
+       ;; orderless-strict-initialism
+       ;; orderless-strict-full-initialism
+       ;; orderless-without-literal          ; Recommended for dispatches instead
+       ))
   :config
-  (orderless-define-completion-style orderless+initialism
-    (orderless-matching-styles '(orderless-initialism orderless-literal orderless-regexp)))
   ;; Define orderless style with initialism by default
-  (setq completion-styles '(orderless basic))
+  (setq completion-styles '(orderless))
   (setq completion-category-defaults nil)
-  (setq completion-category-overrides '((file (styles basic partial-completion))
-                                   (command (styles orderless+initialism))
-                                   (symbol (styles orderless+initialism))
-                                   (variable (styles orderless+initialism)))))
+  (setq completion-category-overrides '((file (styles orderless))
+                                   (command (styles orderless))
+                                   (symbol (styles orderless))
+                                   (variable (styles orderless)))))
 ;; consult
 ;; Example configuration for Consult
 (use-package consult-dir
@@ -1288,24 +1339,38 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file))
   :preface
-  (defun consult-dir--tramp-docker-hosts ()
-  "Get a list of hosts from Docker."
-  (when (require 'tramp-container nil t)
-    (mapcar (lambda (e)
-	    (concat "/docker:" (format "%s" (cadr e)) ":/"))
-	  (tramp-docker--completion-function))))
+  (defcustom consult-dir--tramp-container-executable "docker"
+    "Default executable to use for querying container hosts."
+    :group 'consult-dir
+    :type 'string)
+
+  (defcustom consult-dir--tramp-container-args nil
+    "Optional list of arguments to pass when querying container hosts."
+    :group 'consult-dir
+    :type '(repeat string))
+
+  (defun consult-dir--tramp-container-hosts ()
+    "Get a list of hosts from a container host."
+    (cl-loop for line in (cdr
+                           (ignore-errors
+                             (apply #'process-lines consult-dir--tramp-container-executable
+                               (append consult-dir--tramp-container-args (list "ps")))))
+      for cand = (split-string line "[[:space:]]+" t)
+      collect (let ((user (unless (string-empty-p (car cand))
+                            (concat (car cand) "@")))
+                     (hostname (car (last cand))))
+                (format "/docker:%s%s:/" user hostname))))
+  (defvar consult-dir--source-tramp-docker
+    `(:name     "Docker"
+       :narrow   ?d
+       :category file
+       :face     consult-file
+       :history  file-name-history
+       :items    ,#'consult-dir--tramp-container-hosts)
+    "Docker candiadate source for `consult-dir'.")
   :custom
   (consult-dir-project-list-function #'consult-dir-projectile-dirs)
   :config
-  (defvar consult-dir--source-tramp-docker
-    `(:name     "Docker"
-                :narrow   ?d
-                :category file
-                :face     consult-file
-                :history  file-name-history
-                :items    ,#'consult-dir--tramp-docker-hosts)
-    "Docker candiadate source for `consult-dir'.")
-
   ;; Adding to the list of consult-dir sources
   (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-docker t)
   (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-ssh t))
@@ -1330,9 +1395,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ;; C-x bindings in `ctl-x-map'
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x r" . consult-recent-file)            ;; orig. bookmark-jump
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
          ;; Custom M-# bindings for fast register access
          ("M-#" . consult-register-load)
@@ -1342,21 +1407,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
          ;; M-g bindings in `goto-map'
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
          ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
+         ("M-g M" . consult-global-mark)
          ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("s-s f" . consult-fd)
-         ("s-s p" . consult-ripgrep-thing-at-point)
+          ("M-g I" . consult-imenu-multi)
+          ;; Search
+         ("C-s" . aaronzinhoo--consult-ripgrep-dwim)
+          ;; M-s bindings in `search-map'
+          ;; these should be using S not s, probably want better mapping before turning them on again
+         ;; ("s-s f" . consult-fd)
+         ;; ("s-s p" . consult-ripgrep-thing-at-point)
          ;; ("M-s D" . consult-locate)
          ;; ("M-s g" . consult-grep)
          ;; ("M-s G" . consult-git-grep)
-         ("C-s" . aaronzinhoo--consult-ripgrep-or-line)
          ;; ("M-s L" . consult-line-multi)
          ;; ("M-s k" . consult-keep-lines)
          ;; ("M-s u" . consult-focus-lines)
@@ -1378,10 +1443,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :custom
   (completion-in-region-function #'consult-completion-in-region)
   :preface
-  (defun consult-ripgrep-thing-at-point (&optional dir given-initial)
-  "Pass the region to consult-ripgrep if available.
-
-DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
+  (defun aaronzinhoo--consult-ripgrep-dwim (&optional given-initial)
+    """Pass the region to aaronzinhoo--consult-ripgrep-or-line if available, otherwise just do a plain aaronzinhoo--consult-ripgrep-or-line. DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
+    (interactive "P")
+    (let ((initial
+            (cond
+              ((not (null given-initial)) given-initial)
+              ((use-region-p)
+                (buffer-substring-no-properties (region-beginning) (region-end)))
+              (t ""))))
+      (deactivate-mark)
+      (aaronzinhoo--consult-ripgrep-or-line initial)))
+  (defun consult-ripgrep-thing-at-point (&optional given-initial)
+    """Pass the region to consult-ripgrep if available, DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
   (interactive "P")
   (let ((initial
          (or given-initial
@@ -1391,7 +1465,7 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
                    ((use-region-p)
                     (buffer-substring-no-properties (region-beginning) (region-end)))))))
     (deactivate-mark)
-    (consult-ripgrep (file-name-directory buffer-file-name) initial)))
+    (aaronzinhoo--consult-ripgrep-or-line initial)))
   (defun consult--fd-builder (input)
   (let ((fd-command
          (if (eq 0 (process-file-shell-command "fdfind"))
@@ -1419,7 +1493,7 @@ When the number of characters in a buffer exceeds this threshold,
 `consult-ripgrep' will be used instead of `consult-line'."
   :type 'integer)
 
-  (defun aaronzinhoo--consult-ripgrep-or-line ()
+  (defun aaronzinhoo--consult-ripgrep-or-line (&optional given-initial)
     "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
     (interactive)
     (if (or (not buffer-file-name)
@@ -1429,8 +1503,10 @@ When the number of characters in a buffer exceeds this threshold,
             (jka-compr-get-compression-info buffer-file-name)
             (<= (buffer-size)
                 (/ aaronzinhoo--consult-ripgrep-or-line-limit
-                   (if (eq major-mode 'org-mode) 4 1))))
+                  (if (eq major-mode 'org-mode) 4 1))))
+      (if (null given-initial)
         (consult-line)
+        (consult-line given-initial))
       (when (file-writable-p buffer-file-name)
         (save-buffer))
       (let ((consult-ripgrep-command
@@ -1449,12 +1525,12 @@ When the number of characters in a buffer exceeds this threshold,
                      "--with-filename "
                      ;; defaults
                      "-e ARG OPTS "
-                     (shell-quote-argument buffer-file-name))))
-        (consult-ripgrep))))
-
-  ;; The :init configuration is always executed (Not lazy)
+               (shell-quote-argument buffer-file-name))))
+        (if (null given-initial)
+          (consult-ripgrep)
+          (consult-ripgrep (file-name-directory buffer-file-name) given-initial))))
+    )
   :init
-
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register', `consult-register-load',
   ;; `consult-register-store' and the Emacs built-ins.
@@ -1532,8 +1608,8 @@ When the number of characters in a buffer exceeds this threshold,
   :bind (:map vertico-map
               ("<tab>" . vertico-insert)
               ;; NOTE 2022-02-05: Cycle through candidate groups
-              ("C-M-n" . vertico-next-group)
-              ("C-M-p" . vertico-previous-group)
+              ("C-M-n" . vertico-previous-group)
+              ("C-M-p" . vertico-next-group)
               ;; Multiform toggles
               ("<backspace>" . vertico-directory-delete-char)
               ("M-<backspace>" . vertico-directory-delete-word)
@@ -1590,6 +1666,7 @@ When the number of characters in a buffer exceeds this threshold,
       (embark-act arg)))
   :custom
   (vertico-scroll-margin 0)
+  (vertico-cycle t)
   (vertico-count 20)                    ; Number of candidates to display
   (vertico-resize t)
   (vertico-grid-separator "       ")
@@ -1649,14 +1726,16 @@ When the number of characters in a buffer exceeds this threshold,
   :straight (corfu :type git :host github :repo "minad/corfu" :files (:defaults "extensions/*"))
   ;; Optionally use TAB for cycling, default is `corfu-complete'.
   :bind (:map corfu-map
-              ("M-SPC"      . corfu-insert-separator)
-              ("TAB"        . corfu-complete-common-or-next)
-              ([tab]        . corfu-complete-common-or-next)
-              ("S-TAB"      . corfu-previous)
-              ([backtab]    . corfu-previous)
-              ("<return>"   . corfu-insert)
-              ("M-p"        . corfu-popupinfo-scroll-up)
-              ("M-n"        . corfu-popupinfo-scroll-down))
+          ("M-SPC"      . corfu-insert-separator)
+          ("TAB"        . corfu-complete-common-or-next)
+          ([tab]        . corfu-complete-common-or-next)
+          ("S-TAB"      . corfu-previous)
+          ([backtab]    . corfu-previous)
+          ("<return>"   . corfu-insert)
+          ("C-i"        . corfu-insert)
+          ("M-l"        . corfu-info-location)
+          ("M-p"        . corfu-popupinfo-scroll-up)
+          ("M-n"        . corfu-popupinfo-scroll-down))
   :hook ((vterm-mode . (lambda () (setq-local corfu-quit-at-boundary t
                                                corfu-quit-no-match t
                                                corfu-auto nil)
@@ -1737,38 +1816,93 @@ When the number of characters in a buffer exceeds this threshold,
 ;; TODO add fix for mark outer-tag
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
-  :bind (("M-m" . multiple-cursors-hydra/body))
+  :bind* (("M-m" . multiple-cursors-hydra/body))
   :hook ((prog-mode . multiple-cursors-mode)
-         (text-mode . multiple-cursors-mode))
+          (text-mode . multiple-cursors-mode))
+  :init
+  (defvar aaronzinhoo--mc-completion-candidate nil)
   :pretty-hydra
   (multiple-cursors-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
     ("Up"
-     (("p" mc/mark-previous-like-this "Prev")
-      ("P" mc/skip-to-previous-like-this "Skip Prev")
-      ("M-p" mc/unmark-previous-like-this "Unmark Prev"))
-     "Down"
-     (("n" mc/mark-next-like-this "Next")
-      ("N" mc/skip-to-next-like-this "Skip Next")
-      ("M-n" mc/unmark-next-like-this "Unmark Next"))
-     "Cycle"
-     (("c" mc/cycle-forward "next cursor")
-      ("C" mc/cycle-back "previous cursor"))
-     "Mark All"
-     (("a" mc/mark-all-like-this "Mark All")
-      ("d" mc/mark-all-dwim "Mark All DWIM"))
-     "Misc."
-     (("2" er/expand-region "Expand Region")
-      ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
-      ("RET" newline-and-indent "New Line"))))
+      (("p" mc/mark-previous-like-this "Prev")
+        ("P" mc/skip-to-previous-like-this "Skip Prev")
+        ("M-p" mc/unmark-previous-like-this "Unmark Prev"))
+      "Down"
+      (("n" mc/mark-next-like-this "Next")
+        ("N" mc/skip-to-next-like-this "Skip Next")
+        ("M-n" mc/unmark-next-like-this "Unmark Next"))
+      "Cycle"
+      (("f" mc/cycle-forward "next cursor")
+        ("b" mc/cycle-back "previous cursor"))
+      "Mark All"
+      (("a" mc/mark-all-like-this "Mark All")
+        ("d" mc/mark-all-dwim "Mark All DWIM"))
+      "Misc."
+      (("2" er/expand-region "Expand Region")
+        ("c" mc/complete-in-region "Autocomplete")
+        ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
+        ("RET" newline-and-indent "New Line"))))
+  :preface
+  (defun aaronzinhoo--complete-in-region-minibuffer ()
+    (interactive)
+    (let ((res (run-hook-wrapped 'completion-at-point-functions
+                 #'completion--capf-wrapper 'all)))
+      (pcase res
+        (`(,hookfun . (,start ,end ,collection . ,plist))
+          (let* ((initial (buffer-substring-no-properties start end))
+                  (predicate (plist-get plist :predicate))
+                  (metadata (completion-metadata initial collection predicate))
+                  ;; TODO: `minibuffer-completing-file-name' is mostly deprecated, but
+                  ;; still in use. Packages should instead use the completion metadata.
+                  (minibuffer-completing-file-name
+                    (eq 'file (completion-metadata-get metadata 'category)))
+                  (threshold (completion--cycle-threshold metadata))
+                  (all (completion-all-completions initial collection predicate (length initial)))
+                  (exit-fun (plist-get completion-extra-properties :exit-function)))
+            (let* ((limit (car (completion-boundaries initial collection predicate "")))
+                    (completion
+                      (cond
+                        ((atom all) nil)
+                        ((and (consp all) (atom (cdr all)))
+                          (concat (substring initial 0 limit) (car all)))
+                        ;; reuse aaronzinhoo--mc-completion-candidate value if already selected
+                        ;; this occurs when the user has initially selected a candidate with the real cursor
+                        ((not (null aaronzinhoo--mc-completion-candidate)) aaronzinhoo--mc-completion-candidate)
+                        ;; list completion candidates in dropdown list if aaronzinhoo--mc-completion-candidate if null
+                        (t
+                          ;; Evaluate completion table in the original buffer.
+                          ;; This is a reasonable thing to do and required by
+                          ;; some completion tables in particular by lsp-mode.
+                          ;; See gh:minad/vertico#61.
+                          (completing-read "Completion: " all predicate nil)))))
+
+              (if completion
+                (setq-local aaronzinhoo--mc-completion-candidate completion)
+                (message "No completion")))
+            (progn
+              (completion--replace start end (concat aaronzinhoo--mc-completion-candidate))
+              (when exit-fun
+                (funcall exit-fun completion
+                  ;; If completion is finished and cannot be further
+                  ;; completed, return `finished'.  Otherwise return
+                  ;; `exact'.
+                  (if (eq (try-completion completion collection predicate) t)
+                    'finished 'exact)))
+              t)))))
+    )
+  (defun mc/complete-in-region ()
+    (interactive)
+    (setq-local aaronzinhoo--mc-completion-candidate nil)
+    (mc/execute-command-for-all-cursors 'aaronzinhoo--complete-in-region-minibuffer)
+    (setq-local aaronzinhoo--mc-completion-candidate nil))
   :custom
-  (mc/cmds-to-run-for-all
+  (mc/cmds-to-run-for-al
    '(abbrev-prefix-mark
      crux-smart-delete-line
      hungry-delete-backward
      hungry-delete-forward))
-  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion hydra-multiple-cursors/body hydra-multiple-cursors/mc-hide-unmatched-lines-mode hydra-multiple-cursors/mc/edit-lines-and-exit hydra-multiple-cursors/mc/mark-all-dwim hydra-multiple-cursors/mc/mark-all-like-this hydra-multiple-cursors/mc/mark-all-like-this-and-exit hydra-multiple-cursors/mc/mark-next-like-this hydra-multiple-cursors/mc/mark-previous-like-this hydra-multiple-cursors/mc/nil hydra-multiple-cursors/mc/skip-to-next-like-this hydra-multiple-cursors/mc/skip-to-previous-like-this hydra-multiple-cursors/mc/unmark-next-like-this hydra-multiple-cursors/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra/mc-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/mc/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
@@ -2136,14 +2270,45 @@ When the number of characters in a buffer exceeds this threshold,
   :commands (list-environment))
 ;; NOTE C-c C-t vterm-copy-mode for copying vterm text!
 (use-package vterm
-  :commands vterm
-  :preface
+  :straight (:type git :host github :repo "akermu/emacs-libvterm" :branch "master")
+  :commands (vterm project-vterm)
+  :bind (:map vterm-mode-map
+          ("M-q" . aaronzinhoo--vterm-yank))
+  :init
   (setq vterm-install t)
   :custom
   (vterm-kill-buffer-on-exit t)
-  (vterm-max-scrollback 10000)
+  (vterm-max-scrollback 5000)
   (confirm-kill-processes nil)
-  (hscroll-margin 0))
+  (hscroll-margin 0)
+  :preface
+  (defun aaronzinhoo--vterm-yank ()
+    (interactive "p")
+    (consult-yank))
+  (defun vterm-directory-sync ()
+  "Synchronize current working directory."
+  (interactive)
+  (when vterm--process
+    (let* ((pid (process-id vterm--process))
+           (dir (file-truename (format "/proc/%d/cwd/" pid))))
+      (setq default-directory dir))))
+  (defun project-vterm ()
+    "Start an vterm shell in the current project's root directory.
+If a buffer already exists for running a vterm shell in the project's root,
+switch to it.  Otherwise, create a new vterm buffer.
+With \\[universal-argument] prefix arg, create a new inferior vterm buffer even
+if one already exists."
+    (interactive)
+    (require 'comint)
+    (let* ((default-directory (project-root (project-current t)))
+            (default-project-shell-name (project-prefixed-buffer-name "vterm"))
+            (shell-buffer (get-buffer default-project-shell-name)))
+      (if (and shell-buffer (not current-prefix-arg))
+        (if (comint-check-proc shell-buffer)
+          (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
+          (vterm shell-buffer))
+        (vterm (generate-new-buffer-name default-project-shell-name)))))
+  )
 (use-package multi-vterm
   :commands multi-vterm)
 (use-package ansi-color
@@ -2157,13 +2322,14 @@ When the number of characters in a buffer exceeds this threshold,
       (ansi-color-process-output nil)
       (setq-local comint-last-output-start (point-marker)))))
 ;; Programming/Project Management
-;; commenting
+;; commenting does not have support for native tree sitter yet
 (use-package turbo-log
+  :commands (turbo-log-print-immediately turbo-log-print)
   :straight (:type git :host github :repo "artawower/turbo-log.el")
   :config
   (setq turbo-console--prefix "LOG"))
 (use-package evil-nerd-commenter
-  :bind ("M-;" . evilnc-comment-or-uncomment-lines))
+  :bind* ("C-;" . evilnc-comment-or-uncomment-lines))
 ;; Window|buffer Managers
 (use-package burly
   :straight (burly :type git :host github :repo "alphapapa/burly.el")
@@ -2188,27 +2354,26 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package projectile
   :after (major-mode-hydra)
   :hook (dashboard-mode . projectile-mode)
-  :bind ("s-p" . projectile-hydra/body)
+  :bind* ("s-p" . projectile-hydra/body)
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
    ("Buffers"
-    (("b" consult-projectile-switch-to-buffer "list")
+    (("b" consult-project-buffer "list")
      ("k" projectile-kill-buffers "kill all")
      ("S" projectile-save-project-buffers "save all"))
     "Find"
-    (("d" consult-projectile-find-dir "directory")
-     ("D" projectile-dired "proj. root")
-     ("f" consult-projectile-find-file "file")
+    (("d" project-find-dir "directory")
+     ("D" project-dired "proj. root")
+     ("f" project-find-file "file")
      ("p" consult-projectile-switch-project "project")
      ("F" projectile-find-file-in-known-projects "file (all proj.)"))
     "Other"
     (("N" projectile-cleanup-known-projects)
      ("i" projectile-invalidate-cache "reset cache")
-     ("c" projectile-compile-project "compile")
-     ("v" projectile-run-vterm "run vterm"))
+     ("c" project-compile "compile")
+     ("v" project-vterm "run vterm"))
     "Search & Replace"
-    (("r" projectile-replace "replace")
-     ("R" projectile-replace-regexp "regexp replace")
+    (("r" project-query-replace-regexp "regexp replace")
      ("s" consult-ripgrep "search"))
     "Tests"
     (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
@@ -2222,7 +2387,6 @@ When the number of characters in a buffer exceeds this threshold,
   (projectile-indexing-method 'alien)
   (projectile-enable-caching t)
   (projectile-sort-order 'recentf))
-
 
 ;;; Languages Support
 
@@ -2273,6 +2437,7 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo-yaml-mode-hook ()
     (setq-local lsp-java-boot-enabled nil)
+    (setq-local lsp-lens-mode nil)
     (setq-local eldoc-mode nil)
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
     (yaml-pro-mode nil))
@@ -2290,7 +2455,10 @@ When the number of characters in a buffer exceeds this threshold,
         ("P" yaml-pro-ts-up-level "Previous Parent Node"))
       "Fold"
       (("f" yaml-pro-fold-at-point "Fold")
-        ("F" yaml-pro-unfold-at-point "Unfold")))))
+        ("F" yaml-pro-unfold-at-point "Unfold"))
+      "Schema"
+      (("s" lsp-yaml-select-buffer-schema "Buffer Schema")
+       ("d" lsp-yaml-download-schema-store-db "Download Schemastore")))))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
@@ -2330,25 +2498,29 @@ When the number of characters in a buffer exceeds this threshold,
     (("b" dockerfile-build-buffer "Build Image")
      ("B" dockerfile-build-no-cache-buffer "Build Image W/O Cache")))))
 ;; kubernetes settings overview
-(use-package kubel
-  :after (vterm)
-  :config (kubel-vterm-setup))
-(use-package kubernetes
-  :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
-  :defer t
-  :commands (kubernetes-overview)
-  :custom
-  (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
-  (kubernetes-default-overview-view 'my-view)
-  :config
-  (setq kubernetes-poll-frequency 5
-        kubernetes-redraw-frequency 5))
-(use-package kele
-  :demand t
-  :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
-  :config
-  (define-key kele-mode-map (kbd "s-k") kele-command-map)
-  (kele-mode t))
+(use-package kubed
+  :straight (:type git :host github :repo "eshelyaron/kubed" :branch "master")
+  :bind* ("s-k" . kubed-transient))
+;; (use-package kubel
+;;   :after (vterm)
+;;   :config (kubel-vterm-setup))
+;; (use-package kubernetes
+;;   :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
+;;   :defer t
+;;   :commands (kubernetes-overview)
+;;   :custom
+;;   (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
+;;   (kubernetes-default-overview-view 'my-view)
+;;   :config
+;;   (setq kubernetes-poll-frequency 5
+;;         kubernetes-redraw-frequency 5))
+;; (use-package kele
+;;   :demand t
+;;   :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
+;;   :config
+;;   (define-key kele-mode-map (kbd "s-k") kele-command-map)
+;;   (kele-mode t))
+
 ;;; WEB-DEV CONFIG
 
 ;; apache
@@ -2462,7 +2634,7 @@ When the number of characters in a buffer exceeds this threshold,
   (web-mode-enable-block-face t)
   (web-mode-enable-current-column-highlight t)
   (web-mode-enable-current-element-highlight t)
-  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word hydra-multiple-cursors/nil hydra-web/body hydra-multiple-cursors/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
+  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word multiple-cursors-hydra/nil hydra-web/body multiple-cursors-hydra/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
 
 ;;; Markdown Support
 (use-package markdown-mode
@@ -2477,14 +2649,14 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo--markdown-mode-hook ()
     (setq-local completion-at-point-functions
-                (list #'cape-file #'cape-dabbrev #'cape-dict)))
+      (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :pretty-hydra
   ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Insert"
     (("it" markdown-insert-table "table")
      ("ii" markdown-insert-image "image")
      ("ib" markdown-insert-uri "uri")
-     ("ic" markdown-insert-code-block "code block")
+     ("ic" markdown-insert-gfm-code-block "code block" :color blue)
      ("id" markdown-insert-gfm-checkbox "checkbox"))
     "Preview"
     (("p" impatient-showdown-mode "Preview" :toggle t))
@@ -2492,7 +2664,7 @@ When the number of characters in a buffer exceeds this threshold,
     (("o" markdown-open "Open" :color blue))
     ))
   :custom
-  (markdown-command "pandoc"))
+  (markdown-command "pandoc -t html5"))
 ;; org github-esque markdown export
 (use-package ox-gfm
   :after org)
@@ -2582,32 +2754,33 @@ When the number of characters in a buffer exceeds this threshold,
   :straight nil
   :delight " Py"
   :bind (:map python-ts-mode-map
-              ("s-h" . python-hydra/body))
+          ("<backtab>" . combobulate-python-indent-for-tab-command)
+          ("s-h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
          ;; (python-ts-mode . combobulate-mode)
          (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
   :pretty-hydra
   (python-hydra
-   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
-   ("Run"
-    (("sh" run-python "Python Shell")
-     ("d" pdb "PDB" :color blue)
-     ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
-     ("v" projectile-run-vterm "run vterm"))
-    "Run in Python Shell"
-    (("rb" python-shell-send-buffer "Run Buffer")
-     ("rf" python-shell-send-file "Run File")
-     ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
-     ("rr" python-shell-send-region "Run Region"))
-    "Formatting"
-    (("i" python-fix-imports "Fix Imports")
-     ("a" python-add-import "Add Import")
-     ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
-    "Navigation/Editing"
-    (("c" combobulate-mode "Combobulate Mode" :toggle t)
-     ("j" combobulate-avy "Jump")
-     ("ed" combobulate-edit "Edit")
-     ("en" combobulate-envelop "Envelop"))))
+    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
+    ("Run"
+      (("sh" run-python "Python Shell")
+        ("d" pdb "PDB" :color blue)
+        ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
+        ("v" projectile-run-vterm "run vterm"))
+      "Run in Python Shell"
+      (("rb" python-shell-send-buffer "Run Buffer")
+        ("rf" python-shell-send-file "Run File")
+        ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
+        ("rr" python-shell-send-region "Run Region"))
+      "Formatting"
+      (("i" python-fix-imports "Fix Imports")
+        ("a" python-add-import "Add Import")
+        ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
+      "Navigation/Editing"
+      (("j" combobulate-avy "Jump")
+        ("ed" combobulate-edit "Edit")
+        ("ei" combobulate-python-indent-for-tab-command "Indent")
+        ("en" combobulate-envelop "Envelop"))))
   :preface
   (defun aaronzinhoo--python-shell-send-current-file ()
     (interactive)
@@ -2673,7 +2846,6 @@ When the number of characters in a buffer exceeds this threshold,
   (go-ts-mode-indent-offset 4)
   :init
   ;;Smaller compilation buffer
-  (setq-local compilation-windowp-height 14)
   (defun my-compilation-hook ()
     (when (not (get-buffer-window "*compilation*"))
       (save-selected-window
@@ -2683,13 +2855,10 @@ When the number of characters in a buffer exceeds this threshold,
             (select-window w)
             (switch-to-buffer "*compilation*")
             (shrink-window (- h compilation-window-height)))))))
-  (setq compilation-read-command nil)
   :bind (:map go-ts-mode-map
               ("M-," . compile)
               ("M-." . godef-jump)
-              ("M-*" . pop-tag-mark))
-  :config
-  (setq-local compilation-scroll-output t))
+              ("M-*" . pop-tag-mark)))
 
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
@@ -2730,7 +2899,6 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package java-ts-mode
   :demand t
   :straight nil
-  :mode (("\\.java\\'" . java-ts-mode))
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
           (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
@@ -2790,9 +2958,6 @@ When the number of characters in a buffer exceeds this threshold,
   :preface
   (defun aaronzinhoo--setup-bash-ts-mode ()
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'lsp-completion-at-point #'sh-completion-at-point-function #'comint-completion-at-point #'cape-dabbrev) #'cape-dict))))
-
-(use-package ansible
-  :hook (yaml-ts-mode . ansible))
 
 ;;; Theme
 (use-package doom-modeline
