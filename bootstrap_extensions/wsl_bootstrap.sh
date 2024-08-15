@@ -1,7 +1,7 @@
 #!/bin/bash
 source "$( pwd )/utils.sh"
 
-PROMPT="[ WindowsExtensionLoader ]:"
+PROMPT="[ WSL2ExtensionLoader ]:"
 
 if [ -z "$WSL_DISTRO_NAME" ]; then
 	echo_with_prompt "Not using WSL, exiting..."
