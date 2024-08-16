@@ -2550,10 +2550,6 @@ if one already exists."
 (use-package emmet-mode
   :diminish
   :hook (web-mode . emmet-mode))
-(use-package helm-emmet)
-(use-package html-check-frag
-  :straight (:type git :host github :repo "TobiasZawada/html-check-frag" :branch "master")
-  :hook (web-mode . html-check-frag-mode))
 (use-package css-mode
   :straight nil
   :hook ((scss-mode . aaronzinhoo--scss-setup-hook))
@@ -2562,14 +2558,25 @@ if one already exists."
     (setq-local completion-at-point-functions (list #'css-completion-at-point #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
   (css-indent-offset 2))
-(use-package web-mode
-  :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
-  :hook (web-mode . aaronzinhoo--web-mode-hook)
+(use-package html-ts-mode
+  :straight nil
   :mode (("\\.html\\'" . html-ts-mode))
-  :bind ((:map web-mode-map
-               ("s-h" . web-mode-hydra/body)))
+  :hook ((html-ts-mode . aaronzinhoo--html-setup-hook))
+  :preface
+  (defun aaronzinhoo--html-setup-hook ()
+    (setq-local lsp-lens-enable nil)
+    (setq-local lsp-lens-mode nil)
+    (setq-local aaronzinhoo--lsp-capf-backends (list (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict)))
+  (defun aaronzinhoo--close-pair ()
+    (interactive)
+    (when (eq ?> (char-after))
+      (forward-char))
+    (save-excursion
+      (sgml-close-tag))
+    )
+  ;; TODO: update hydra with custom tree-sitter based functions
   :pretty-hydra
-  ((:hint nil :title (with-octicon "nf-oct-globe" "Web Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
+  ((:hint nil :title (with-octicon "nf-oct-globe" "Html Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Navigation"
     (("a" sgml-skip-tag-backward "tag beginning | prev tag")
      ("e" sgml-skip-tag-forward "tag end | next tag")
@@ -2579,14 +2586,16 @@ if one already exists."
      ("f" web-mode-fold-or-unfold "fold/unfold"))
     "Edit"
     (("d" aaronzinhoo-delete-tag "delete tag"))
-    "Error"
-    (("v" html-check-frag-next "next html error")
-     ("E" web-mode-dom-errors-show "show errors"))
     "Action"
     (("w" web-mode-element-wrap "wrap element in tag" ));end action
     "Other"
-    (("s" helm-emmet "Insert Emmet Snippet")
-     ("RET" nil "Quit" :color blue))))
+    (("RET" nil "Quit" :color blue))))
+  )
+(use-package web-mode
+  :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
+  :hook (web-mode . aaronzinhoo--web-mode-hook)
+  :bind ((:map web-mode-map
+               ("s-h" . web-mode-hydra/body)))
   :preface
   (defun aaronzinhoo-sgml-prettify-html ()
     """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
