@@ -115,9 +115,6 @@
   (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
-  (defadvice compile (before ad-compile-smart activate)
-    "Advises `compile' so it sets the argument COMINT to t."
-    (ad-set-arg 1 t))
   ;; commands for improving speed of lsp
   (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
     "Try to parse bytecode instead of json."
@@ -211,7 +208,8 @@
   :straight nil
   :init
   (setq treesit-language-source-alist
-    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+    '((angular "https://github.com/dlvandenberg/tree-sitter-angular" "main" "src")
+       (bash "https://github.com/tree-sitter/tree-sitter-bash")
        (cmake "https://github.com/uyha/tree-sitter-cmake")
        (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
        (c "https://github.com/tree-sitter/tree-sitter-c")
@@ -1039,20 +1037,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-mode
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook ((c-ts-mode . lsp-deferred)
+  :hook ((bash-ts-mode . lsp-deferred)
+          (c-ts-mode . lsp-deferred)
           (c++-ts-mode . lsp-deferred)
-          (go-ts-mode . lsp-deferred)
-          (sql-mode . lsp-deferred)
-          (html-ts-mode . lsp-deferred)
-          (web-mode . lsp-deferred)
-          (typescript-ts-mode . lsp-deferred)
-          (rust-ts-mode . lsp-deferred)
-          (dockerfile-ts-mode . lsp-deferred)
-          (sh-mode . lsp-deferred)
-          (bash-ts-mode . lsp-deferred)
-          (yaml-ts-mode . lsp-deferred)
-          (python-ts-mode . lsp-deferred)
           (conf-javaprop-mode . lsp-deferred)
+          (css-ts-mode . lsp-deferred)
+          (dockerfile-ts-mode . lsp-deferred)
+          (go-ts-mode . lsp-deferred)
+          (html-ts-mode . lsp-deferred)
+          (python-ts-mode . lsp-deferred)
+          (rust-ts-mode . lsp-deferred)
+          (sh-mode . lsp-deferred)
+          (sql-mode . lsp-deferred)
+          (typescript-ts-mode . lsp-deferred)
+          (web-mode . lsp-deferred)
+          (yaml-ts-mode . lsp-deferred)
           (lsp-mode . lsp-enable-which-key-integration)
           (lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
           (lsp-mode . yas-minor-mode))
@@ -1062,25 +1061,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "LSP" 1 -0.05))
     ("Goto"
-     (("r" lsp-find-references "refs")
-      ("d" lsp-find-definition "defs")
-      ("i" lsp-goto-implementation "implementation (interface)")
-      ("t" lsp-find-type-definition "type-def")
-      ("b" xref-pop-marker-stack "pop back" :color red))
-     "Refactor"
-     (("f" lsp-format-buffer "format")
-       ("n" lsp-rename "rename")
-       ("o" lsp-organize-imports "organize imports")
-       ("c" lsp-execute-code-action "code action"))
-     "UI"
-     (("p" lsp-ui-peek-mode "peek-mode")
-      ("R" lsp-ui-peek-find-references "peek-refs" :color red)
-      ("D" lsp-ui-peek-find-definitions "peek-defs" :color red)
-      ("m" lsp-ui-imenu "peek-menu"))
-     "Server"
-     (("s" lsp-describe-session "session")
-      ("I" lsp-install-server "install")
-      ("S" lsp-workspace-restart "restart"))))
+      (("r" lsp-find-references "Refs")
+        ("d" lsp-find-definition "Defs")
+        ("i" lsp-goto-implementation "Implementation (interface)")
+        ("t" lsp-find-type-definition "Type-def")
+        ("b" xref-pop-marker-stack "Pop back" :color red))
+      "Refactor"
+      (("f" lsp-format-buffer "Format")
+        ("n" lsp-rename "Rename")
+        ("o" lsp-organize-imports "Organize imports")
+        ("c" lsp-code-actions-at-point "List code actions"))
+      "UI"
+      (("p" lsp-ui-peek-mode "Peek-mode")
+        ("R" lsp-ui-peek-find-references "Peek-refs" :color red)
+        ("D" lsp-ui-peek-find-definitions "Peek-defs" :color red)
+        ("m" lsp-ui-imenu "Peek-menu"))
+      "Server"
+      (("s" lsp-describe-session "Session")
+        ("I" lsp-install-server "Install")
+        ("S" lsp-workspace-restart "Restart"))))
   :preface
   (defun aaronzinhoo--lsp-mode-setup-completion ()
     "Replace the default `lsp-completion-at-point' with its
@@ -2563,19 +2562,16 @@ if one already exists."
   :hook (web-mode . html-check-frag-mode))
 (use-package css-mode
   :straight nil
-  :hook ((css-mode . css-ts-mode)
-         (css-ts-mode . aaronzinhoo--css-setup-hook)
-         (scss-mode . aaronzinhoo--css-setup-hook))
+  :hook ((scss-mode . aaronzinhoo--scss-setup-hook))
   :preface
-  (defun aaronzinhoo--css-setup-hook ()
+  (defun aaronzinhoo--scss-setup-hook ()
     (setq-local completion-at-point-functions (list #'css-completion-at-point #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
   (css-indent-offset 2))
 (use-package web-mode
   :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
   :hook (web-mode . aaronzinhoo--web-mode-hook)
-  :mode (("\\.html\\'" . html-ts-mode)
-         ("\\.component.html\\'" . html-ts-mode))
+  :mode (("\\.html\\'" . html-ts-mode))
   :bind ((:map web-mode-map
                ("s-h" . web-mode-hydra/body)))
   :pretty-hydra
@@ -2729,11 +2725,16 @@ if one already exists."
 ;;angular setup
 (use-package typescript-ts-mode
   :delight " Ts"
+  :mode (("\\.ts\\'" . typescript-ts-mode))
   :hook ((typescript-ts-mode . subword-mode)
-          (typescript-ts-mode . aaronzinhoo--typescript-mode-hook))
+          (typescript-ts-mode . aaronzinhoo--typescript-mode-hook)
+          (lsp-modeline-code-actions-mode . aaronzinhoo--typescript-mode-hook))
   :preface
   (defun aaronzinhoo--typescript-mode-hook ()
-    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))))
+    ;; typescript server code actions has new type that causes a break here
+    (setq-local lsp-modeline-code-actions-enable nil)
+    (setq-local lsp-modeline-code-actions-mode nil))
+  )
 (use-package rjsx-mode
   :mode (("\\.js\\'" . rjsx-mode)
          ("\\.tsx\\'" . rjsx-mode))
