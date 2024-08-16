@@ -1088,15 +1088,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (setq-local completion-at-point-functions
             (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict))
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
-    ;; (setq-local completion-styles '(flex basic))
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
       '(orderless))) ;; Configure orderless which can use flex
-  (defun lsp-go-hooks ()
-    (add-hook 'before-save-hook 'lsp-format-buffer nil t)
-    (add-hook 'before-save-hook 'lsp-organize-imports nil t)
-    (setq-local lsp-gopls-staticcheck t)
-    (setq-local lsp-eldoc-render-all t)
-    (setq-local lsp-gopls-complete-unimported t))
   ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
   ;; used to help pyright find venv folders
   (defun aaronzinhoo-lsp-python-setup ()
@@ -2840,26 +2833,32 @@ if one already exists."
   :mode ("\\.mod\\'" . go-mod-ts-mode))
 (use-package go-ts-mode
   :straight nil
-  :mode ("\\.go\\'" . go-ts-mode)
+  :bind (("s-h" . go-hydra/body))
   :hook ((go-ts-mode . subword-mode)
-         (go-ts-mode . yas-minor-mode))
-  :custom
-  (go-ts-mode-indent-offset 4)
-  :init
-  ;;Smaller compilation buffer
-  (defun my-compilation-hook ()
-    (when (not (get-buffer-window "*compilation*"))
-      (save-selected-window
-        (save-excursion
-          (let* ((w (split-window-vertically))
-                 (h (window-height w)))
-            (select-window w)
-            (switch-to-buffer "*compilation*")
-            (shrink-window (- h compilation-window-height)))))))
-  :bind (:map go-ts-mode-map
-              ("M-," . compile)
-              ("M-." . godef-jump)
-              ("M-*" . pop-tag-mark)))
+          (go-ts-mode . aaronzinhoo--setup-go-mode))
+  :preface
+  (defun aaronzinhoo--setup-go-mode ()
+    (setq-local go-ts-mode-indent-offset 4)
+    (setq-local lsp-gopls-staticcheck t)
+    (setq-local lsp-eldoc-render-all t)
+    (setq-local lsp-gopls-complete-unimported t))
+  :pretty-hydra
+  (go-hydra
+   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_go" "Go Mode Helper" 1 -0.05))
+    ("Jump"
+      (("j" godef-jump "Jump to definition")
+        ("b" pop-tag-mark "Jump back"))
+      "Run"
+      (("r" go-run "Run buffer")
+        ("f" gofmt "Format buffer")
+        ("p" go-playground "Play ground"))
+      "Other"
+      (("d" godoc "Godoc" :color blue))
+      "Test"
+      (("tt" go-test-current-test "Test current test")
+        ("tf" go-test-current-file "Test current file"))
+    ))
+  )
 
 ;; C++ / C
 ;; lsp-mode + ccls for debugging
