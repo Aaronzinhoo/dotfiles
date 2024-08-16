@@ -1085,8 +1085,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     "Replace the default `lsp-completion-at-point' with its
 `cape-capf-buster' version. Also add `cape-file' and
 `company-yasnippet' backends."
-    (setq-local completion-at-point-functions
-            (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict))
+    (setq-local completion-at-point-functions aaronzinhoo--lsp-capf-backends)
     (bind-key (kbd "TAB") 'corfu-next corfu-map)
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
       '(orderless))) ;; Configure orderless which can use flex
@@ -1789,6 +1788,8 @@ When the number of characters in a buffer exceeds this threshold,
   (global-corfu-mode)
   (corfu-history-mode)
   (corfu-popupinfo-mode) ; Popup completion info
+  :config
+  (defvar aaronzinhoo--lsp-capf-backends (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict) "Initial list of capf backends to use for lsp-mode")
   )
 (use-package imenu-list
   :bind (("s-m" . imenu-list-smart-toggle))
