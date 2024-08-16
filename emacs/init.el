@@ -2833,7 +2833,8 @@ if one already exists."
   :mode ("\\.mod\\'" . go-mod-ts-mode))
 (use-package go-ts-mode
   :straight nil
-  :bind (("s-h" . go-hydra/body))
+  :bind (:map go-ts-mode-map
+          ("s-h" . go-hydra/body))
   :hook ((go-ts-mode . subword-mode)
           (go-ts-mode . aaronzinhoo--setup-go-mode))
   :preface
