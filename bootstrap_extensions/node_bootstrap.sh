@@ -32,6 +32,7 @@ tsun
 dockerfile-language-server-nodejs
 @ansible/ansible-language-server
 redoc-cli
+vscode-langservers-extracted
 pyright
 EOF
 
