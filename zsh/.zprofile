@@ -1,4 +1,3 @@
-. "$HOME/.cargo/env"
 . "$HOME/.alias"
 eval "$($HOME/.homebrew/bin/brew shellenv)"
 export EDITOR="emacs"
@@ -55,6 +54,7 @@ export EMACS_DIR="${XDG_CONFIG_HOME}/emacs"
 # rust vars
 export RUSTUP_HOME="${XDG_CONFIG_HOME}/multirust"
 export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
+. "${CARGO_HOME}/env"
 
 # krew
 export KREW_ROOT="${XDG_CONFIG_HOME}/krew"
