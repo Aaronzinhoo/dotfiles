@@ -5,17 +5,29 @@
 ;;; Code:
 ;; TODO add build for shell scripts, and add help menu for go
 ;; load the early init file if this is not a recent emacs
-(message "Initializing settings...")
-(let ((default-directory  (concat (expand-file-name (file-name-directory (or load-file-name buffer-file-name))) "elisp/")))
-  ;; load all paths from default-directory recursively
-  (normal-top-level-add-subdirs-to-load-path)
-  ;; load the utils for some helper functions
-  (require 'init-constants (concat default-directory "init/init-constants.elc"))
-  (require 'init-defaults (concat default-directory "init/init-defaults.elc"))
-  (require 'init-straight (concat default-directory "init/init-straight.elc"))
-  (require 'init-fonts (concat default-directory "init/init-fonts.elc"))
-  (require 'init-utils (concat default-directory "init/init-utils.elc")))
+(message "Initializing custom settings...")
+(load custom-file)
 (require 'custom)
+
+(message "Loading straight package manager")
+;; dont check all my straight repos for changes. Really slows down speed
+;; keep eye on https://github.com/raxod502/straight.el/pull/694#issuecomment-805197632 for updates on watcher
+(setq straight-check-for-modifications '(find-when-checking))
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously  "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+                                     'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+(straight-use-package 'use-package)
+(straight-use-package 'org)
+(setq straight-use-package-by-default t)
+(setq use-package-always-defer t)
 
 (message "Loading packages")
 ;;; Packages
@@ -27,8 +39,8 @@
 (use-package display-line-numbers
   :straight nil
   :hook ((conf-mode . display-line-numbers-mode)
-         (text-mode . display-line-numbers-mode)
-         (prog-mode . display-line-numbers-mode))
+          (text-mode . display-line-numbers-mode)
+          (prog-mode . display-line-numbers-mode))
   :config
   (dolist (mode '(org-mode-hook
                   term-mode-hook
@@ -41,7 +53,8 @@
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package emacs
   :straight nil
-  :hook (minibuffer-setup . cursor-intangible-mode)
+  :hook ((minibuffer-setup . cursor-intangible-mode)
+          (after-init . #'aaronzinhoo-frame-recenter))
   :bind* (("M-<up>" . move-text-up)
            ("M-<down>" . move-text-down)
            ("M-q" . yank)
@@ -84,6 +97,42 @@
   (compilation-read-command t)
   (compilation-scroll-output t)
   :preface
+  (defun aaronzinhoo-frame-recenter (&optional frame)
+  "Center FRAME on the screen.
+FRAME can be a frame name, a terminal name, or a frame.
+If FRAME is omitted or nil, use currently selected frame."
+  (interactive)
+  (unless (eq 'maximised (frame-parameter nil 'fullscreen))
+    (let* ((frame (or (and (boundp 'frame) frame) (selected-frame)))
+           (frame-w (frame-pixel-width frame))
+           (frame-h (frame-pixel-height frame))
+           ;; frame-monitor-workarea returns (x y width height) for the monitor
+           (monitor-w (nth 2 (frame-monitor-workarea frame)))
+           (monitor-h (nth 3 (frame-monitor-workarea frame)))
+           (center (list (/ (- monitor-w frame-w) 2)
+                         (/ (- monitor-h frame-h) 2))))
+      (apply 'set-frame-position (flatten-list (list frame center))))))
+  (defun split-and-follow-horizontally ()
+    "Split window horizontally and follow with the previous buffer open."
+    (interactive)
+    (split-window-below)
+    (balance-windows)
+    (other-window 1)
+    (next-buffer))
+  (defun split-and-follow-vertically ()
+    "Split window vertically and follow with the previous buffer open."
+    (interactive)
+    (split-window-right)
+    (balance-windows)
+    (other-window 1)
+    (next-buffer))
+  (defun pop-local-mark-ring ()
+    "Move cursor to last mark position of current buffer.
+Call this repeatedly will cycle all positions in `mark-ring'.
+URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
+  Version 2016-04-04"
+    (interactive)
+    (set-mark-command t))
   (defun create-uuid ()
     "Return a newly generated UUID. This uses a simple hashing of variable data."
     (let ((s (md5 (format "%s%s%s%s%s%s%s%s%s%s"
@@ -108,6 +157,16 @@
     (interactive)
     (insert (create-uuid)))
   :init
+  (defcustom ccm-vpos-init '(round (window-text-height) 2)
+    "This is the screen line position where the cursor initially stays."
+    :group 'centered-cursor
+    :tag "Vertical cursor position"
+    :type '(choice (const :tag "Center" (round (window-text-height) 2))
+             (const :tag "Golden ratio" (round (* 21 (window-text-height)) 34))
+             (integer :tag "Lines from top" :value 10)
+             (const :tag "2 Lines above center" (- (round (window-text-height) 2) 2))))
+  (when (display-graphic-p)
+    (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
   (when (memq window-system '(mac ns))
     (setq mac-command-modifier 'meta)
     (setq mac-right-command-modifier 'control)
@@ -252,6 +311,7 @@
                       (json-mode . json-ts-mode)
                       (js-mode . js-ts-mode)
                       (python-mode . python-ts-mode)
+                      (sh-mode . bash-ts-mode)
                       (typescript-mode . typescript-ts-mode)
                       (toml-mode . toml-ts-mode)
                       (yaml-mode . yaml-ts-mode)))
