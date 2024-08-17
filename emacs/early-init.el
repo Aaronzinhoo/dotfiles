@@ -13,6 +13,7 @@
 ;;
 ;;; Code:
 
+;; Setup variables
 (defconst aaronzinhoo-emacs-directory (expand-file-name "~/.config/emacs"))
 (defconst user-emacs-directory aaronzinhoo-emacs-directory)
 (defconst user-full-name "Aaron Gonzales")
@@ -29,6 +30,9 @@
 (defconst nvm-home-folder (getenv "NVM_DIR") "Path to currently used nvm node version with trailing slash.")
 (defconst pyenv-root-folder (getenv "PYENV_ROOT") "Path to pyenv root folder without trailing slash.")
 (defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
+(setq package-user-dir (concat aaronzinhoo-emacs-directory "/elpa"))
+(setq package-gnupghome-dir (concat aaronzinhoo-emacs-directory "/elpa/gnupg"))
+(setq-default custom-theme-directory (concat aaronzinhoo-emacs-directory "/themes"))
 
 ;; Defer garbage collection further back in the startup process
 (setq gc-cons-threshold most-positive-fixnum)
@@ -95,22 +99,14 @@
   (advice-add #'yes-or-no-p :override #'y-or-n-p))
 (defalias #'view-hello-file #'ignore) ; Never show the hello file
 
+
 ;;; Native compilation and Byte compilation
-
-(if (and (featurep 'native-compile)
-         (fboundp 'native-comp-available-p)
-         (native-comp-available-p))
-    ;; Activate `native-compile'
-    (setq native-comp-deferred-compilation t
-          package-native-compile t)
-  ;; Deactivate the `native-compile' feature if it is not available
-  (setq features (delq 'native-compile features)))
-
 ;; Suppress compiler warnings and don't inundate users with their popups.
 (setq
+  native-comp-jit-compilation t
   native-comp-async-report-warnings-errors 'silent
   native-comp-warning-on-missing-source 'nil
-  native-comp-jit-compilation t)
+  package-native-compile t)
 
 (setenv "LSP_USE_PLISTS" "true")
 
@@ -124,11 +120,6 @@
 (setq default-input-method nil)
 (setq-default cursor-in-non-selected-windows nil)
 (setq highlight-nonselected-windows nil)
-
-;; Fonts
-(add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
-;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 
 ;; Set of default values
 (setq
@@ -163,7 +154,6 @@
 ;; setq will only set for local-buffer so must use setq-default
 ;; for variables that are not buffer specific
 (setq-default
- compilation-scroll-output t
  indent-tabs-mode nil
  tab-width 4
  tab-stop-list (number-sequence 4 120 4))

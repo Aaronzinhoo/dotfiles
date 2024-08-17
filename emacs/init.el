@@ -9,7 +9,7 @@
 (load custom-file)
 (require 'custom)
 
-(message "Loading straight package manager")
+(message "Loading Straight package manager")
 ;; dont check all my straight repos for changes. Really slows down speed
 ;; keep eye on https://github.com/raxod502/straight.el/pull/694#issuecomment-805197632 for updates on watcher
 (setq straight-check-for-modifications '(find-when-checking))
@@ -52,8 +52,7 @@
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
 (use-package emacs
   :straight nil
-  :hook ((minibuffer-setup . cursor-intangible-mode)
-          (after-init . #'aaronzinhoo-frame-recenter))
+  :hook ((minibuffer-setup . cursor-intangible-mode))
   :bind* (("M-<up>" . move-text-up)
            ("M-<down>" . move-text-down)
            ("M-q" . yank)
@@ -177,8 +176,9 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
   ;; (advice-add 'compile :filter-args (lambda (command &optional comint) '(command t)))
   :config
-  (toggle-frame-maximized)
-  (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
+  (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
+  (toggle-frame-maximized))
 (use-package elec-pair
   :straight nil
   :hook ((git-commit-setup . git-commit-add-electric-pairs)
@@ -519,8 +519,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     (:hint nil :color amaranth :quit-key "SPC" :title (with-mdicon "nf-md-navigation_variant_outline" "Navigation" 1 -0.05))
     ("Buffer"
      (("a" crux-move-beginning-of-line "Begin Line")
-      ("z" end-of-visual-line "End Line")
-      ("s" swiper "Search"))
+      ("z" end-of-visual-line "End Line"))
      "Block"
      (("d" block-nav-previous-block "Block Up")
       ("c" block-nav-next-block "Block Down")
@@ -1074,7 +1073,38 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (yas-reload-all))
 
 ;;; LSP
-
+(use-package dap-mode
+  :after (lsp-mode)
+  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
+  :hook ((lsp-mode . dap-auto-configure-mode)
+         ;; dap-stopped called after breakpoint hit
+         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
+  :custom
+  (dap-python-debugger 'debugpy)
+  :config
+  (dap-register-debug-template "My Runner"
+                             (list :type "java"
+                                   :request "launch"
+                                   :args ""
+                                   :vmArgs "-ea -Dtileaccessservice.instance.name=tileaccessservice_1"
+                                   :projectName "tileaccessservice"
+                                   :mainClass "com.linquest.tileaccessservice.TileAccessServiceApplication"
+                                   :env '(("DEV" . "1"))))
+  (dap-register-debug-template "Python :: Test TileAccessService"
+  (list :type "python"
+        :args "-i"
+        :cwd nil
+        :env '(("DEBUG" . "1"))
+        :target-module (expand-file-name "~/development/work/kahless/backend/user-management-service/main.py")
+        :request "launch"
+        :name "My App"))
+  (dap-ui-controls-mode nil)
+  (dap-ui-mode nil)
+  (dap-tooltip-mode nil)
+  (require 'dap-python)
+  (require 'dap-dlv-go)
+  (require 'dap-lldb)
+  (require 'dap-gdb-lldb))
 (use-package lsp-mode
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
@@ -1150,7 +1180,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-rust-analyzer-display-chaining-hints t)
   (lsp-rust-analyzer-display-closure-return-type-hints t)
   (lsp-completion-provider :none) ;; we use Corfu!
-  (lsp-treemacs-sync-mode t)
   (lsp-auto-guess-root t)
   (lsp-log-io nil)
   (lsp-enable-indentation nil)
@@ -1214,13 +1243,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq gc-cons-threshold  100000000)
   (setq read-process-output-max (* 1024 1024)) ;;1MB
   )
-(use-package lsp-docker
-  :after (lsp-mode)
-  :requires (lsp-mode)
-  :after (lsp-mode)
-  :straight (:type git :host github :repo "emacs-lsp/lsp-docker" :branch "master"))
 (use-package lsp-treemacs
-  :commands (treemacs lsp-treemacs-errors-list))
+  :commands (treemacs lsp-treemacs-errors-list)
+  :custom
+  (lsp-treemacs-sync-mode t))
 (use-package lsp-ui
   :commands lsp-ui-mode
   :bind (:map lsp-ui-mode-map
@@ -1255,38 +1281,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                    (require 'lsp-pyright))))
 
 ;;; Debugger Support
-(use-package dap-mode
-  :after (lsp-mode lsp-docker)
-  :straight (:type git :host github :repo "emacs-lsp/dap-mode" :branch "master")
-  :hook ((lsp-mode . dap-auto-configure-mode)
-         ;; dap-stopped called after breakpoint hit
-         (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
-  :custom
-  (dap-python-debugger 'debugpy)
-  :config
-  (dap-register-debug-template "My Runner"
-                             (list :type "java"
-                                   :request "launch"
-                                   :args ""
-                                   :vmArgs "-ea -Dtileaccessservice.instance.name=tileaccessservice_1"
-                                   :projectName "tileaccessservice"
-                                   :mainClass "com.linquest.tileaccessservice.TileAccessServiceApplication"
-                                   :env '(("DEV" . "1"))))
-  (dap-register-debug-template "Python :: Test TileAccessService"
-  (list :type "python"
-        :args "-i"
-        :cwd nil
-        :env '(("DEBUG" . "1"))
-        :target-module (expand-file-name "~/development/work/kahless/backend/user-management-service/main.py")
-        :request "launch"
-        :name "My App"))
-  (dap-ui-controls-mode nil)
-  (dap-ui-mode nil)
-  (dap-tooltip-mode nil)
-  (require 'dap-python)
-  (require 'dap-dlv-go)
-  (require 'dap-lldb)
-  (require 'dap-gdb-lldb))
 (use-package dap-java
   :after (lsp-java dap)
   :straight (dap-java :type git :host github :repo "emacs-lsp/lsp-java" :branch "master"))
