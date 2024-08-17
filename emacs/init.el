@@ -3009,7 +3009,8 @@ if one already exists."
 
 ;;; SQL Mode
 (use-package sqlformat
-  :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
+  :vc (:url "https://github.com/purcell/sqlformat"
+        :branch "master")
   :hook (sql-mode . sqlformat-on-save-mode)
   :custom
   (sqlformat-command 'pgformatter))
