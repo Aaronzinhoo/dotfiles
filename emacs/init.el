@@ -174,29 +174,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
-  ;; commands for improving speed of lsp
-  (define-advice json-parse-buffer (:around (old-fn &rest args) lsp-booster-parse-bytecode)
-    "Try to parse bytecode instead of json."
-    (or
-      (when (equal (following-char) ?#)
-        (let ((bytecode (read (current-buffer))))
-          (when (byte-code-function-p bytecode)
-            (funcall bytecode))))
-      (apply old-fn args)))
-  (define-advice lsp-resolve-final-command (:around (old-fn cmd &optional test?) add-lsp-server-booster)
-    "Prepend emacs-lsp-booster command to lsp CMD."
-    (let ((orig-result (funcall old-fn cmd test?)))
-      (if (and (not test?)                             ;; for check lsp-server-present?
-            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-            lsp-use-plists
-            (not (functionp 'json-rpc-connection))  ;; native json-rpc
-            (executable-find "emacs-lsp-booster")
-            (not (member 'ansible minor-mode-list)))
-        (progn
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-        orig-result)))
+  (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
+  (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
+  ;; (advice-add 'compile :filter-args (lambda (command &optional comint) '(command t)))
   :config
+  (toggle-frame-maximized)
   (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes/")))
 (use-package elec-pair
   :straight nil
@@ -1192,7 +1174,36 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        ,(concat node-home-folder "lib/node_modules")
        "--stdio"))
   :init
-  (setenv "LSP_USE_PLISTS" "true")
+  (defun lsp-booster--advice-json-parse (old-fn &rest args)
+    "Try to parse bytecode instead of json."
+    (or
+      (when (equal (following-char) ?#)
+        (let ((bytecode (read (current-buffer))))
+          (when (byte-code-function-p bytecode)
+            (funcall bytecode))))
+      (apply old-fn args)))
+  (advice-add (if (progn (require 'json)
+                    (fboundp 'json-parse-buffer))
+                'json-parse-buffer
+                'json-read)
+    :around
+    #'lsp-booster--advice-json-parse)
+
+  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+            lsp-use-plists
+            (not (functionp 'json-rpc-connection))  ;; native json-rpc
+            (executable-find "emacs-lsp-booster"))
+        (progn
+          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+            (setcar orig-result command-from-exec-path))
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
+  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
   :config
   (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
