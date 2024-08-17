@@ -2,7 +2,7 @@
 
 An opinionated configuration for a \*nix machines. The goal of this is like any dotfiles repo, provide a version controlled repo to manage everything I use on a daily basis. This helps me track bugs, features, learned lessons, etc all while providing a simpler way to setup new machines with what I need. The setup could be improved in a multitude of ways especially when it comes to organization, speed, extensibility, and ease of use as well as a plethora of other things but for now it works and I will continue to chip away at it when I got time.
 
-I am hoping this repo can be useful as a basis for others to manage dotfiles. If I did something egregiously incorrect, let me know and I don't addressing it.
+I am hoping this repo can be useful as a basis for others to manage dotfiles. If I did something egregious, let me know and I don't mind addressing it.
 
 ## TLDR
 
