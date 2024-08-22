@@ -252,7 +252,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     '((angular "https://github.com/dlvandenberg/tree-sitter-angular" "main" "src")
        (bash "https://github.com/tree-sitter/tree-sitter-bash")
        (cmake "https://github.com/uyha/tree-sitter-cmake")
-       (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+       (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.22.0")
        (c "https://github.com/tree-sitter/tree-sitter-c")
        (css "https://github.com/tree-sitter/tree-sitter-css")
        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
