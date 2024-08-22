@@ -1126,7 +1126,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
           (lsp-mode . yas-minor-mode))
   :bind (:map lsp-mode-map
-              ("s-l" . lsp-hydra/body))
+          ("s-l" . lsp-hydra/body)
+          ([remap xref-find-apropos] . consult-lsp-symbols))
   :pretty-hydra
   (lsp-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "LSP" 1 -0.05))
@@ -1135,6 +1136,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("d" lsp-find-definition "Defs")
         ("i" lsp-goto-implementation "Implementation (interface)")
         ("t" lsp-find-type-definition "Type-def")
+        ("D" consult-lsp-diagnostics "Diagnostics")
+        ("s" consult-lsp-file-symbols "File Symbols")
+        ("S" consult-lsp-symbols "Workspace Symbols")
         ("b" xref-pop-marker-stack "Pop back" :color red))
       "Refactor"
       (("f" lsp-format-buffer "Format")
@@ -1431,6 +1435,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package consult-flycheck
   :after (consult)
   :straight (consult-flycheck :type git :host github :repo "minad/consult-flycheck" :branch "main"))
+(use-package consult-lsp
+  :after (consult)
+  :commands (consult-lsp-diagnostics consult-lsp-symbols consult-lsp-file-symbols)
+  :straight (:type git :host github :repo "gagbo/consult-lsp" :branch "main"))
 (use-package consult-projectile
   :after (consult)
   :demand t
@@ -2447,8 +2455,9 @@ if one already exists."
 ;;; Languages Support
 
 ;; folding
-;; (use-package ts-fold
-;;   :straight (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold"))
+(use-package treesit-fold
+  :commands (treesit-fold-toggle)
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold"))
 
 ;; Indent Guides
 (use-package highlight-indent-guides)
@@ -2639,64 +2648,15 @@ if one already exists."
     )
   ;; TODO: update hydra with custom tree-sitter based functions
   :pretty-hydra
-  ((:hint nil :title (with-octicon "nf-oct-globe" "Html Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
-   ("Navigation"
-    (("a" sgml-skip-tag-backward "tag beginning | prev tag")
-     ("e" sgml-skip-tag-forward "tag end | next tag")
-     ("n" web-mode-element-next "next tag")
-     ("p" web-mode-element-previous "previous tag")
-     ("F" web-mode-element-children-fold-or-unfold "fold/unfold tag children")
-     ("f" web-mode-fold-or-unfold "fold/unfold"))
-    "Edit"
-    (("d" aaronzinhoo-delete-tag "delete tag"))
-    "Action"
-    (("w" web-mode-element-wrap "wrap element in tag" ));end action
-    "Other"
-    (("RET" nil "Quit" :color blue))))
+  ((:hint nil :title (with-faicon "nf-fa-html5" "Html Mode" 1 -0.05) :quit-key "SPC" :color pink)
+    ("Navigation"
+      (("a" sgml-skip-tag-backward "tag beginning | prev tag")
+        ("e" sgml-skip-tag-forward "tag end | next tag"))
+      "Fold"
+      (("f" treesit-fold-toggle "fold/unfold"))
+      "Other"
+      (("RET" nil "Quit" :color blue))))
   )
-(use-package web-mode
-  :straight (:type git :host github :repo "fxbois/web-mode" :branch "master")
-  :hook (web-mode . aaronzinhoo--web-mode-hook)
-  :bind ((:map web-mode-map
-               ("s-h" . web-mode-hydra/body)))
-  :preface
-  (defun aaronzinhoo-sgml-prettify-html ()
-    """Use sgml to prettify HTML buffer and after pop the cursor to the original location"""
-    (interactive)
-    (mark-whole-buffer)
-    (sgml-pretty-print (region-beginning) (region-end))
-    (mark-whole-buffer)
-    (indent-for-tab-command))
-  (defun aaronzinhoo-delete-tag ()
-    (interactive)
-    (sgml-skip-tag-backward 1)
-    (point-to-register 8)
-    (sgml-skip-tag-forward 1)
-    (backward-char)
-    (web-mode-tag-beginning)
-    (er/mark-outer-tag)
-    (hungry-delete-backward 1)
-    (jump-to-register 8)
-    (er/mark-outer-tag)
-    (hungry-delete-backward 1))
-  ;; add company-capf to end otherwise lsp-mode will add it to the front of company-backends
-  (defun aaronzinhoo--web-mode-hook ()
-    (setq-local completion-at-point-functions (list #'lsp-completion-at-point #'cape-file (cape-capf-super (cape-company-to-capf #'company-web-html) #'css-completion-at-point) #'cape-dabbrev #'cape-dict)))
-  :custom
-  (web-mode-css-indent-offset 2)
-  (web-mode-code-indent-offset 2)
-  (web-mode-markup-indent-offset 2)
-  (web-mode-attr-indent-offset 2)
-  (web-mode-attr-value-indent-offset 2)
-  (web-mode-enable-auto-pairing t)
-  (web-mode-enable-auto-opening t)
-  (web-mode-enable-auto-closing t)
-  (web-mode-enable-css-colorization t)
-  (web-mode-enable-auto-expanding t)
-  (web-mode-enable-block-face t)
-  (web-mode-enable-current-column-highlight t)
-  (web-mode-enable-current-element-highlight t)
-  (web-mode-commands-like-expand-region '(web-mode-mark-and-expand er/expand-region er/contract-region mc/mark-all-like-this mc/mark-next-like-this mc/mark-previous-like-this previous-line next-line forward-char backward-char forward-word backward-word multiple-cursors-hydra/nil hydra-web/body multiple-cursors-hydra/body hydra-web/sgml-skip-tag-backward hydra-web/sgml-skip-tag-forward web-mode-element-previous web-mode-element-next mc/skip-to-next-like-this mc/skip-to-previous-like-this)))
 
 ;;; Markdown Support
 (use-package markdown-mode
