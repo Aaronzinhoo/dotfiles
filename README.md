@@ -69,5 +69,9 @@ For a detailed help message
 ## TODO
 
 - investigate embark, vertico, avy
+- basedpyright lsp server
 - look into using casual suite of tools
+- replacing web-mode functionality (web-mode-element-next, previous, element-wrap)
+- better treesit support for angular
+- corg.el
 - Investigate dockerizing setup to reduce need for OS based setups
