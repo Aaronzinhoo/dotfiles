@@ -2415,42 +2415,47 @@ if one already exists."
   (bookmark-default-file (concat user-emacs-directory "/bookmarks")) ;;define file to use.
   (bookmark-save-flag t) ;;save bookmarks to .emacs.bmk after each entry
   )
-(use-package projectile
+(use-package project
+  :straight nil
   :after (major-mode-hydra)
-  :hook (dashboard-mode . projectile-mode)
-  :bind* ("s-p" . projectile-hydra/body)
+  :bind* ("s-p" . project-hydra/body)
   :pretty-hydra
-  ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
-   ("Buffers"
-    (("b" consult-project-buffer "list")
-     ("k" project-kill-buffers "kill all")
-     ("S" aaronzinhoo--project-save-project-buffers "save all"))
-    "Find"
-    (("d" project-find-dir "directory")
-     ("D" project-dired "proj. root")
-     ("f" project-find-file "file")
-     ("p" consult-projectile-switch-project "project")
-     ("F" projectile-find-file-in-known-projects "file (all proj.)"))
-    "Other"
-    (("N" projectile-cleanup-known-projects)
-     ("i" projectile-invalidate-cache "reset cache")
-     ("c" project-compile "compile")
-     ("v" project-vterm "run vterm"))
-    "Search & Replace"
-    (("r" project-query-replace-regexp "regexp replace")
-     ("s" consult-ripgrep "search"))
-    "Tests"
-    (("ts" projectile-toggle-between-implementation-and-test "switch to test|implementation file")
-     ("tt" projectile-test-project "run tests")
-     ("tf" projectile-find-test-file "find test file"))))
-  :custom
-  (projectile-git-fd-args "-H -0 -E .git -tf")
-  (projectile-generic-command "fd . -0 --type f --color=never")
-  (projectile-find-dir-includes-top-level t)
-  ;; use .gitignore to exclude files from search
-  (projectile-indexing-method 'alien)
-  (projectile-enable-caching t)
-  (projectile-sort-order 'recentf))
+  (project-hydra
+    (:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Project Menu" 1 -0.05))
+    ("Buffers"
+      (("b" consult-project-buffer "list")
+        ("k" project-kill-buffers "kill all")
+        ("S" aaronzinhoo--project-save-project-buffers "save all"))
+      "Find"
+      (("d" project-find-dir "directory")
+        ("D" project-dired "Open proj. root")
+        ("f" project-find-file "file")
+        ("p" project-switch-project "project")
+        ("F" project-or-external-find-file "find file ext. + proj"))
+      "Other"
+      (("C" project-forget-zombie-projects "Clear out old projects")
+        ("c" project-compile "Compile")
+        ("v" project-vterm "Run vterm")
+        ("R" project-remember-projects-under "Register Proj(s). under Dir"))
+      "Search & Replace"
+      (("r" project-query-replace-regexp "regexp replace")
+        ("s" consult-ripgrep "search"))))
+  :preface
+  (defun aaronzinhoo--project-save-project-buffers ()
+    "Save all project buffers."
+    (interactive)
+    (let* ((project (project-current))
+            (current-project-name (project-name project))
+            (modified-buffers (cl-remove-if-not (lambda (buf)
+                                                  (and (buffer-file-name buf)
+                                                    (buffer-modified-p buf)))
+                                (project-buffers project))))
+      (if (null modified-buffers)
+        (message "[%s] No buffers need saving" current-project-name)
+        (dolist (buf modified-buffers)
+          (with-current-buffer buf
+            (save-buffer)))
+        (message "[%s] Saved %d buffer(s)" current-project-name (length modified-buffers))))))
 
 ;;; Languages Support
 
@@ -2458,9 +2463,6 @@ if one already exists."
 (use-package treesit-fold
   :commands (treesit-fold-toggle)
   :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold"))
-
-;; Indent Guides
-(use-package highlight-indent-guides)
 
 ;; Code Coverage
 (use-package cov
