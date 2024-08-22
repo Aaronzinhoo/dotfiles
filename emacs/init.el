@@ -66,7 +66,8 @@
            ("M-l" . 'forward-char)
            ("M-q" . 'yank)
            ("M-4" . 'pop-local-mark-ring)
-           ("M-;" . 'previous-window-any-frame)
+           ("C-," . 'pop-local-mark-ring)
+           ("M-," . 'previous-window-any-frame)
            ("C-x k" . 'kill-current-buffer)
            ("C-x C-k" . 'kill-buffer-and-window)
            ("C-x 2" . 'split-and-follow-horizontally)
@@ -281,9 +282,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       (treesit-install-language-grammar (car lang))))
   (dolist (mapping '((sh-mode . bash-ts-mode)
                       (c-mode . c-ts-mode)
-                      (cc-mode . c++-ts-mode)
                       (c++-mode . c++-ts-mode)
-                      (c-or-c++-mode . c-or-c++-ts-mode)
                       (css-mode . css-ts-mode)
                       (dockerfile-mode . dockerfile-ts-mode)
                       (go-dot-mod-mode . go-mod-ts-mode)
@@ -1143,14 +1142,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("o" lsp-organize-imports "Organize imports")
         ("c" lsp-code-actions-at-point "List code actions"))
       "UI"
-      (("p" lsp-ui-peek-mode "Peek-mode")
-        ("R" lsp-ui-peek-find-references "Peek-refs" :color red)
-        ("D" lsp-ui-peek-find-definitions "Peek-defs" :color red)
-        ("m" lsp-ui-imenu "Peek-menu"))
-      "Server"
-      (("s" lsp-describe-session "Session")
-        ("I" lsp-install-server "Install")
-        ("S" lsp-workspace-restart "Restart"))))
+      (("up" lsp-ui-peek-mode "Peek-mode")
+        ("ur" lsp-ui-peek-find-references "Peek-refs" :color red)
+        ("ud" lsp-ui-peek-find-definitions "Peek-defs" :color red)
+        ("um" lsp-ui-imenu "Peek-menu"))
+      "Lsp Server"
+      (("LS" lsp-describe-session "Session")
+        ("LI" lsp-install-server "Install")
+        ("LR" lsp-workspace-restart "Restart"))))
   :preface
   (defun aaronzinhoo--lsp-mode-setup-completion ()
     "Replace the default `lsp-completion-at-point' with its
@@ -2416,8 +2415,8 @@ if one already exists."
   ((:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Projectile" 1 -0.05))
    ("Buffers"
     (("b" consult-project-buffer "list")
-     ("k" projectile-kill-buffers "kill all")
-     ("S" projectile-save-project-buffers "save all"))
+     ("k" project-kill-buffers "kill all")
+     ("S" aaronzinhoo--project-save-project-buffers "save all"))
     "Find"
     (("d" project-find-dir "directory")
      ("D" project-dired "proj. root")
@@ -2505,14 +2504,14 @@ if one already exists."
       (("i" yaml-pro-ts-indent-subtree "Indent")
         ("u" yaml-pro-ts-unindent-subtree "Unindent"))
       "Navigation"
-      (("j" combobulate-avy-jump "Jump")
+      (
+        ;; ("j" combobulate-avy-jump "Jump") ;; bug in this so for now ignore... could be in the treesitter language actually..
         ("n" yaml-pro-ts-next-subtree "Next Sibling Node")
         ("p" yaml-pro-ts-prev-subtree "Previous Sibling Node")
         ("N" block-nav-next-indentation-level "Next Child Node")
         ("P" yaml-pro-ts-up-level "Previous Parent Node"))
       "Fold"
-      (("f" yaml-pro-fold-at-point "Fold")
-        ("F" yaml-pro-unfold-at-point "Unfold"))
+      (("f" treesit-fold-toggle "Toggle Fold"))
       "Schema"
       (("s" lsp-yaml-select-buffer-schema "Buffer Schema")
        ("d" lsp-yaml-download-schema-store-db "Download Schemastore")))))
@@ -2840,10 +2839,13 @@ if one already exists."
         ("rf" python-shell-send-file "Run File")
         ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
         ("rr" python-shell-send-region "Run Region"))
+      "Imports"
+      (("if" python-fix-imports "Fix Imports")
+        ("ia" python-add-import "Add Import"))
       "Formatting"
-      (("i" python-fix-imports "Fix Imports")
-        ("a" python-add-import "Add Import")
-        ("f" py-autopep8-mode "Autopep8 Mode" :toggle t))
+      (("F" py-autopep8-mode "Autopep8 Mode" :toggle t))
+      "Fold"
+      (("f" treesit-fold-toggle "fold/unfold"))
       "Navigation/Editing"
       (("j" combobulate-avy "Jump")
         ("ed" combobulate-edit "Edit")
@@ -2919,14 +2921,17 @@ if one already exists."
     (setq-local lsp-gopls-complete-unimported t))
   :pretty-hydra
   (go-hydra
-   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_go" "Go Mode Helper" 1 -0.05))
+   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_go" "Go Mode" 1 -0.05))
     ("Jump"
       (("j" godef-jump "Jump to definition")
         ("b" pop-tag-mark "Jump back"))
+      "Fold"
+      (("f" treesit-fold-toggle "fold/unfold"))
+      "Refactor"
+      (("r" gofmt "Format buffer"))
       "Run"
-      (("r" go-run "Run buffer")
-        ("f" gofmt "Format buffer")
-        ("p" go-playground "Play ground"))
+      (("rr" go-run "Run buffer")
+        ("rp" go-playground "Play ground"))
       "Other"
       (("d" godoc "Godoc" :color blue))
       "Test"
@@ -2982,22 +2987,24 @@ if one already exists."
   :pretty-hydra
   (java-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
-   ("Class"
-    (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
-     ("co" lsp-java-generate-overrides "Generate Overides")
-     ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
-     ("ct" lsp-java-add-throws "Add Throws"))
-    "Import"
-    (("a" lsp-java-add-import "Add")
-     ("o" lsp-java-organize-imports "Organize"))
-    "Notifications"
-    (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
-    "Project Management"
-    (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
-     ("pd" lsp-dependency-list "List Dependencies"))
-    "Test"
-    (("tb" lsp-jt-browser "Test Browser" :color blue)
-     ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
+    ("Class"
+      (("cg" lsp-java-generate-getters-and-setters "Generate [S|G]etters")
+        ("co" lsp-java-generate-overrides "Generate Overides")
+        ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
+        ("ct" lsp-java-add-throws "Add Throws"))
+      "Fold"
+      (("f" treesit-fold-toggle "fold/unfold"))
+      "Imports"
+      (("a" lsp-java-add-import "Add")
+        ("o" lsp-java-organize-imports "Organize"))
+      "Notifications"
+      (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
+      "Project Management"
+      (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
+        ("pd" lsp-dependency-list "List Dependencies"))
+      "Test"
+      (("tb" lsp-jt-browser "Test Browser" :color blue)
+        ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
 
 ;; protobuf
 (use-package protobuf-ts-mode
