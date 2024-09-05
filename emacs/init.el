@@ -1590,6 +1590,7 @@ When the number of characters in a buffer exceeds this threshold,
                (shell-quote-argument buffer-file-name))))
         (if (null given-initial)
           (consult-ripgrep)
+          ;; will search in the current files directory
           (consult-ripgrep (file-name-directory buffer-file-name) given-initial))))
     )
   :init
@@ -2439,8 +2440,18 @@ if one already exists."
         ("R" project-remember-projects-under "Register Proj(s). under Dir"))
       "Search & Replace"
       (("r" project-query-replace-regexp "regexp replace")
-        ("s" consult-ripgrep "search"))))
+        ("s" aaronzinhoo--project-consult-ripgrep-dwim "search"))))
   :preface
+  (defun aaronzinhoo--project-consult-ripgrep-dwim (&optional given-initial)
+    (interactive)
+    (let ((initial
+            (cond
+              ((not (null given-initial)) given-initial)
+              ((use-region-p)
+                (buffer-substring-no-properties (region-beginning) (region-end))
+                (deactivate-mark))
+              (t ""))))
+      (consult-ripgrep (project-root (project-current)) initial)))
   (defun aaronzinhoo--project-save-project-buffers ()
     "Save all project buffers."
     (interactive)
@@ -2890,7 +2901,7 @@ if one already exists."
       "Fold"
       (("f" treesit-fold-toggle "fold/unfold"))
       "Refactor"
-      (("r" gofmt "Format buffer"))
+      (("rf" gofmt "Format buffer"))
       "Run"
       (("rr" go-run "Run buffer")
         ("rp" go-playground "Play ground"))
