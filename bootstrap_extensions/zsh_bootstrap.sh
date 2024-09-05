@@ -2,7 +2,7 @@
 
 PROMPT="[ ZSHExtensionLoader ]: "
 
-install_bootstrap_check "[ -d $HOME/.oh-my-zsh ]" "rust" || exit 0;
+install_bootstrap_check "[ -d $HOME/.oh-my-zsh ]" "zsh" || exit 0;
 
 PACKAGE_TO_CHECK="git"
 if ! command -v "$PACKAGE_TO_CHECK" > /dev/null; then

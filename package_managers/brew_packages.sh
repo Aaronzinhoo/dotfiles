@@ -8,13 +8,13 @@ export PROMPT='[ BrewInstaller ]: '
 # install brew if needed
 
 echo_with_prompt "Verifying HomeBrew is installed"
-if [ -f "$HOME/.homebrew/bin/brew" ]; then
+if [ -f "${HOMEBREW_ROOT}/bin/brew" ]; then
     echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
-    eval "$($HOME/.homebrew/bin/brew shellenv)"
+    eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
 else
     echo_with_prompt "HomeBrew NOT installed! Installing now!"
-    mkdir $HOME/.homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C $HOME/.homebrew
-    eval "$($HOME/.homebrew/bin/brew shellenv)"
+    mkdir "${HOMEBREW_ROOT}" && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C ${HOMEBREW_ROOT}
+    eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
     brew update --force --quiet
     chmod -R go-w "$(brew --prefix)/share/zsh"
 fi
