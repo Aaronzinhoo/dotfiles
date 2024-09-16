@@ -124,8 +124,8 @@ complete -F __start_kubectl k
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # env vars to install confluent kafka on M1
-export LIBRARY_PATH=/opt/homebrew/Cellar/librdkafka/2.4.0/lib
-export C_INCLUDE_PATH=/opt/homebrew/Cellar/librdkafka/2.4.0/include
+export LIBRARY_PATH=${HOMEBREW_ROOT}/Cellar/librdkafka/2.5.3/lib
+export C_INCLUDE_PATH=${HOMEBREW_ROOT}/Cellar/librdkafka/2.5.3/include
 
 # place this after nvm initialization!
 autoload -U add-zsh-hook
@@ -159,7 +159,7 @@ export PATH="$PATH:$GOPATH/bin"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # rust vars
-export PATH="/Users/aaron.gonzales/.homebrew/opt/rustup/bin:$PATH"
+export PATH="${HOMEBREW_ROOT}/opt/rustup/bin:$PATH"
 
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

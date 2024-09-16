@@ -1,4 +1,4 @@
-eval "$($HOME/.homebrew/bin/brew shellenv)"
+eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
 
 export FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
 

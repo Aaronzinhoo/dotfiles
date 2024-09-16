@@ -7,7 +7,7 @@ export PROMPT='[ BrewInstaller ]: '
 
 # install brew if needed
 
-echo_with_prompt "Verifying HomeBrew is installed"
+echo_with_prompt "Verifying HomeBrew is installed in ${HOMEBREW_ROOT}"
 if [ -f "${HOMEBREW_ROOT}/bin/brew" ]; then
     echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
     eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"

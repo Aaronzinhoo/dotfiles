@@ -1,10 +1,12 @@
 . "$HOME/.alias"
-eval "$($HOME/.homebrew/bin/brew shellenv)"
 export EDITOR="emacs"
 export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_CACHE_HOME="${XDG_CONFIG_HOME}/cache"
 export XDG_DATA_HOME="${XDG_CONFIG_HOME}/local/share"
 export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
+export HOMEBREW_ROOT="${XDG_CONFIG_HOME}/homebrew"
+
+eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
 
 FILE_NAME=".zprofile"
 case $OSTYPE in
