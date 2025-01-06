@@ -1277,8 +1277,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-pyright
   :requires (lsp pyvenv)
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
-  :if (executable-find "pyright")
+  :if (executable-find "basedpyright")
   :init
+  (setq lsp-pyright-langserver-command "basedpyright")
   (setq lsp-pyright-venv-directory (concat pyenv-root-folder "/versions"))
   (setq lsp-pyright-venv-path (concat pyenv-root-folder "/versions"))
   (setq lsp-pyright-python-executable-cmd "python3")
@@ -2693,11 +2694,11 @@ if one already exists."
   :pretty-hydra
   ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Insert"
-    (("it" markdown-insert-table "table")
-     ("ii" markdown-insert-image "image")
-     ("ib" markdown-insert-uri "uri")
-     ("ic" markdown-insert-gfm-code-block "code block" :color blue)
-     ("id" markdown-insert-gfm-checkbox "checkbox"))
+     (("it" markdown-insert-table "table")
+       ("ii" markdown-insert-image "image")
+       ("il" markdown-insert-link "link")
+       ("ic" markdown-insert-gfm-code-block "code block" :color blue)
+       ("id" markdown-insert-gfm-checkbox "checkbox"))
     "Preview"
     (("p" impatient-showdown-mode "Preview" :toggle t))
     "Action"
@@ -2794,7 +2795,7 @@ if one already exists."
 ;; syntax on-the-fly: flycheck
 ;; style: flake8
 ;; completion: company
-;; install black, flake8 ipython, jedi, rope, autopep8, yapf
+;; install black, flake8 ipython, jedi, rope, autopep8, sphinx-doc
 (use-package python
   :straight nil
   :delight " Py"
@@ -2870,7 +2871,11 @@ if one already exists."
 (use-package py-autopep8
   :commands (py-autopep8-mode)
   :custom
-  (py-autopep8-options '("--max-line-length 140")))
+  (py-autopep8-options '("--max-line-length=140" "--aggressive")))
+(use-package sphinx-doc
+  :hook (python-ts-mode . sphinx-doc-mode)
+  :custom
+  (sphinx-doc-include-types t))
 
 ;; Golang Setup
 ;; export GO111MODULE="on" might be needed
@@ -2906,7 +2911,7 @@ if one already exists."
       "Fold"
       (("f" treesit-fold-toggle "fold/unfold"))
       "Refactor"
-      (("rf" gofmt "Format buffer"))
+      (("rf" lsp-format-buffer "Format buffer"))
       "Run"
       (("rr" go-run "Run buffer")
         ("rp" go-playground "Play ground"))
@@ -2960,8 +2965,9 @@ if one already exists."
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
           (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
-  :bind (:map java-ts-mode-map
-              ("s-h" . java-hydra/body))
+  :bind (("TAB" . indent-for-tab-command)
+          (:map java-ts-mode-map
+              ("s-h" . java-hydra/body)))
   :pretty-hydra
   (java-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
