@@ -68,10 +68,17 @@ For a detailed help message
 
 ## TODO
 
-- investigate embark, vertico, avy
-- basedpyright lsp server
-- look into using casual suite of tools
-- replacing web-mode functionality (web-mode-element-next, previous, element-wrap)
-- better treesit support for angular
-- corg.el
-- Investigate dockerizing setup to reduce need for OS based setups
+- Yaml
+  - yaml mode tab for complete command
+- Helm
+  - make editing helm files nicer
+- Markdown
+  - adding markdown-ts support to markdown mode
+- General
+  - investigate embark, vertico, avy
+  - look into using casual suite of tools
+  - corg.el
+- Web mode
+  - replacing web-mode functionality (web-mode-element-next, previous, element-wrap)
+  - html mode s-h keybinding
+  - better treesit support for angular
