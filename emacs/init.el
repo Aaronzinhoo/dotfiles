@@ -257,9 +257,10 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
        (css "https://github.com/tree-sitter/tree-sitter-css")
        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
        (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-       (go "https://github.com/tree-sitter/tree-sitter-go")
+       (go "https://github.com/tree-sitter/tree-sitter-go" "master" "src")
        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
        (gosum "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")
+       (html "https://github.com/tree-sitter/tree-sitter-html" "master" "src")
        (java "https://github.com/tree-sitter/tree-sitter-java")
        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
        (json "https://github.com/tree-sitter/tree-sitter-json")
@@ -398,10 +399,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 ;;   :if (memq window-system '(windows)))
 (use-package ssh-config-mode
   :hook ((ssh-config-mode . aaronzinhoo--ssh-config-mode-hook))
+  :bind (("<backtab>" . indent-for-tab-command))
   :preface
   (defun aaronzinhoo--ssh-config-mode-hook ()
     (setq-local completion-at-point-functions
-                (list #'cape-file #'ssh-config-completion-at-point #'cape-dabbrev))))
+      (list #'cape-file #'ssh-config-completion-at-point #'cape-dabbrev))))
 (use-package x509-mode
   :straight t
   :commands (x509-mode)
@@ -982,7 +984,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (([remap open-line] . aaronzinhoo-open-line)
           ([remap kill-ring-save] . easy-kill)))
 (use-package combobulate
-  :commands (combobulate-avy-jump)
+  :commands (combobulate-avy-jump combobulate-python-indent-for-tab-command)
   :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
   :config
   ;; You can customize Combobulate's key prefix here.
@@ -1051,6 +1053,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (er/enable-mode-expansions 'bash-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'css-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions 'go-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'html-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'java-ts-mode 'er/add-treesitter-mode-expansions)
   (er/enable-mode-expansions 'js-ts-mode 'er/add-treesitter-mode-expansions)
@@ -2386,6 +2389,7 @@ if one already exists."
     (when (derived-mode-p 'compilation-mode)
       (ansi-color-process-output nil)
       (setq-local comint-last-output-start (point-marker)))))
+
 ;; Programming/Project Management
 ;; commenting does not have support for native tree sitter yet
 (use-package turbo-log
@@ -2393,6 +2397,7 @@ if one already exists."
   :straight (:type git :host github :repo "artawower/turbo-log.el")
   :config
   (setq turbo-console--prefix "LOG"))
+
 (use-package evil-nerd-commenter
   :bind* ("C-;" . evilnc-comment-or-uncomment-lines))
 ;; Window|buffer Managers
