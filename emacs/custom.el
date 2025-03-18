@@ -37,7 +37,9 @@
  '(package-vc-selected-packages
    '((sqlformat :url "https://github.com/purcell/sqlformat" :branch
                 "master")))
- '(safe-local-variable-values '((elisp-lint-indent-specs (when-let . 1)))))
+ '(safe-local-variable-values
+   '((jinx-local-words . "config")
+     (elisp-lint-indent-specs (when-let . 1)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

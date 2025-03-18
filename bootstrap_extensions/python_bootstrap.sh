@@ -25,6 +25,7 @@ matplotlib
 autopep8
 isort
 pyflakes
+ansible
 EOF
 
 pyenv install "${PYTHON_VERSION}"
