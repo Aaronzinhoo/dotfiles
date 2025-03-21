@@ -1118,7 +1118,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (dockerfile-ts-mode . lsp-deferred)
           (go-ts-mode . lsp-deferred)
           (html-ts-mode . lsp-deferred)
-          (python-ts-mode . lsp-deferred)
           (rust-ts-mode . lsp-deferred)
           (sh-mode . lsp-deferred)
           (sql-mode . lsp-deferred)
@@ -1196,10 +1195,45 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
+  (lsp-ruff-lsp-server-command '("ruff" "server"))
+  (lsp-file-watch-ignored-directories '("[/\\\\]\\.git\\'" "[/\\\\]\\.github\\'" "[/\\\\]\\.gitlab\\'"
+                                         "[/\\\\]\\.circleci\\'" "[/\\\\]\\.hg\\'" "[/\\\\]\\.bzr\\'"
+                                         "[/\\\\]_darcs\\'" "[/\\\\]\\.svn\\'" "[/\\\\]_FOSSIL_\\'"
+                                         "[/\\\\]\\.idea\\'" "[/\\\\]\\.ensime_cache\\'" "[/\\\\]\\.eunit\\'"
+                                         "[/\\\\]node_modules" "[/\\\\]\\.yarn\\'" "[/\\\\]\\.fslckout\\'"
+                                         "[/\\\\]\\.tox\\'" "[/\\\\]\\.nox\\'" "[/\\\\]dist\\'"
+                                         "[/\\\\]dist-newstyle\\'" "[/\\\\]\\.stack-work\\'"
+                                         "[/\\\\]\\.bloop\\'" "[/\\\\]\\.metals\\'" "[/\\\\]target\\'"
+                                         "[/\\\\]\\.ccls-cache\\'" "[/\\\\]\\.vs\\'" "[/\\\\]\\.vscode\\'"
+                                         "[/\\\\]\\.venv\\'" "[/\\\\]\\.mypy_cache\\'"
+                                         "[/\\\\]\\.pytest_cache\\'" "[/\\\\]\\.build\\'"
+                                         "[/\\\\]__pycache__\\'" "[/\\\\]\\.deps\\'" "[/\\\\]build-aux\\'"
+                                         "[/\\\\]autom4te.cache\\'" "[/\\\\]\\.reference\\'"
+                                         "[/\\\\]bazel-[^/\\\\]+\\'" "[/\\\\]\\.cache[/\\\\]lsp-csharp\\'"
+                                         "[/\\\\]\\.meta\\'" "[/\\\\]\\.nuget\\'" "[/\\\\]Library\\'"
+                                         "[/\\\\]\\.lsp\\'" "[/\\\\]\\.clj-kondo\\'"
+                                         "[/\\\\]\\.shadow-cljs\\'" "[/\\\\]\\.babel_cache\\'"
+                                         "[/\\\\]\\.cpcache\\'" "[/\\\\]\\checkouts\\'" "[/\\\\]\\.gradle\\'"
+                                         "[/\\\\]\\.m2\\'" "[/\\\\]bin/Debug\\'" "[/\\\\]obj\\'"
+                                         "[/\\\\]_opam\\'" "[/\\\\]_build\\'" "[/\\\\]\\.elixir_ls\\'"
+                                         "[/\\\\]\\.elixir-tools\\'" "[/\\\\]\\.terraform\\'"
+                                         "[/\\\\]\\.terragrunt-cache\\'" "[/\\\\]\\result"
+                                         "[/\\\\]\\result-bin" "[/\\\\]\\.direnv\\'" "/Users/agonzales"
+                                         "/Users/agonzales/.config/pyenv/"))
+  (lsp-yaml-schema-extensions '(((name . "Kubernetes v1.30.3")
+                                  (description . "Kubernetes v1.30.3 manifest schema definition")
+                                  (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
+                                  (fileMatch . ["*-k8s.yaml" "*-k8s.yml"]))
+                                 ((name . "OpenAPI v3.1.0")
+                                  (description . "OpenAPI v3.1.0 schema definition")
+                                  (url . "https://spec.openapis.org/oas/3.1/schema/2022-10-07")
+                                  (fileMatch . ["*openapi.y*"]))))
   (lsp-yaml-schemas
     `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
        (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
-       (kubernetes . ["*.yaml"])))
+       (,(intern "https://spec.openapis.org/oas/3.1/schema/2022-10-07") . ["*openapi.y*"])
+       (,(intern "file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json") . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"]))
+       (kubernetes . ["*.yaml"]))
   (lsp-clients-angular-language-server-command
     `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
        "--ngProbeLocations"
@@ -1275,17 +1309,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 
 (use-package lsp-pyright
-  :requires (lsp pyvenv)
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
-  :if (executable-find "basedpyright")
-  :init
-  (setq lsp-pyright-langserver-command "basedpyright")
-  (setq lsp-pyright-venv-directory (concat pyenv-root-folder "/versions"))
-  (setq lsp-pyright-venv-path (concat pyenv-root-folder "/versions"))
-  (setq lsp-pyright-python-executable-cmd "python3")
+  :custom
+  (lsp-pyright-langserver-command "basedpyright")
+  (lsp-pyright-venv-directory (concat pyenv-root-folder "/versions"))
+  (lsp-pyright-venv-path (concat pyenv-root-folder "/versions"))
+  (lsp-pyright-python-executable-cmd "python3")
   :hook
-  (python-mode . (lambda ()
-                   (require 'lsp-pyright))))
+  (python-ts-mode . (lambda ()
+                      (require 'lsp-pyright)
+                      (lsp-deferred))))
 
 ;;; Debugger Support
 (use-package dap-java
@@ -2965,9 +2998,9 @@ if one already exists."
   :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
           (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
-  :bind (("TAB" . indent-for-tab-command)
-          (:map java-ts-mode-map
-              ("s-h" . java-hydra/body)))
+  :bind ((:map java-ts-mode-map
+           ("TAB" . indent-for-tab-command)
+           ("s-h" . java-hydra/body)))
   :pretty-hydra
   (java-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
@@ -2988,7 +3021,9 @@ if one already exists."
         ("pd" lsp-dependency-list "List Dependencies"))
       "Test"
       (("tb" lsp-jt-browser "Test Browser" :color blue)
-        ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
+        ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
+  :config
+  (yas-minor-mode -1))
 
 ;; protobuf
 (use-package protobuf-ts-mode

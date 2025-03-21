@@ -5,41 +5,36 @@
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file "~/.config/emacs/var/bmkp/current-bookmark.el")
  '(company-dabbrev-ignore-case nil)
+ '(custom-safe-themes
+    '("4c7228157ba3a48c288ad8ef83c490b94cb29ef01236205e360c2c4db200bb18"
+       default))
  '(doom-modeline-check-simple-format t nil nil "Customized with use-package doom-modeline")
+ '(org-fold-catch-invisible-edits 'show-and-error nil nil "Customized with use-package org")
  '(package-selected-packages
-   '(keychain-environment company company-eclim go-mode lsp-ui
-                          frame-local pyenv-mode-auto pyenv-mode rg
-                          delight blacken powerline powermo
-                          company-posframe company-postframe
-                          company-box simpleclip
-                          all-the-icons-ivy-rich tide flycheck
-                          exec-path-from-shell company-web skewer-mode
-                          simple-httpd js2 prettier-js rjsx
-                          json-snatcher json-reformat js-comint
-                          web-mode emmet-mode add-node-modules-path
-                          yaml-mode lsp-mode dired-recent diredfl
-                          ivy-rich all-the-icons beginend
-                          default-text-scale company-prescient
-                          ivy-prescient prescient benchmark-init flx
-                          company-quickhelp-terminal crux
-                          company-quickhelp counsel ace-jump
-                          ace-jump-mode diminish auto-package-update
-                          electric-pair-mode moe-theme-switcher
-                          electric-pair ssh-agency jedi moe-theme
-                          bind-map rjsx-mode ag company-tern
-                          impatient-mode company-jedi smex
-                          idle-highlight-in-visible-buffers-mode
-                          idle-highlight-mode magit async git-commit
-                          list-packages-ext use-package image+
-                          gnu-elpa-keyring-update magithub pylint
-                          python-black multiple-cursors material-theme
-                          elpy better-defaults python))
+    '(keychain-environment company company-eclim go-mode lsp-ui
+       frame-local pyenv-mode-auto pyenv-mode rg delight blacken
+       powerline powermo company-posframe company-postframe
+       company-box simpleclip all-the-icons-ivy-rich tide flycheck
+       exec-path-from-shell company-web skewer-mode simple-httpd js2
+       prettier-js rjsx json-snatcher json-reformat js-comint web-mode
+       emmet-mode add-node-modules-path yaml-mode lsp-mode
+       dired-recent diredfl ivy-rich all-the-icons beginend
+       default-text-scale company-prescient ivy-prescient prescient
+       benchmark-init flx company-quickhelp-terminal crux
+       company-quickhelp counsel ace-jump ace-jump-mode diminish
+       auto-package-update electric-pair-mode moe-theme-switcher
+       electric-pair ssh-agency jedi moe-theme bind-map rjsx-mode ag
+       company-tern impatient-mode company-jedi smex
+       idle-highlight-in-visible-buffers-mode idle-highlight-mode
+       magit async git-commit list-packages-ext use-package image+
+       gnu-elpa-keyring-update magithub pylint python-black
+       multiple-cursors material-theme elpy better-defaults python))
  '(package-vc-selected-packages
-   '((sqlformat :url "https://github.com/purcell/sqlformat" :branch
-                "master")))
+    '((sqlformat :url "https://github.com/purcell/sqlformat" :branch
+        "master")))
  '(safe-local-variable-values
-   '((jinx-local-words . "config")
-     (elisp-lint-indent-specs (when-let . 1)))))
+    '((jinx-local-words . "config")
+       (elisp-lint-indent-specs (when-let . 1)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
