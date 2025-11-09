@@ -1237,6 +1237,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        (,(intern "https://spec.openapis.org/oas/3.1/schema/2022-10-07") . ["*openapi.y*"])
        (,(intern "file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json") . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"]))
        (kubernetes . ["*.yaml"]))
+       (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])))
+  ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
+  (lsp-yaml--built-in-kubernetes-schema
+    '((name . "Kubernetes")
+       (description . "Built-in kubernetes manifest schema definition")
+       (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
+       (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
   (lsp-clients-angular-language-server-command
     `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
        "--ngProbeLocations"
