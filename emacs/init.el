@@ -177,6 +177,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
   ;; (advice-add 'compile :filter-args (lambda (command &optional comint) '(command t)))
   :config
+  (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i"))
   (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
   (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
   (toggle-frame-maximized))
@@ -313,6 +314,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :config
   (winner-mode 1))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package cond-let
+  :straight (:type git :host github :repo "tarsius/cond-let" :branch "main"))
 (use-package system-packages
   :straight t
   :custom
@@ -567,12 +570,12 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
      ("k" helpful-key "key")
      ("c" helpful-command "command")
      ("d" helpful-at-point "thing at point")
-     ("m" describe-mode "mode")))))
+      ("m" describe-mode "mode")))))
 (use-package undo-fu-session
-  :straight (:type git :host nil :repo "https://codeberg.org/ideasman42/emacs-undo-fu-session" :branch "main")
-  :hook (emacs-startup . undo-fu-session-global-mode)
   :custom
-  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
+  (undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  :config
+  (undo-fu-session-global-mode))
 (use-package undo-fu
   :after (major-mode-hydra)
   :straight (:type git :host nil :repo "https://codeberg.org/ideasman42/emacs-undo-fu" :branch "main")
@@ -1939,7 +1942,8 @@ When the number of characters in a buffer exceeds this threshold,
         ("b" mc/cycle-back "previous cursor"))
       "Mark All"
       (("a" mc/mark-all-like-this "Mark All")
-        ("d" mc/mark-all-dwim "Mark All DWIM"))
+        ("d" mc/mark-all-dwim "Mark All DWIM")
+        ("s" symbol-overlay-mc-mark-all "Mark All Symbol"))
       "Misc."
       (("2" er/expand-region "Expand Region")
         ("c" mc/complete-in-region "Autocomplete")
@@ -2723,7 +2727,7 @@ if one already exists."
   :preface
   (defun aaronzinhoo--markdown-mode-hook ()
     (setq-local completion-at-point-functions
-      (list #'cape-file #'cape-dabbrev #'cape-dict)))
+      (list #'cape-file #'cape-dict)))
   :pretty-hydra
   ((:hint nil :title (with-octicon "nf-oct-markdown" "Markdown Mode Control" 1 -0.05) :quit-key "SPC" :color pink)
    ("Insert"

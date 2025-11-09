@@ -23,7 +23,7 @@ fi
 # necessary packages
 #--------------------
 echo_with_prompt "installing necessary packages\n";
-brew install bind git coreutils dbus wget autoconf automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass
+brew install bind git coreutils dbus wget autoconf sevenzip automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass yq
 #--------------------
 
 #--------------------

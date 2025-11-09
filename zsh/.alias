@@ -11,3 +11,6 @@ alias pip="python -m pip "
 
 # emacs
 alias e="emacs &"
+
+# 7zip
+alias 7z="7zz"
