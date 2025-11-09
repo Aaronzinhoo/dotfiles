@@ -1125,6 +1125,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (sh-mode . lsp-deferred)
           (sql-mode . lsp-deferred)
           (typescript-ts-mode . lsp-deferred)
+          (tsx-ts-mode . lsp-deferred)
           (web-mode . lsp-deferred)
           (yaml-ts-mode . lsp-deferred)
           (lsp-mode . lsp-enable-which-key-integration)
@@ -1237,7 +1238,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        (,(intern "https://spec.openapis.org/oas/3.1/schema/2022-10-07") . ["*openapi.y*"])
        (,(intern "file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json") . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"]))
        (kubernetes . ["*.yaml"]))
-       (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])))
   ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
   (lsp-yaml--built-in-kubernetes-schema
     '((name . "Kubernetes")
