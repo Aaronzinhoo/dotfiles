@@ -2546,9 +2546,7 @@ if one already exists."
   :straight nil
   :bind ((:map yaml-ts-mode-map
            ("s-h" . yaml-hydra/body)))
-  :hook ((yaml-ts-mode . yaml-pro-mode)
-         (docker-compose-mode . yaml-ts-mode)
-         (yaml-pro-mode . yaml-pro-ts-mode)
+  :hook ((docker-compose-mode . yaml-ts-mode)
          (yaml-ts-mode . aaronzinhoo-yaml-mode-hook)
          (yaml-ts-mode . flycheck-mode)
          (yaml-ts-mode . hungry-delete-mode)
