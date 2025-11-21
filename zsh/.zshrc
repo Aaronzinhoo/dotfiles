@@ -229,3 +229,9 @@ PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
+
+# AsyncAPI CLI Autocomplete
+
+ASYNCAPI_AC_ZSH_SETUP_PATH=/Users/aaron.gonzales/Library/Caches/@asyncapi/cli/autocomplete/zsh_setup && test -f $ASYNCAPI_AC_ZSH_SETUP_PATH && source $ASYNCAPI_AC_ZSH_SETUP_PATH; # asyncapi autocomplete setup
+
+

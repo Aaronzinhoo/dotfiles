@@ -23,6 +23,8 @@ fi
 # necessary packages
 #--------------------
 echo_with_prompt "installing necessary packages\n";
+brew install svn
+svn list  https://svn.code.sf.net/p/netpbm/code/userguide
 brew install bind git coreutils dbus wget autoconf sevenzip automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass yq
 #--------------------
 
