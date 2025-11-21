@@ -175,9 +175,10 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
   (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
-  ;; (advice-add 'compile :filter-args (lambda (command &optional comint) '(command t)))
+  (setq global-auto-revert-mode t)
   :config
-  (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i"))
+  (if (fboundp 'dired-compress-file-suffixes)
+    (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
   (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
   (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
   (toggle-frame-maximized))
