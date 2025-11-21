@@ -1018,7 +1018,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (node-end (treesit-node-end node)))
       ;; Node fits the region exactly. Try its parent node instead.
       (when (aaronzinhoo--treesit-node-bounds-match-region-p node (region-beginning) (region-end))
-        (when-let ((node (treesit-parent-until node
+        (when-let* ((node (treesit-parent-until node
                            (lambda (n) (not (aaronzinhoo--treesit-node-bounds-match-region-p n (region-beginning) (region-end)))))))
           (setq node-start (treesit-node-start node)
             node-end (treesit-node-end node))))
@@ -1181,28 +1181,46 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (defun aaronzinhoo-lsp-python-setup ()
     (when (buffer-file-name)
       (let* ((python-version ".python-version")
-             (project-dir (locate-dominating-file (buffer-file-name) python-version)))
+              (project-dir (locate-dominating-file (buffer-file-name) python-version)))
         (when project-dir
 	      (progn
 	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
 	        (lsp-workspace-folders-add project-dir)
 	        (pyvenv-workon
-             (with-temp-buffer
-               (insert-file-contents (expand-file-name python-version project-dir))
-               (car (split-string (buffer-string))))))))))
+              (with-temp-buffer
+                (insert-file-contents (expand-file-name python-version project-dir))
+                (car (split-string (buffer-string))))))))))
   :custom
+  ;; core
+  (lsp-enable-xref t)
+  (lsp-auto-configure t)
+  (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
+  (lsp-enable-folding nil)              ; I disable folding since I use origami
+  (lsp-enable-indentation nil) ; use other formatter
+  (lsp-enable-links nil)                ; No need since we have `browse-url'
+  (lsp-enable-on-type-formatting nil)
+  (lsp-enable-symbol-highlighting t)
+  (lsp-enable-text-document-color nil)   ; This is Treesitter's job
+  ;; modeline
+  (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+  (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
+  (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+  (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
+  (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
+  (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+  ;; lens
+  (lsp-lens-enable nil)                 ; Optional, I don't need it
+  ;; semantic
+  (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
+  ;; misc
   (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-eldoc-render-all t)
   (lsp-rust-analyzer-display-chaining-hints t)
   (lsp-rust-analyzer-display-closure-return-type-hints t)
   (lsp-completion-provider :none) ;; we use Corfu!
   (lsp-auto-guess-root t)
   (lsp-log-io nil)
-  (lsp-enable-indentation nil)
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-enable-on-type-formatting nil)
+  (lsp-headerline-breadcrumb-enable nil) ; Sideline used only for diagnostics
   (lsp-prefer-flymake nil)
-  (lsp-enable-symbol-highlighting t)
   (lsp-signature-auto-activate nil)
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
@@ -1236,15 +1254,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                   (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
                                   (fileMatch . ["*-k8s.yaml" "*-k8s.yml"]))
                                  ((name . "OpenAPI v3.1.0")
-                                  (description . "OpenAPI v3.1.0 schema definition")
-                                  (url . "https://spec.openapis.org/oas/3.1/schema/2022-10-07")
-                                  (fileMatch . ["*openapi.y*"]))))
+                                   (description . "OpenAPI v3.1.0 schema definition")
+                                   (url . "https://spec.openapis.org/oas/3.1/schema/2022-10-07")
+                                   (fileMatch . ["*openapi.y*"]))))
   (lsp-yaml-schemas
     `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
        (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
        (,(intern "https://spec.openapis.org/oas/3.1/schema/2022-10-07") . ["*openapi.y*"])
        (,(intern "file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json") . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"]))
-       (kubernetes . ["*.yaml"]))
+    (kubernetes . ["*.yaml"]))
   ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
   (lsp-yaml--built-in-kubernetes-schema
     '((name . "Kubernetes")
@@ -1283,7 +1301,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (not (functionp 'json-rpc-connection))  ;; native json-rpc
             (executable-find "emacs-lsp-booster"))
         (progn
-          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+          (when-let* ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
             (setcar orig-result command-from-exec-path))
           (message "Using emacs-lsp-booster for %s!" orig-result)
           (cons "emacs-lsp-booster" orig-result))
@@ -1310,9 +1328,13 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
               ([remap xref-find-references] . lsp-ui-peek-find-references))
   :custom
+  (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
   (lsp-ui-sideline-show-code-actions nil)
   (lsp-ui-peek-enable t)
   (lsp-ui-doc-use-webkit t)
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-include-signature t) ; Show Signature
+  (lsp-ui-doc-position 'at-point)
   (lsp-ui-doc-enable nil))
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
@@ -1915,6 +1937,13 @@ When the number of characters in a buffer exceeds this threshold,
   (corfu-history-mode)
   (corfu-popupinfo-mode) ; Popup completion info
   :config
+  (add-hook 'eshell-mode-hook
+    (lambda () (setq-local corfu-quit-at-boundary t
+                 corfu-quit-no-match t
+                 corfu-auto nil)
+      (corfu-mode))
+    nil
+    t)
   (defvar aaronzinhoo--lsp-capf-backends (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict) "Initial list of capf backends to use for lsp-mode")
   )
 (use-package imenu-list
@@ -2617,7 +2646,9 @@ if one already exists."
   :bind ("s-d" . docker))
 (use-package dockerfile-mode
   :commands (dockerfile-build-buffer dockerfile-build-no-cache-buffer)
-  :straight (:type git :host github :repo "spotify/dockerfile-mode" :branch "master"))
+  :straight (:type git :host github :repo "spotify/dockerfile-mode" :branch "master")
+  :custom
+  (dockerfile-use-buildkit t))
 (use-package dockerfile-ts-mode
   :straight nil
   :hook (dockerfile-mode . dockerfile-ts-mode)
@@ -2927,7 +2958,7 @@ if one already exists."
   :straight (:type git :host github :repo "grafov/go-playground" :branch "master")
   :config
   (defun my/go-playground-remove-lsp-workspace ()
-    (when-let ((root (lsp-workspace-root))) (lsp-workspace-folders-remove root)))
+    (when-let* ((root (lsp-workspace-root))) (lsp-workspace-folders-remove root)))
   (add-hook 'go-playground-pre-rm-hook #'my/go-playground-remove-lsp-workspace))
 (use-package go-mod-ts-mode
   :straight nil
@@ -2942,7 +2973,6 @@ if one already exists."
   (defun aaronzinhoo--setup-go-mode ()
     (setq-local go-ts-mode-indent-offset 4)
     (setq-local lsp-gopls-staticcheck t)
-    (setq-local lsp-eldoc-render-all t)
     (setq-local lsp-gopls-complete-unimported t))
   :pretty-hydra
   (go-hydra
