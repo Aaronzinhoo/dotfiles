@@ -253,8 +253,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     '((angular "https://github.com/dlvandenberg/tree-sitter-angular" "main" "src")
        (bash "https://github.com/tree-sitter/tree-sitter-bash")
        (cmake "https://github.com/uyha/tree-sitter-cmake")
-       (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.22.0")
        (c "https://github.com/tree-sitter/tree-sitter-c")
+       (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.22.0")
        (css "https://github.com/tree-sitter/tree-sitter-css")
        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
        (elisp "https://github.com/Wilfred/tree-sitter-elisp")
@@ -290,10 +290,12 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
                       (go-dot-mod-mode . go-mod-ts-mode)
                       (go-mode . go-ts-mode)
                       (java-mode . java-ts-mode)
-                      (json-mode . json-ts-mode)
                       (js-mode . js-ts-mode)
+                      (json-mode . json-ts-mode)
+                      (js-json-mode . json-ts-mode)
                       (python-mode . python-ts-mode)
                       (sh-mode . bash-ts-mode)
+                      (sh-base-mode . bash-ts-mode)
                       (typescript-mode . typescript-ts-mode)
                       (toml-mode . toml-ts-mode)
                       (yaml-mode . yaml-ts-mode)))
@@ -670,7 +672,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
                                      (smerge-hydra/body)))))
+(use-package llama
+  :straight (:host github :repo "tarsius/llama"))
 (use-package magit-todos)
+(use-package git-commit)
 (use-package git-identity
   :after magit
   :bind (:map magit-status-mode-map
@@ -692,6 +697,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; The default user name
   (git-identity-default-username "Aaron Gonzales"))
 (use-package magit
+  :after (llama)
   :commands (magit-status)
   :diminish
   :bind (("M-s" . magit-status)
@@ -1121,6 +1127,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (dockerfile-ts-mode . lsp-deferred)
           (go-ts-mode . lsp-deferred)
           (html-ts-mode . lsp-deferred)
+          (js-ts-mode . lsp-deferred)
           (rust-ts-mode . lsp-deferred)
           (sh-mode . lsp-deferred)
           (sql-mode . lsp-deferred)
@@ -2666,11 +2673,13 @@ if one already exists."
   :defer t)
 (use-package add-node-modules-path
   :hook ((rjsx-mode . add-node-modules-path)
-         (typescript-mode . add-node-modules-path)
-         (js2-mode . add-node-modules-path)
-         (json-mode . add-node-modules-path)
-         ;; add completion for css class names in html files
-         (css-mode . add-node-modules-path)))
+          (typescript-mode . add-node-modules-path)
+          (json-mode . add-node-modules-path)
+          (js-ts-mode . add-node-modules-path)
+          (tsx-ts-mode . add-node-modules-path)
+          (typescript-ts-mode . add-node-modules-path)
+          ;; add completion for css class names in html files
+          (css-mode . add-node-modules-path)))
 ;; TODO add electric pair for < or add snippet
 (use-package nxml-mode
   :straight nil
@@ -2788,20 +2797,22 @@ if one already exists."
 (use-package prettier
   :diminish
   :hook ((markdown-mode . prettier-mode)
-         (json-mode . prettier-mode)
-         (css-mode . prettier-mode)
-         (rjsx-mode . prettier-mode)
-         (typescript-ts-mode . prettier-mode))
+          (json-mode . prettier-mode)
+          (css-mode . prettier-mode)
+          (rjsx-mode . prettier-mode)
+          (tsx-ts-mode . prettier-mode)
+          (js-ts-mode . prettier-mode)
+          (typescript-ts-mode . prettier-mode))
   :custom
   (prettier-mode-sync-config-flag t))
 (use-package js-comint
   :defer t
+  :hook (inferior-js-mode . inferior-js-mode-hook-setup)
   :init
   (defun inferior-js-mode-hook-setup ()
     (add-hook 'comint-output-filter-functions 'js-comint-process-output))
   :config
-  (add-hook 'inferior-js-mode-hook 'inferior-js-mode-hook-setup t)
-  (add-hook 'js2-mode-hook
+  (add-hook 'js-ts-mode-hook
             (lambda ()
               (local-set-key (kbd "\C-c !") 'run-js)
               (local-set-key (kbd "\C-c\C-r") 'js-send-region)
@@ -2809,26 +2820,15 @@ if one already exists."
               (local-set-key (kbd "C-c b") 'js-send-buffer)
               (local-set-key (kbd "C-c C-b") 'js-send-buffer-and-go)))
   )
+(use-package js-mode
+  :straight nil
+  :hook (js-mode . js-ts-mode))
 ;;angular setup
 (use-package typescript-ts-mode
   :delight " Ts"
-  :mode (("\\.ts\\'" . typescript-ts-mode))
-  :hook ((typescript-ts-mode . subword-mode)
-          (typescript-ts-mode . aaronzinhoo--typescript-mode-hook)
-          (lsp-modeline-code-actions-mode . aaronzinhoo--typescript-mode-hook))
-  :preface
-  (defun aaronzinhoo--typescript-mode-hook ()
-    ;; typescript server code actions has new type that causes a break here
-    (setq-local lsp-modeline-code-actions-enable nil)
-    (setq-local lsp-modeline-code-actions-mode nil))
-  )
-(use-package rjsx-mode
-  :mode (("\\.js\\'" . rjsx-mode)
-         ("\\.tsx\\'" . rjsx-mode))
-  :config
-  (setq js2-mode-show-strict-warnings nil)
-  (setq js-indent-level 2)
-  (add-hook 'js2-mode-hook #'prettier-js-mode))
+  :mode (("\\.ts\\'" . typescript-ts-mode)
+          ("\\.tsx\\'" . tsx-ts-mode))
+  :hook ((typescript-ts-mode . subword-mode)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; PYTHON CONFIG
