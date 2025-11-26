@@ -23,9 +23,10 @@ fi
 # necessary packages
 #--------------------
 echo_with_prompt "installing necessary packages\n";
+xcode-select --install
 brew install svn
 svn list  https://svn.code.sf.net/p/netpbm/code/userguide
-brew install bind git coreutils dbus wget autoconf sevenzip automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass yq
+brew install bind git coreutils dbus wget autoconf sevenzip automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass yq jq sevenzip trivy opensc
 #--------------------
 
 #--------------------
@@ -104,11 +105,15 @@ brew install aws-iam-authenticator
 #----------------------
 # postgres
 #----------------------
-brew install postgresql
+brew install postgresql@16
 brew install pgformatter
-if [ ! -L "/usr/local/lib/libpq.5.dylib" ]; then
-    ln -s /opt/homebrew/opt/postgresql@14/lib/postgresql@14/libpq.5.dylib /usr/local/lib/libpq.5.dylib
-fi
+#----------------------
+
+#----------------------
+# mongo
+#----------------------
+brew tap mongodb/brew
+brew install mongodb-community
 #----------------------
 
 
@@ -123,7 +128,6 @@ brew install --cask qutebrowser
 # chrome
 #---------------------
 brew install --cask google-chrome
-brew install --cask chromedriver
 #---------------------
 
 
@@ -144,10 +148,8 @@ brew install yamllint
 
 
 #--------------------
-# languages
+# C++
 #--------------------
-
-## C++
 echo_with_prompt "installing C++ dependencies"
 brew install ccls
 brew install cmake
