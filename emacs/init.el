@@ -8,7 +8,6 @@
 (message "Initializing custom settings...")
 (load custom-file)
 (require 'custom)
-
 (message "Loading Straight package manager")
 ;; dont check all my straight repos for changes. Really slows down speed
 ;; keep eye on https://github.com/raxod502/straight.el/pull/694#issuecomment-805197632 for updates on watcher
@@ -50,6 +49,11 @@
                   vterm-mode-hook
                   eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0)))))
+(use-package straight
+  :custom
+  ;; add project and flymake to the pseudo-packages variable so straight.el doesn't download a separate version than what eglot downloads.
+  (straight-built-in-pseudo-packages '(emacs nadvice python image-mode project flymake xref))
+  (straight-use-package-by-default t))
 (use-package emacs
   :straight nil
   :hook ((minibuffer-setup . cursor-intangible-mode))
@@ -175,8 +179,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
   (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
-  (setq global-auto-revert-mode t)
   :config
+  (setq global-auto-revert-mode 1)
+  ;; revert dired buffers but dont state it
+  (global-auto-revert-non-file-buffers 1)
+  (auto-revert-verbose nil)
   (if (fboundp 'dired-compress-file-suffixes)
     (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
   (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
@@ -698,11 +705,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; The default user name
   (git-identity-default-username "Aaron Gonzales"))
 (use-package magit
-  :after (llama)
-  :commands (magit-status)
+  :commands (magit magit-status)
   :diminish
-  :bind (("M-s" . magit-status)
-         :map magit-status-mode-map
+  :bind* (("M-s" . magit-status))
+  :bind (:map magit-status-mode-map
          ("RET" . magit-diff-visit-file-other-window)
          ("M-i" . magit-section-backward)
          ("M-k" . magit-section-forward)
@@ -804,10 +810,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (delete-by-moving-to-trash t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
-  ;; revert dired buffers but dont state it
-  (global-auto-revert-non-file-buffers t)
-  (auto-revert-verbose nil)
-  (dired-auto-revert-buffer t)
+  (dired-auto-revert-buffer 1)
   (dired-listing-switches "-lAXGh --group-directories-first")
   :init
   (when (memq window-system '(mac ns))
@@ -1967,9 +1970,14 @@ When the number of characters in a buffer exceeds this threshold,
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
   :bind* (("M-m" . multiple-cursors-hydra/body))
   :hook ((prog-mode . multiple-cursors-mode)
-          (text-mode . multiple-cursors-mode))
+          (text-mode . multiple-cursors-mode)
+          (multiple-cursors-mode . aaronzinhoo--mc-setup-hook))
   :init
   (defvar aaronzinhoo--mc-completion-candidate nil)
+  (defun aaronzinhoo--mc-setup-hook ()
+    (setq mc/cmds-to-run-for-all
+      '(abbrev-prefix-mark  crux-smart-delete-line hungry-delete-backward hungry-delete-forward evilnc-comment-or-uncomment-lines))
+    (setq mc/cmds-to-run-once '(pixel-scroll-precision avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
   :pretty-hydra
   (multiple-cursors-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
@@ -2045,14 +2053,7 @@ When the number of characters in a buffer exceeds this threshold,
     (interactive)
     (setq-local aaronzinhoo--mc-completion-candidate nil)
     (mc/execute-command-for-all-cursors 'aaronzinhoo--complete-in-region-minibuffer)
-    (setq-local aaronzinhoo--mc-completion-candidate nil))
-  :custom
-  (mc/cmds-to-run-for-al
-   '(abbrev-prefix-mark
-     crux-smart-delete-line
-     hungry-delete-backward
-     hungry-delete-forward))
-  (mc/cmds-to-run-once '(avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra/mc-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/mc/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
+    (setq-local aaronzinhoo--mc-completion-candidate nil)))
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
