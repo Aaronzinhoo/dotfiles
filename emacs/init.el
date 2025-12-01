@@ -476,6 +476,15 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   ("s-B" . hydra-bookmark/body)
   :custom
   (hydra-default-hint nil))
+(use-package combobulate
+  :defer t
+  :commands (combobulate)
+  :custom
+  ;; You can customize Combobulate's key prefix here.
+  ;; Note that you may have to restart Emacs for this to take effect!
+  (combobulate-key-prefix "s-c")
+  :bind* (("s-c" . combobulate))
+  :hook ((prog-mode . combobulate-mode)))
 (use-package major-mode-hydra
   :demand t
   :after (hydra s nerd-icons)
@@ -2581,12 +2590,10 @@ if one already exists."
   :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main")
   :custom
   (openapi-preview-redoc-command "redoc-cli"))
-(use-package yaml-pro
-  :commands (yaml-pro-mode yaml-pro-ts-mode)
-  :straight (:type git :host github :repo "zkry/yaml-pro" :branch "master")
-  )
 (use-package yaml-mode
-  :demand t)
+  :demand t
+  :bind ((:map yaml-mode-map
+           ("s-h" . yaml-hydra/body))))
 (use-package yaml-ts-mode
   :straight nil
   :bind ((:map yaml-ts-mode-map
@@ -2604,20 +2611,20 @@ if one already exists."
     (setq-local lsp-lens-mode nil)
     (setq-local eldoc-mode nil)
     (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
-    (yaml-pro-mode nil))
+    ;; (yaml-pro-mode nil)
+    )
   :pretty-hydra
   (yaml-hydra
     (:hint nil :title (with-faicon "nf-fa-yen" "Yaml Commands" 1 -0.05) :quit-key "q" :color red)
     ("Indent"
-      (("i" yaml-pro-ts-indent-subtree "Indent")
-        ("u" yaml-pro-ts-unindent-subtree "Unindent"))
+      (("i" indent-rigidly "Indent Region"))
       "Navigation"
       (
         ;; ("j" combobulate-avy-jump "Jump") ;; bug in this so for now ignore... could be in the treesitter language actually..
-        ("n" yaml-pro-ts-next-subtree "Next Sibling Node")
-        ("p" yaml-pro-ts-prev-subtree "Previous Sibling Node")
+        ;; ("n" yaml-pro-ts-next-subtree "Next Sibling Node")
+        ;; ("p" yaml-pro-ts-prev-subtree "Previous Sibling Node")
         ("N" block-nav-next-indentation-level "Next Child Node")
-        ("P" yaml-pro-ts-up-level "Previous Parent Node"))
+        ;; ("P" yaml-pro-ts-up-level "Previous Parent Node"))
       "Fold"
       (("f" treesit-fold-toggle "Toggle Fold"))
       "Schema"
