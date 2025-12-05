@@ -2629,7 +2629,7 @@ if one already exists."
       (("f" treesit-fold-toggle "Toggle Fold"))
       "Schema"
       (("s" lsp-yaml-select-buffer-schema "Buffer Schema")
-       ("d" lsp-yaml-download-schema-store-db "Download Schemastore")))))
+       ("d" lsp-yaml-download-schema-store-db "Download Schemastore"))))))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
