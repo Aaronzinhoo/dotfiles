@@ -1998,15 +1998,28 @@ When the number of characters in a buffer exceeds this threshold,
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
   :bind* (("M-m" . multiple-cursors-hydra/body))
-  :hook ((prog-mode . multiple-cursors-mode)
-          (text-mode . multiple-cursors-mode)
-          (multiple-cursors-mode . aaronzinhoo--mc-setup-hook))
   :init
+  (setq mc/list-file
+    (locate-user-emacs-file ".mc-lists.el"))
   (defvar aaronzinhoo--mc-completion-candidate nil)
-  (defun aaronzinhoo--mc-setup-hook ()
-    (setq mc/cmds-to-run-for-all
-      '(abbrev-prefix-mark  crux-smart-delete-line hungry-delete-backward hungry-delete-forward evilnc-comment-or-uncomment-lines))
-    (setq mc/cmds-to-run-once '(pixel-scroll-precision avy-goto-char-timer dap-tooltip-mouse-motion multiple-cursors-hydra/body multiple-cursors-hydra-hide-unmatched-lines-mode multiple-cursors-hydra/mc/edit-lines-and-exit multiple-cursors-hydra/mc/mark-all-dwim multiple-cursors-hydra/mc/mark-all-like-this multiple-cursors-hydra/mc/mark-all-like-this-and-exit multiple-cursors-hydra/mc/mark-next-like-this multiple-cursors-hydra/mc/mark-previous-like-this multiple-cursors-hydra/nil multiple-cursors-hydra/mc/skip-to-next-like-this multiple-cursors-hydra/mc/skip-to-previous-like-this multiple-cursors-hydra/mc/unmark-next-like-this multiple-cursors-hydra/mc/unmark-previous-like-this mc/mark-previous-like-this wgrep-finish-edit)))
+  :config
+  ;; Load previously learned choices before adding configured choices.
+  (mc/load-lists)
+  (dolist (command
+            '(abbrev-prefix-mark
+               crux-smart-delete-line
+               hungry-delete-backward
+               hungry-delete-forward
+               evilnc-comment-or-uncomment-lines))
+    (add-to-list 'mc/cmds-to-run-for-all command))
+  (dolist (command
+            '(pixel-scroll-precision
+               avy-goto-char-timer
+               dap-tooltip-mouse-motion
+               multiple-cursors-hydra/body
+               multiple-cursors-hydra-hide-unmatched-lines-mode
+               wgrep-finish-edit))
+    (add-to-list 'mc/cmds-to-run-once command))
   :pretty-hydra
   (multiple-cursors-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-cursor_default_outline" "Multiple Cursors" 1 -0.05))
@@ -2083,6 +2096,7 @@ When the number of characters in a buffer exceeds this threshold,
     (setq-local aaronzinhoo--mc-completion-candidate nil)
     (mc/execute-command-for-all-cursors 'aaronzinhoo--complete-in-region-minibuffer)
     (setq-local aaronzinhoo--mc-completion-candidate nil)))
+
 
 ;;; Creating Diagrams
 (use-package plantuml-mode
