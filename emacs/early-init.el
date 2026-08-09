@@ -127,6 +127,7 @@
   ;; No second pass of case-insensitive search over auto-mode-alist.
   auto-mode-case-fold nil
   auto-save-default t
+  global-auto-revert-mode t
   ;;cursor options
   blink-cursor-blinks -1
   delete-pair-blink-delay 0

@@ -37,6 +37,8 @@ git clone https://github.com/lukechilds/zsh-better-npm-completion "${CUSTOM_PLUG
 
 git clone https://github.com/johanhaleby/kubetail.git "${CUSTOM_PLUGINS}/kubetail"
 
+git clone https://github.com custom/plugins/tofu "${CUSTOM_PLUGINS}/tofu"
+
 
 echo_with_prompt "Adding necessary symlinks"
 if [ ! -L "$HOME/.local/bin/bat" ]; then

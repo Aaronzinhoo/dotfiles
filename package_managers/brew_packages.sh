@@ -68,30 +68,18 @@ brew install lazydocker
 #---------------------
 
 #---------------------
-# minikube
+# Cloud Tooling
 #---------------------
-echo_with_prompt "installing minikube\n"
+echo_with_prompt "installing cloud tooling\n"
 brew install minikube
-#---------------------
-
-
-#---------------------
-# kubectl
-#---------------------
-echo_with_prompt "installing kubectl\n"
 brew install kubernetes-cli
 brew install kubeseal
 brew install kubetail
 brew install kubespy
 brew install fzf # needed for tools
-#---------------------
-
-
-#---------------------
-# helm
-#---------------------
-echo_with_prompt "installing helm\n"
 brew install helm
+brew install argocd
+brew install opentofu
 #---------------------
 
 #---------------------

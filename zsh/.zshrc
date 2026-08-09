@@ -81,7 +81,7 @@ ZSH_CUSTOM_AUTOUPDATE_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip golang zsh-completions command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-syntax-highlighting )
+plugins=( autoupdate zsh-nvm nvm git z zsh-autosuggestions colored-man-pages pyenv pip golang zsh-completions command-not-found docker docker-compose ng zsh-better-npm-completion helm kubectl rust spring zsh-syntax-highlighting opentofu dotenv )
 
 zstyle ':omz:plugins:nvm' lazy yes
 source $ZSH/oh-my-zsh.sh
@@ -232,6 +232,4 @@ source <(ng completion script)
 
 # AsyncAPI CLI Autocomplete
 
-ASYNCAPI_AC_ZSH_SETUP_PATH=/Users/aaron.gonzales/Library/Caches/@asyncapi/cli/autocomplete/zsh_setup && test -f $ASYNCAPI_AC_ZSH_SETUP_PATH && source $ASYNCAPI_AC_ZSH_SETUP_PATH; # asyncapi autocomplete setup
-
-
+ASYNCAPI_AC_ZSH_SETUP_PATH=/Users/agonzales/Library/Caches/@asyncapi/cli/autocomplete/zsh_setup && test -f $ASYNCAPI_AC_ZSH_SETUP_PATH && source $ASYNCAPI_AC_ZSH_SETUP_PATH; # asyncapi autocomplete setup

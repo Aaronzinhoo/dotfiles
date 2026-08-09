@@ -174,16 +174,16 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     (setq mac-command-modifier 'meta)
     (setq mac-right-command-modifier 'control)
     (setq mac-option-modifier 'super))
-  (define-key key-translation-map (kbd "ESC") 'event-apply-meta-modifier)
-  (define-key key-translation-map (kbd "<escape>") 'event-apply-meta-modifier)
   (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
   (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
   :config
-  (setq global-auto-revert-mode 1)
   ;; revert dired buffers but dont state it
-  (global-auto-revert-non-file-buffers 1)
+  (global-auto-revert-non-file-buffers t)
   (auto-revert-verbose nil)
+  (global-auto-revert-mode t)
+  (global-auto-revert-mode nil)
+  (global-auto-revert-mode t)
   (if (fboundp 'dired-compress-file-suffixes)
     (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
   (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
@@ -725,12 +725,31 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook ((magit-mode . magit-auto-revert-mode)
          ((git-commit-setup . aaronzinhoo--git-commit-setup)))
   :preface
+  (defun aaronzinhoo--delete-merged-branches ()
+  (interactive)
+  (magit-fetch-all-prune)
+  (let* ((default-branch
+           (read-string "Default branch: " (magit-get-current-branch)))
+         (merged-branches
+          (magit-git-lines "branch"
+                           "--format" "%(refname:short)"
+                           "--merged"
+                           default-branch))
+         (branches-to-delete
+          (remove default-branch merged-branches)))
+    (if branches-to-delete
+        (if (yes-or-no-p (concat "Delete branches? ["
+                                 (mapconcat 'identity branches-to-delete ", ") "]"))
+            (magit-branch-delete branches-to-delete))
+      (message "Nothing to delete"))))
   (defun aaronzinhoo--git-commit-setup ()
     (setq-local fill-column 72)
     (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
   (magit-bind-magit-project-status nil)
   :config
+  (transient-append-suffix 'magit-branch "C"
+    '("K" "delete all merged" aaronzinhoo--delete-merged-branches))
   (add-hook 'after-save-hook 'magit-after-save-refresh-status))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1322,6 +1341,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
   (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
   :config
+  (add-to-list 'lsp-disabled-clients 'sql-language-server)
   (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
   (push 'rustic-clippy flycheck-checkers)
   (push '(web-mode . "html") lsp-language-id-configuration)
@@ -2695,7 +2715,10 @@ if one already exists."
 ;;   (kele-mode t))
 
 ;;; WEB-DEV CONFIG
-
+(use-package dotenv
+  :straight (:type git :host github :repo "pkulev/dotenv.el" :branch "main")
+  :hook
+  (prog-mode . dotenv-update-current-env))
 ;; apache
 (use-package apache-mode
   :straight (:type git :host github :repo "PommesSchranke/apache-mode" :branch "customizable-faces")
@@ -3089,6 +3112,11 @@ if one already exists."
   :custom
   (sqlformat-command 'pgformatter))
 
+;;; terraform
+(use-package terraform-mode
+  :ensure t
+  :mode (("\\.tofu\\'" . terraform-mode)
+          ("\\.tf\\'" . terraform-mode)))
 ;;; Emacs Lisp Mode
 (use-package emacs-lisp-mode
   :straight nil

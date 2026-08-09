@@ -8,6 +8,7 @@
  '(custom-safe-themes
     '("4c7228157ba3a48c288ad8ef83c490b94cb29ef01236205e360c2c4db200bb18"
        default))
+ '(docker-compose-command "docker compose")
  '(doom-modeline-check-simple-format t nil nil "Customized with use-package doom-modeline")
  '(org-fold-catch-invisible-edits 'show-and-error nil nil "Customized with use-package org")
  '(package-selected-packages

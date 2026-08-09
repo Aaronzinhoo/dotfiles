@@ -62,7 +62,7 @@ export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
 export KREW_ROOT="${XDG_CONFIG_HOME}/krew"
 
 # docker is not running properly without this
-export DOCKER_BUILDKIT=0
+export DOCKER_BUILDKIT=1
 
 # OS speific setup
 if [[ "$OSTYPE" =~ "^darwin" ]]; then
