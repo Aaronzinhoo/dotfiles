@@ -23,6 +23,7 @@ ipython
 ruff-lsp
 matplotlib
 autopep8
+basedpyright
 isort
 pyflakes
 ansible
