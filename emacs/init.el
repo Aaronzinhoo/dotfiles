@@ -235,6 +235,12 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (show-paren-when-point-in-periphery t)
   :config
   (show-paren-mode t))
+(use-package gcmh
+  :demand t
+  :custom
+  (gcmh-high-cons-threshold (* 128 1024 1024))
+  :config
+  (gcmh-mode 1))
 (use-package sh-mode
   :straight nil
   :hook ((sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
@@ -981,7 +987,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                         '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
   (flycheck-add-mode 'json-jsonlint 'json-ts-mode)
-  (flycheck-add-mode 'javascript-eslint 'web-mode)
   ;; eslint requires you to be careful with the configuration
   ;; ensure to use .json files and setup accordingly
   ;; test with shell command
@@ -1151,25 +1156,23 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-mode
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
-  :hook ((bash-ts-mode . lsp-deferred)
-          (c-ts-mode . lsp-deferred)
-          (c++-ts-mode . lsp-deferred)
-          (conf-javaprop-mode . lsp-deferred)
-          (css-ts-mode . lsp-deferred)
-          (dockerfile-ts-mode . lsp-deferred)
-          (go-ts-mode . lsp-deferred)
-          (html-ts-mode . lsp-deferred)
-          (js-ts-mode . lsp-deferred)
-          (rust-ts-mode . lsp-deferred)
-          (sh-mode . lsp-deferred)
-          (sql-mode . lsp-deferred)
-          (typescript-ts-mode . lsp-deferred)
-          (tsx-ts-mode . lsp-deferred)
-          (web-mode . lsp-deferred)
-          (yaml-ts-mode . lsp-deferred)
-          (lsp-mode . lsp-enable-which-key-integration)
-          (lsp-completion-mode . aaronzinhoo--lsp-mode-setup-completion)
-          (lsp-mode . yas-minor-mode))
+  :hook
+  ((bash-ts-mode        . lsp-deferred)
+    (c-ts-mode          . lsp-deferred)
+    (c++-ts-mode        . lsp-deferred)
+    (css-ts-mode . aaronzinhoo--web-lsp-setup)
+    (dockerfile-ts-mode . lsp-deferred)
+    (go-ts-mode         . lsp-deferred)
+    (html-ts-mode . aaronzinhoo--web-lsp-setup)
+    (js-ts-mode . aaronzinhoo--web-lsp-setup)
+    (json-ts-mode       . lsp-deferred)
+    (rust-ts-mode       . lsp-deferred)
+    (sql-mode           . lsp-deferred)
+    (tsx-ts-mode . aaronzinhoo--web-lsp-setup)
+    (typescript-ts-mode . aaronzinhoo--web-lsp-setup)
+    (yaml-ts-mode       . lsp-deferred)
+    (lsp-mode            . lsp-enable-which-key-integration)
+    (lsp-completion-mode . aaronzinhoo--lsp-completion-setup))
   :bind (:map lsp-mode-map
           ("s-l" . lsp-hydra/body)
           ([remap xref-find-apropos] . consult-lsp-symbols))
@@ -1200,28 +1203,95 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("LI" lsp-install-server "Install")
         ("LR" lsp-workspace-restart "Restart"))))
   :preface
-  (defun aaronzinhoo--lsp-mode-setup-completion ()
-    "Replace the default `lsp-completion-at-point' with its
-`cape-capf-buster' version. Also add `cape-file' and
-`company-yasnippet' backends."
-    (setq-local completion-at-point-functions aaronzinhoo--lsp-capf-backends)
-    (bind-key (kbd "TAB") 'corfu-next corfu-map)
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-      '(orderless))) ;; Configure orderless which can use flex
-  ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2021-09/msg00535.html
-  ;; used to help pyright find venv folders
-  (defun aaronzinhoo-lsp-python-setup ()
-    (when (buffer-file-name)
-      (let* ((python-version ".python-version")
-              (project-dir (locate-dominating-file (buffer-file-name) python-version)))
-        (when project-dir
-	      (progn
-	        ;; https://github.com/emacs-lsp/lsp-pyright/issues/62#issuecomment-942845406
-	        (lsp-workspace-folders-add project-dir)
-	        (pyvenv-workon
-              (with-temp-buffer
-                (insert-file-contents (expand-file-name python-version project-dir))
-                (car (split-string (buffer-string))))))))))
+  (defun aaronzinhoo--lsp-booster-json-parse (old-function &rest args)
+    "Parse LSP Booster bytecode, or call OLD-FUNCTION with ARGS."
+    (or
+      (when (eq (following-char) ?#)
+        (let ((bytecode (read (current-buffer))))
+          (when (byte-code-function-p bytecode)
+            (funcall bytecode))))
+      (apply old-function args)))
+
+  (defun aaronzinhoo--lsp-booster-final-command
+    (old-function command &optional test?)
+    "Wrap LSP COMMAND with emacs-lsp-booster when appropriate."
+    (let ((resolved-command
+            (funcall old-function command test?)))
+      (if (and (not test?)
+            (not (file-remote-p default-directory))
+            lsp-use-plists
+            (not (functionp 'json-rpc-connection))
+            (executable-find "emacs-lsp-booster"))
+        (progn
+          (when-let ((executable
+                       (executable-find (car resolved-command))))
+            (setcar resolved-command executable))
+          (message "Using emacs-lsp-booster for %S"
+            resolved-command)
+          (cons "emacs-lsp-booster" resolved-command))
+        resolved-command)))
+  (defun aaronzinhoo--lsp-completion-setup ()
+    "Configure LSP completion for Corfu and Cape."
+    (setq-local completion-at-point-functions
+      (list
+        (cape-capf-buster #'lsp-completion-at-point)
+        #'cape-file))
+
+    (setq-local completion-category-overrides
+      '((lsp-capf (styles orderless)))))  ;; Configure orderless which can use flex
+  (defun aaronzinhoo--angular-project-root ()
+    "Return the nearest Angular workspace root."
+    (when-let ((file (or buffer-file-name default-directory)))
+      (locate-dominating-file file "angular.json")))
+
+  (defun aaronzinhoo--activate-project-node ()
+    "Activate the project's NVM version and local executables."
+    (when-let* ((file (or buffer-file-name default-directory))
+                 (nvm-root
+                   (locate-dominating-file file ".nvmrc")))
+      (nvm-use-for nvm-root))
+
+    (when-let* ((file (or buffer-file-name default-directory))
+                 (package-root
+                   (locate-dominating-file file "package.json"))
+                 (bin-directory
+                   (expand-file-name "node_modules/.bin"
+                     package-root))
+                 ((file-directory-p bin-directory)))
+      (setq-local exec-path
+        (cons bin-directory
+          (delete bin-directory
+            (copy-sequence exec-path))))
+      (setq-local process-environment
+        (copy-sequence process-environment))
+      (setenv
+        "PATH"
+        (concat bin-directory
+          path-separator
+          (or (getenv "PATH") "")))))
+
+  (defun aaronzinhoo--configure-angular-language-server ()
+  "Configure the project-local Angular language server."
+  (when-let* ((root (aaronzinhoo--angular-project-root))
+              (node-modules
+               (expand-file-name "node_modules" root))
+              (ngserver
+               (expand-file-name
+                "node_modules/.bin/ngserver"
+                root))
+              ((file-executable-p ngserver)))
+    (setq-local
+     lsp-clients-angular-language-server-command
+     (list ngserver
+           "--stdio"
+           "--tsProbeLocations" node-modules
+           "--ngProbeLocations" node-modules))))
+
+  (defun aaronzinhoo--web-lsp-setup ()
+    "Prepare the Node environment, then start LSP."
+    (aaronzinhoo--activate-project-node)
+    (aaronzinhoo--configure-angular-language-server)
+    (lsp-deferred))
   :custom
   ;; core
   (lsp-enable-xref t)
@@ -1231,7 +1301,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-enable-indentation nil) ; use other formatter
   (lsp-enable-links nil)                ; No need since we have `browse-url'
   (lsp-enable-on-type-formatting nil)
-  (lsp-enable-symbol-highlighting t)
+  (lsp-enable-symbol-highlighting nil)
   (lsp-enable-text-document-color nil)   ; This is Treesitter's job
   ;; modeline
   (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
@@ -1257,30 +1327,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   (lsp-ruff-lsp-server-command '("ruff" "server"))
-  (lsp-file-watch-ignored-directories '("[/\\\\]\\.git\\'" "[/\\\\]\\.github\\'" "[/\\\\]\\.gitlab\\'"
-                                         "[/\\\\]\\.circleci\\'" "[/\\\\]\\.hg\\'" "[/\\\\]\\.bzr\\'"
-                                         "[/\\\\]_darcs\\'" "[/\\\\]\\.svn\\'" "[/\\\\]_FOSSIL_\\'"
-                                         "[/\\\\]\\.idea\\'" "[/\\\\]\\.ensime_cache\\'" "[/\\\\]\\.eunit\\'"
-                                         "[/\\\\]node_modules" "[/\\\\]\\.yarn\\'" "[/\\\\]\\.fslckout\\'"
-                                         "[/\\\\]\\.tox\\'" "[/\\\\]\\.nox\\'" "[/\\\\]dist\\'"
-                                         "[/\\\\]dist-newstyle\\'" "[/\\\\]\\.stack-work\\'"
-                                         "[/\\\\]\\.bloop\\'" "[/\\\\]\\.metals\\'" "[/\\\\]target\\'"
-                                         "[/\\\\]\\.ccls-cache\\'" "[/\\\\]\\.vs\\'" "[/\\\\]\\.vscode\\'"
-                                         "[/\\\\]\\.venv\\'" "[/\\\\]\\.mypy_cache\\'"
-                                         "[/\\\\]\\.pytest_cache\\'" "[/\\\\]\\.build\\'"
-                                         "[/\\\\]__pycache__\\'" "[/\\\\]\\.deps\\'" "[/\\\\]build-aux\\'"
-                                         "[/\\\\]autom4te.cache\\'" "[/\\\\]\\.reference\\'"
-                                         "[/\\\\]bazel-[^/\\\\]+\\'" "[/\\\\]\\.cache[/\\\\]lsp-csharp\\'"
-                                         "[/\\\\]\\.meta\\'" "[/\\\\]\\.nuget\\'" "[/\\\\]Library\\'"
-                                         "[/\\\\]\\.lsp\\'" "[/\\\\]\\.clj-kondo\\'"
-                                         "[/\\\\]\\.shadow-cljs\\'" "[/\\\\]\\.babel_cache\\'"
-                                         "[/\\\\]\\.cpcache\\'" "[/\\\\]\\checkouts\\'" "[/\\\\]\\.gradle\\'"
-                                         "[/\\\\]\\.m2\\'" "[/\\\\]bin/Debug\\'" "[/\\\\]obj\\'"
-                                         "[/\\\\]_opam\\'" "[/\\\\]_build\\'" "[/\\\\]\\.elixir_ls\\'"
-                                         "[/\\\\]\\.elixir-tools\\'" "[/\\\\]\\.terraform\\'"
-                                         "[/\\\\]\\.terragrunt-cache\\'" "[/\\\\]\\result"
-                                         "[/\\\\]\\result-bin" "[/\\\\]\\.direnv\\'" "/Users/agonzales"
-                                         "/Users/agonzales/.config/pyenv/"))
   (lsp-yaml-schema-extensions '(((name . "Kubernetes v1.30.3")
                                   (description . "Kubernetes v1.30.3 manifest schema definition")
                                   (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
@@ -1290,67 +1336,78 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                    (url . "https://spec.openapis.org/oas/3.1/schema/2022-10-07")
                                    (fileMatch . ["*openapi.y*"]))))
   (lsp-yaml-schemas
-    `((,(intern "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json") . ["*-compose.y*"])
-       (,(intern "https://json.schemastore.org/kustomization.json") . ["kustomization.yaml"])
-       (,(intern "https://spec.openapis.org/oas/3.1/schema/2022-10-07") . ["*openapi.y*"])
-       (,(intern "file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json") . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"]))
-    (kubernetes . ["*.yaml"]))
+    `(("https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"
+        . ["*-compose.yaml" "*-compose.yml"])
+
+       ("https://json.schemastore.org/kustomization.json"
+         . ["kustomization.yaml"
+             "kustomization.yml"])
+
+       ("https://spec.openapis.org/oas/3.1/schema/2022-10-07"
+         . ["*openapi.yaml"
+             "*openapi.yml"])
+
+       ("file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json"
+         . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"])
+
+       (kubernetes . ["*-k8s.yaml"
+                       "*-k8s.yml"
+                       "k8s/**/*.yaml"
+                       "k8s/**/*.yml"
+                       "manifests/**/*.yaml"
+                       "manifests/**/*.yml"])))
   ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
   (lsp-yaml--built-in-kubernetes-schema
     '((name . "Kubernetes")
        (description . "Built-in kubernetes manifest schema definition")
-       (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
+       (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
        (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
-  (lsp-clients-angular-language-server-command
-    `("node"     ,(concat node-home-folder "lib/node_modules/@angular/language-server")
-       "--ngProbeLocations"
-       ,(concat node-home-folder "lib/node_modules")
-       "--tsProbeLocations"
-       ,(concat node-home-folder "lib/node_modules")
-       "--stdio"))
   :init
-  (defun lsp-booster--advice-json-parse (old-fn &rest args)
-    "Try to parse bytecode instead of json."
-    (or
-      (when (equal (following-char) ?#)
-        (let ((bytecode (read (current-buffer))))
-          (when (byte-code-function-p bytecode)
-            (funcall bytecode))))
-      (apply old-fn args)))
-  (advice-add (if (progn (require 'json)
-                    (fboundp 'json-parse-buffer))
-                'json-parse-buffer
-                'json-read)
-    :around
-    #'lsp-booster--advice-json-parse)
-
-  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-    "Prepend emacs-lsp-booster command to lsp CMD."
-    (let ((orig-result (funcall old-fn cmd test?)))
-      (if (and (not test?)                             ;; for check lsp-server-present?
-            (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-            lsp-use-plists
-            (not (functionp 'json-rpc-connection))  ;; native json-rpc
-            (executable-find "emacs-lsp-booster"))
-        (progn
-          (when-let* ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
-            (setcar orig-result command-from-exec-path))
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-        orig-result)))
-  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
-  (add-hook 'python-ts-mode-hook 'aaronzinhoo-lsp-python-setup)
+  (setq lsp-use-plists t)
   :config
+  ;; Install the JSON-parser advice after the JSON implementation is known.
+  (require 'json)
+
+  (let ((json-parser
+          (if (fboundp 'json-parse-buffer)
+            'json-parse-buffer
+            'json-read)))
+    (unless
+      (advice-member-p
+        #'aaronzinhoo--lsp-booster-json-parse
+        json-parser)
+      (advice-add
+        json-parser
+        :around
+        #'aaronzinhoo--lsp-booster-json-parse)))
+
+  ;; lsp-resolve-final-command exists now because :config runs after loading.
+  (unless
+    (advice-member-p
+      #'aaronzinhoo--lsp-booster-final-command
+      'lsp-resolve-final-command)
+    (advice-add
+      'lsp-resolve-final-command
+      :around
+      #'aaronzinhoo--lsp-booster-final-command))
+  (add-to-list
+    'lsp-file-watch-ignored-directories
+    (regexp-quote (expand-file-name "~/.config/pyenv")))
+  (dolist (directory
+            '("[/\\\\]\\.venv\\'"
+               "[/\\\\]\\.direnv\\'"
+               "[/\\\\]\\.terraform\\'"
+               "[/\\\\]\\.terragrunt-cache\\'"
+               "[/\\\\]node_modules\\'"
+               "[/\\\\]dist\\'"
+               "[/\\\\]coverage\\'"))
+    (add-to-list 'lsp-file-watch-ignored-directories directory))
   (add-to-list 'lsp-disabled-clients 'sql-language-server)
-  (push '(protobuf-ts-mode . "protobuf") lsp-language-id-configuration)
   (push 'rustic-clippy flycheck-checkers)
-  (push '(web-mode . "html") lsp-language-id-configuration)
-  (push '(docker-compose-mode . "yaml") lsp-language-id-configuration)
-  (push '(yaml-ts-mode . "yaml") lsp-language-id-configuration)
-  (push '(bash-ts-mode . "sh") lsp-language-id-configuration)
-  (setq gc-cons-threshold  100000000)
-  (setq read-process-output-max (* 1024 1024)) ;;1MB
-  )
+  (add-to-list 'lsp-language-id-configuration
+    '(protobuf-ts-mode . "protobuf"))
+  (add-to-list 'lsp-language-id-configuration
+    '(docker-compose-mode . "yaml")))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list)
   :custom
@@ -1372,12 +1429,38 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-ts-mode . lsp-deferred)
-         (java-ts-mode . lsp-java-boot-lens-mode))
+          (java-ts-mode . lsp-java-boot-lens-mode)
+          (java-ts-mode . aaronzinhoo--lsp-java-setup)
+          (lsp-mode . aaronzinhoo--disable-yas-in-java))
+  :preface
+  (defun aaronzinhoo--lsp-java-setup ()
+    "Configure LSP and enable lenses in Java buffers."
+    (when (derived-mode-p 'java-ts-mode)
+      (setq-local lsp-lens-enable t)
+      (lsp-lens-mode 1)))
+    (defun aaronzinhoo--lsp-java-vmargs ()
+    "Return JVM arguments used to start the Java language server."
+    (let ((lombok-file
+           (expand-file-name
+            "deps/lombok.jar"
+            user-init-dir-fullpath)))
+      (append
+       '("-XX:+UseParallelGC"
+         "-XX:GCTimeRatio=4"
+         "-XX:AdaptiveSizePolicyWeight=90"
+         "-Dsun.zip.disableMemoryMapping=true"
+         "-Xmx2G"
+         "-Xms100m")
+       (when (file-readable-p lombok-file)
+         (list (concat "-javaagent:" lombok-file))))))
+  (defun aaronzinhoo--disable-yas-in-java ()
+    "Disable Yasnippet in Java LSP buffers."
+    (when (derived-mode-p 'java-ts-mode)
+      (yas-minor-mode -1)))
+  :init
+  (setq lsp-java-vmargs (aaronzinhoo--lsp-java-vmargs))
   :config
-  (require 'lsp-java-boot)
-  (let ((lombok-file (concat user-init-dir-fullpath "deps/lombok-1.18.26.jar")))
-    ;; current VSCode defaults
-    (setq lsp-java-vmargs (list "-XX:+UseParallelGC" "-XX:GCTimeRatio=4" "-XX:AdaptiveSizePolicyWeight=90" "-Dsun.zip.disableMemoryMapping=true" "-Xmx2G" "-Xms100m" (concat "-javaagent:" lombok-file)))))
+  (require 'lsp-java-boot))
 
 
 (use-package lsp-pyright
@@ -1882,11 +1965,6 @@ When the number of characters in a buffer exceeds this threshold,
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
-;; useful company backends
-(use-package company-web
-  :after (company)
-  :init
-  (require 'company-web-html))
 (use-package company-org-block
   :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
 ;; See the Cape README for more tweaks!
@@ -2900,7 +2978,10 @@ if one already exists."
 (use-package js-mode
   :straight nil
   :hook (js-mode . js-ts-mode))
-;;angular setup
+;;angular / typescript setup
+(use-package nvm
+  :straight (:host github :repo "rejeep/nvm.el")
+  :commands (nvm-use-for nvm-use-for-buffer))
 (use-package typescript-ts-mode
   :delight " Ts"
   :mode (("\\.ts\\'" . typescript-ts-mode)
@@ -2915,6 +2996,12 @@ if one already exists."
 ;; style: flake8
 ;; completion: company
 ;; install black, flake8 ipython, jedi, rope, autopep8, sphinx-doc
+(use-package pyvenv
+  :straight t
+  :commands (pyvenv-workon pyvenv-activate)
+  :init
+  (setenv "WORKON_HOME"
+          (expand-file-name "versions" pyenv-root-folder)))
 (use-package python
   :straight nil
   :delight " Py"
@@ -2922,8 +3009,9 @@ if one already exists."
           ("<backtab>" . combobulate-python-indent-for-tab-command)
           ("s-h" . python-hydra/body))
   :hook ((python-ts-mode . pyvenv-mode)
-         ;; (python-ts-mode . combobulate-mode)
-         (python-ts-mode . (lambda () (aaronzinhoo--python-setup))))
+          (python-ts-mode . aaronzinhoo--python-lsp-setup)
+          (python-ts-mode . aaronzinhoo--python-setup)
+          (inferior-python-mode . corfu-mode))
   :pretty-hydra
   (python-hydra
     (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_python" "Python Mode" 1 -0.05))
@@ -2946,47 +3034,40 @@ if one already exists."
       (("f" treesit-fold-toggle "fold/unfold"))
       "Navigation/Editing"
       (("j" combobulate-avy "Jump")
-        ("ed" combobulate-edit "Edit")
-        ("ei" combobulate-python-indent-for-tab-command "Indent")
-        ("en" combobulate-envelop "Envelop"))))
+        ("ei" combobulate-python-indent-for-tab-command "Indent"))))
   :preface
+  (defun aaronzinhoo--python-activate-environment ()
+    "Activate the pyenv environment specified by .python-version."
+    (when-let* ((file buffer-file-name)
+                 (root (locate-dominating-file file ".python-version"))
+                 (version-file
+                   (expand-file-name ".python-version" root))
+                 ((file-readable-p version-file))
+                 (environment
+                   (string-trim
+                     (with-temp-buffer
+                       (insert-file-contents version-file)
+                       (buffer-string))))
+                 ((not (string-empty-p environment))))
+      (pyvenv-workon environment)))
+  (defun aaronzinhoo--python-lsp-setup ()
+    "Activate the Python environment, then start LSP."
+    (aaronzinhoo--python-activate-environment)
+    (lsp-deferred))
   (defun aaronzinhoo--python-shell-send-current-file ()
     (interactive)
     (python-shell-send-file (buffer-file-name)))
   (defun aaronzinhoo--python-setup ()
     (setq python-indent-offset 4)
     (setq-local highlight-indentation-offset 4))
-  (defun aaronzinhoo--activate-python-shell-complettion ()
-    "Return non-nil if can trigger native completion."
-    (let ((python-shell-completion-native-enable t)
-          (python-shell-completion-native-output-timeout
-           python-shell-completion-native-try-output-timeout))
-      (python-shell-completion-native-get-completions
-       (get-buffer-process (current-buffer))
-       nil "_")))
   :custom
+  (python-shell-interpreter "ipython3")
+  (python-shell-interpreter-args "--no-color-info --matplotlib=inline --automagic --simple-prompt --pprint")
+  (python-shell-completion-native-enable t)
+  (python-shell-completion-native-output-timeout 2)
   (python-check-command "flake8")
   :init
-  (setenv "WORKON_HOME" (concat pyenv-root-folder "/versions"))
-  (setenv "VIRTUALENVWRAPPER_PYTHON" (concat pyenv-root-folder "/shims/python"))
-  (setenv "VIRTUALENVWRAPPER_VIRTUALENV" (concat pyenv-root-folder "/shims/python"))
-  (setenv "PIPENV_PYTHON" (concat pyenv-root-folder "/shims/python"))
-  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
-  (with-eval-after-load 'python (defun temp () (aaronzinhoo--activate-python-shell-complettion))))
-(use-package pyvenv
-  :straight t
-  :init
-  (setq pyvenv-post-activate-hooks
-        (list (lambda ()
-                (when (executable-find "ipython3")
-                  (setq python-shell-interpreter "ipython3"
-                        python-shell-interpreter-args "-i --matplotlib=inline --automagic --simple-prompt --pprint"
-                        ;; https://gitlab.com/python-mode-devs/python-mode/-/issues/112#note_699461188
-                        py-ipython-command "ipython3"
-                        py-ipython-command-args '("-i" "--matplotlib=inline" "--automagic" "--simple-prompt" "--pprint"))))))
-  (setq pyvenv-post-deactivate-hooks
-        (list (lambda ()
-                (setq python-shell-interpreter "python3")))))
+  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8))))
 (use-package py-autopep8
   :commands (py-autopep8-mode)
   :custom
@@ -3076,16 +3157,26 @@ if one already exists."
   :defer t)
 (use-package conf-javaprop-mode
   :straight nil
-  :mode ("\\.properties'" . conf-javaprop-mode))
+  :mode ("\\.properties\\'" . conf-javaprop-mode))
 (use-package java-ts-mode
-  :demand t
   :straight nil
-  :hook ((java-ts-mode . (lambda () (setq c-basic-offset 4 tab-width 4)))
+  :hook ((java-ts-mode . aaronzinhoo--java-setup)
+          (java-ts-mode . lsp-deferred)
+          (java-ts-mode . lsp-lens-mode)
           (java-ts-mode . subword-mode))
   ;; define the hydra with the mode since the mode-map may not be defined yet
-  :bind ((:map java-ts-mode-map
-           ("TAB" . indent-for-tab-command)
-           ("s-h" . java-hydra/body)))
+  :bind
+  (:map java-ts-mode-map
+    ("TAB" . indent-for-tab-command)
+    ([tab] . indent-for-tab-command)
+    ("s-h" . java-hydra/body))
+  :preface
+  (defun aaronzinhoo--java-setup ()
+    "Configure indentation for the current Java buffer."
+    (setq-local c-basic-offset 4)
+    (setq-local tab-width 4)
+    (setq-local lsp-lens-enable t)
+    (lsp-lens-mode 1))
   :pretty-hydra
   (java-hydra
    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-language_java" "Java LSP Mode" 1 -0.05))
@@ -3103,12 +3194,10 @@ if one already exists."
       (("n" lsp-java-resolve-actionable-notifications "Resolve Notifications"))
       "Project Management"
       (("ps" lsp-java-spring-initializr "Spring Init" :color blue)
-        ("pd" lsp-dependency-list "List Dependencies"))
+        ("pd" lsp-java-dependency-list "List Dependencies"))
       "Test"
       (("tb" lsp-jt-browser "Test Browser" :color blue)
-        ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t))))
-  :config
-  (yas-minor-mode -1))
+        ("tl" lsp-jt-lens-mode "Testing Lens Mode" :toggle t)))))
 
 ;; protobuf
 (use-package protobuf-ts-mode
