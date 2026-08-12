@@ -971,10 +971,84 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("M" flycheck-manual "manual")
         ("v" flycheck-verify-setup "verify setup"))))
   :preface
+  (require 'json)
+  (defun aaronzinhoo-openapi-buffer-p ()
+    "Return non-nil when the current YAML buffer contains an OpenAPI document."
+    (and
+      (derived-mode-p 'yaml-ts-mode 'yaml-mode)
+      (or
+        ;; Common OpenAPI filenames.
+        (and buffer-file-name
+          (string-match-p
+            "\\(?:openapi\\|swagger\\).*\\.ya?ml\\'"
+            (downcase
+              (file-name-nondirectory buffer-file-name))))
+
+        ;; Detect the root OpenAPI or Swagger version property.
+        (save-excursion
+          (goto-char (point-min))
+          (re-search-forward
+            "^[[:space:]]*\\(?:openapi\\|swagger\\):[[:space:]]*"
+            (min (point-max) 4000)
+            t)))))
+  (defun aaronzinhoo-spectral-severity (severity)
+    "Convert Spectral SEVERITY to a Flycheck severity symbol."
+    (pcase severity
+      (0 'error)
+      (1 'warning)
+      (_ 'info)))
+  (defun aaronzinhoo-spectral-error-parser
+    (output checker buffer)
+    "Parse Spectral JSON OUTPUT for CHECKER in BUFFER."
+    (condition-case err
+      (let ((results
+              (json-parse-string
+                output
+                :object-type 'alist
+                :array-type 'list
+                :null-object nil
+                :false-object nil)))
+        (mapcar
+          (lambda (result)
+            (let* ((range
+                     (alist-get 'range result))
+                    (start
+                      (alist-get 'start range))
+                    ;; Spectral locations are zero-based, while
+                    ;; Flycheck locations are one-based.
+                    (line
+                      (1+
+                        (or (alist-get 'line start) 0)))
+                    (column
+                      (1+
+                        (or (alist-get 'character start) 0)))
+                    (severity
+                      (alist-get 'severity result))
+                    (message
+                      (alist-get 'message result))
+                    (code
+                      (alist-get 'code result))
+                    (source
+                      (alist-get 'source result)))
+              (flycheck-error-new-at
+                line
+                column
+                (aaronzinhoo-spectral-severity severity)
+                (if code
+                  (format "%s [%s]" message code)
+                  message)
+                :checker checker
+                :buffer buffer
+                :filename source)))
+          results))
+      (error
+        (message "Could not parse Spectral output: %s"
+          (error-message-string err))
+        nil)))
   (defvar-local flycheck-local-checkers nil)
   (defun +flycheck-checker-get(fn checker property)
     (or (alist-get property (alist-get checker flycheck-local-checkers))
-        (funcall fn checker property)))
+      (funcall fn checker property)))
   (advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
   :custom
   (flycheck-stylelintrc "~/.stylelintrc")
@@ -983,8 +1057,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-rust-cargo-executable (concat user-home-directory "/.cargo/bin/cargo"))
   :config
   (setq-default flycheck-disabled-checkers
-                (append flycheck-disabled-checkers
-                        '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
+    (append flycheck-disabled-checkers
+      '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
   (flycheck-add-mode 'json-jsonlint 'json-ts-mode)
   ;; eslint requires you to be careful with the configuration
@@ -993,7 +1067,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
   (flycheck-add-mode 'css-stylelint 'css-ts-mode)
   (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-ts-mode)
-  (flycheck-add-mode 'sh-shellcheck 'sh-mode))
+  (flycheck-add-mode 'sh-shellcheck 'sh-mode)
+  (flycheck-define-checker openapi-spectral
+    "Validate OpenAPI and Swagger documents using Spectral."
+    :command
+    ("spectral"
+      "lint"
+      "--format" "json"
+      "--quiet"
+      source)
+    :error-parser aaronzinhoo-spectral-error-parser
+    :predicate aaronzinhoo-openapi-buffer-p
+    :modes (yaml-ts-mode)
+    ;; Spectral uses exit status 1 when linting issues are found.
+    :error-explainer
+    (lambda (error)
+      (format "Spectral: %s"
+        (flycheck-error-message error))))
+  ;; Continue to Spectral for OpenAPI documents. Its predicate makes
+  ;; this checker unavailable in ordinary YAML buffers.
+  (add-to-list 'flycheck-checkers 'openapi-spectral)
+  (flycheck-add-next-checker
+   'yaml-yamllint
+   '(t . openapi-spectral)))
 (use-package flycheck-aspell
   :after flycheck
   :config
@@ -1001,14 +1097,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic)
   ;; If you want to check HTML buffers
   (add-to-list 'flycheck-checkers 'html-aspell-dynamic))
-(use-package flycheck-swagger-cli
-  :after (flycheck)
-  :straight (:type git :host github :repo "vercapi/flycheck-swagger-cli" :branch "master")
-  :custom
-  (flycheck-swagger-cli-executable "swagger-cli")
-  :init
-  (flycheck-add-mode 'swagger-cli 'yaml-ts-mode)
-  (require 'flycheck-swagger-cli))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
 ;; (use-package aggressive-indent
@@ -1154,23 +1242,24 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (require 'dap-lldb)
   (require 'dap-gdb-lldb))
 (use-package lsp-mode
+  :after flycheck
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :hook
-  ((bash-ts-mode        . lsp-deferred)
-    (c-ts-mode          . lsp-deferred)
-    (c++-ts-mode        . lsp-deferred)
-    (css-ts-mode . aaronzinhoo--web-lsp-setup)
-    (dockerfile-ts-mode . lsp-deferred)
-    (go-ts-mode         . lsp-deferred)
-    (html-ts-mode . aaronzinhoo--web-lsp-setup)
-    (js-ts-mode . aaronzinhoo--web-lsp-setup)
-    (json-ts-mode       . lsp-deferred)
-    (rust-ts-mode       . lsp-deferred)
-    (sql-mode           . lsp-deferred)
-    (tsx-ts-mode . aaronzinhoo--web-lsp-setup)
-    (typescript-ts-mode . aaronzinhoo--web-lsp-setup)
-    (yaml-ts-mode       . lsp-deferred)
+  ((bash-ts-mode         . lsp-deferred)
+    (c-ts-mode           . lsp-deferred)
+    (c++-ts-mode         . lsp-deferred)
+    (css-ts-mode         . aaronzinhoo--web-lsp-setup)
+    (dockerfile-ts-mode  . lsp-deferred)
+    (go-ts-mode          . lsp-deferred)
+    (html-ts-mode        . aaronzinhoo--web-lsp-setup)
+    (js-ts-mode          . aaronzinhoo--web-lsp-setup)
+    (json-ts-mode        . lsp-deferred)
+    (rust-ts-mode        . lsp-deferred)
+    (sql-mode            . lsp-deferred)
+    (tsx-ts-mode         . aaronzinhoo--web-lsp-setup)
+    (typescript-ts-mode  . aaronzinhoo--web-lsp-setup)
+    (lsp-managed-mode    . aaronzinhoo--configure-lsp-flycheck-chain)
     (lsp-mode            . lsp-enable-which-key-integration)
     (lsp-completion-mode . aaronzinhoo--lsp-completion-setup))
   :bind (:map lsp-mode-map
@@ -1269,7 +1358,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         (concat bin-directory
           path-separator
           (or (getenv "PATH") "")))))
-
   (defun aaronzinhoo--configure-angular-language-server ()
   "Configure the project-local Angular language server."
   (when-let* ((root (aaronzinhoo--angular-project-root))
@@ -1286,12 +1374,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
            "--stdio"
            "--tsProbeLocations" node-modules
            "--ngProbeLocations" node-modules))))
-
   (defun aaronzinhoo--web-lsp-setup ()
     "Prepare the Node environment, then start LSP."
     (aaronzinhoo--activate-project-node)
     (aaronzinhoo--configure-angular-language-server)
     (lsp-deferred))
+  (defun aaronzinhoo--configure-lsp-flycheck-chain ()
+    "Add yamllint after LSP for LSP-managed YAML buffers."
+    (when (derived-mode-p 'yaml-ts-mode 'yaml-mode)
+      (flycheck-add-next-checker
+        'lsp
+        '(t . yaml-yamllint))))
   :custom
   ;; core
   (lsp-enable-xref t)
@@ -1327,41 +1420,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (lsp-keymap-prefix nil)
   (lsp-completion-enable t)
   (lsp-ruff-lsp-server-command '("ruff" "server"))
-  (lsp-yaml-schema-extensions '(((name . "Kubernetes v1.30.3")
-                                  (description . "Kubernetes v1.30.3 manifest schema definition")
-                                  (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.30.3-standalone-strict/all.json")
-                                  (fileMatch . ["*-k8s.yaml" "*-k8s.yml"]))
-                                 ((name . "OpenAPI v3.1.0")
-                                   (description . "OpenAPI v3.1.0 schema definition")
-                                   (url . "https://spec.openapis.org/oas/3.1/schema/2022-10-07")
-                                   (fileMatch . ["*openapi.y*"]))))
-  (lsp-yaml-schemas
-    `(("https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"
-        . ["*-compose.yaml" "*-compose.yml"])
-
-       ("https://json.schemastore.org/kustomization.json"
-         . ["kustomization.yaml"
-             "kustomization.yml"])
-
-       ("https://spec.openapis.org/oas/3.1/schema/2022-10-07"
-         . ["*openapi.yaml"
-             "*openapi.yml"])
-
-       ("file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json"
-         . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"])
-
-       (kubernetes . ["*-k8s.yaml"
-                       "*-k8s.yml"
-                       "k8s/**/*.yaml"
-                       "k8s/**/*.yml"
-                       "manifests/**/*.yaml"
-                       "manifests/**/*.yml"])))
-  ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
-  (lsp-yaml--built-in-kubernetes-schema
-    '((name . "Kubernetes")
-       (description . "Built-in kubernetes manifest schema definition")
-       (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
-       (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
   :init
   (setq lsp-use-plists t)
   :config
@@ -1405,9 +1463,56 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-to-list 'lsp-disabled-clients 'sql-language-server)
   (push 'rustic-clippy flycheck-checkers)
   (add-to-list 'lsp-language-id-configuration
-    '(protobuf-ts-mode . "protobuf"))
-  (add-to-list 'lsp-language-id-configuration
-    '(docker-compose-mode . "yaml")))
+    '(protobuf-ts-mode . "protobuf")))
+(use-package lsp-yaml
+  :straight nil
+  :after lsp-mode
+  :custom
+  (lsp-yaml-schemas
+   '((https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+      . ["compose.yaml"
+         "compose.yml"
+         "docker-compose.yaml"
+         "docker-compose.yml"
+         "docker-compose*.yaml"
+         "docker-compose*.yml"])
+
+     (https://json.schemastore.org/kustomization.json
+      . ["kustomization.yaml"
+         "kustomization.yml"])
+
+     (https://spec.openapis.org/oas/3.1/schema/2022-10-07
+      . ["*openapi.yaml"
+         "*openapi.yml"])
+
+     (file:///Users/agonzales/development/work/kahless/backend/kafka-provisioner/schema.json
+      . ["/Users/agonzales/development/work/kahless/backend/kafka-provisioner/tests/scripts/*"])
+
+     (kubernetes
+      . ["*-k8s.yaml"
+         "*-k8s.yml"
+         "k8s/**/*.yaml"
+         "k8s/**/*.yml"
+         "manifests/**/*.yaml"
+         "manifests/**/*.yml"])))
+  ;; Temporary workaround for the upstream schema version.
+  (lsp-yaml--built-in-kubernetes-schema
+   '((name . "Kubernetes")
+     (description
+      . "Built-in Kubernetes manifest schema definition")
+     (url
+      . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
+     (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
+  ;; fixed upstream but cannot pull in upstream fix due lsp having issue in emacs 30
+  (lsp-yaml--built-in-kubernetes-schema
+    '((name . "Kubernetes")
+       (description . "Built-in kubernetes manifest schema definition")
+       (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
+       (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
+  :config
+  (add-to-list
+   'lsp-language-id-configuration
+   '(docker-compose-mode . "yaml")))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list)
   :custom
@@ -2676,9 +2781,7 @@ if one already exists."
           (with-current-buffer buf
             (save-buffer)))
         (message "[%s] Saved %d buffer(s)" current-project-name (length modified-buffers))))))
-
 ;;; Languages Support
-
 ;; folding
 (use-package treesit-fold
   :commands (treesit-fold-toggle)
@@ -2693,55 +2796,80 @@ if one already exists."
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
-(use-package openapi-yaml-mode
-  :straight (:type git :host github :repo "magoyette/openapi-yaml-mode" :branch "master")
-  :ensure t
-  :hook ((openapi-yaml-mode . yas-minor-mode)))
+(use-package dtrt-indent
+  :straight t
+  :config
+  (add-to-list
+    'dtrt-indent-hook-mapping-list
+    '(yaml-ts-mode default
+       (yaml-indent-offset tab-width)))
+  (dtrt-indent-global-mode 1))
 (use-package openapi-preview
   :commands (openapi-preview)
   :straight (:type git :host github :repo "merrickluo/openapi-preview" :branch "main")
   :custom
   (openapi-preview-redoc-command "redoc-cli"))
 (use-package yaml-mode
-  :demand t
+  :straight t
+  :defer t
   :bind ((:map yaml-mode-map
            ("s-h" . yaml-hydra/body))))
 (use-package yaml-ts-mode
   :straight nil
+  :after flycheck
   :bind ((:map yaml-ts-mode-map
-           ("s-h" . yaml-hydra/body)))
+           ("s-h" . yaml-hydra/body)
+           ("TAB" . indent-for-tab-command)
+           ("<tab>" . indent-for-tab-command)
+           ("<backtab>" . yaml-indent-line)))
   :hook ((docker-compose-mode . yaml-ts-mode)
-         (yaml-ts-mode . aaronzinhoo-yaml-mode-hook)
-         (yaml-ts-mode . flycheck-mode)
-         (yaml-ts-mode . hungry-delete-mode)
-         (yaml-ts-mode . (lambda () (setq-local tab-width 2)))
-         (yaml-ts-mode . (lambda () (setq-local flycheck-local-checkers '((yaml-yamllint . ((next-checkers . (swagger-cli lsp)))))))))
+          (yaml-ts-mode . aaronzinhoo--yaml-mode-hook)
+          (yaml-ts-mode . aaronzinhoo--yaml-indentation-setup)
+          (yaml-ts-mode . flycheck-mode)
+          (yaml-ts-mode . lsp-deferred)
+          (yaml-ts-mode . hungry-delete-mode)
+          (yaml-ts-mode . yas-minor-mode))
   :bind (:map yaml-ts-mode-map ("<backtab>" . yaml-indent-line))
+  :custom
+  ;; Fallback when dtrt-indent cannot detect the indentation width.
+  (yaml-indent-offset 2)
   :preface
-  (defun aaronzinhoo-yaml-mode-hook ()
-    (setq-local lsp-java-boot-enabled nil)
-    (setq-local lsp-lens-mode nil)
-    (setq-local eldoc-mode nil)
-    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
-    ;; (yaml-pro-mode nil)
-    )
+  (defun aaronzinhoo--yaml-indentation-setup ()
+    "Use yaml-mode's indentation logic in yaml-ts-mode."
+    (require 'yaml-mode)
+    (setq-local
+      indent-line-function #'yaml-indent-line
+      indent-tabs-mode nil))
+  (defun aaronzinhoo--yaml-mode-hook ()
+    (setq-local
+      lsp-java-boot-enabled nil
+      lsp-lens-mode nil
+      completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
+    (eldoc-mode -1))
   :pretty-hydra
   (yaml-hydra
-    (:hint nil :title (with-faicon "nf-fa-yen" "Yaml Commands" 1 -0.05) :quit-key "q" :color red)
+    (:hint nil
+      :title (with-faicon
+               "nf-fa-yen"
+               "YAML Commands"
+               1
+               -0.05)
+      :quit-key "q"
+      :color red)
     ("Indent"
       (("i" indent-rigidly "Indent Region"))
       "Navigation"
-      (
-        ;; ("j" combobulate-avy-jump "Jump") ;; bug in this so for now ignore... could be in the treesitter language actually..
-        ;; ("n" yaml-pro-ts-next-subtree "Next Sibling Node")
-        ;; ("p" yaml-pro-ts-prev-subtree "Previous Sibling Node")
-        ("N" block-nav-next-indentation-level "Next Child Node")
-        ;; ("P" yaml-pro-ts-up-level "Previous Parent Node"))
+      (("N" block-nav-next-indentation-level
+         "Next Child Node")
+       ("P" block-nav-previous-indentation-level
+         "Prev Parent Node") )
       "Fold"
       (("f" treesit-fold-toggle "Toggle Fold"))
       "Schema"
-      (("s" lsp-yaml-select-buffer-schema "Buffer Schema")
-       ("d" lsp-yaml-download-schema-store-db "Download Schemastore"))))))
+      (("s" lsp-yaml-select-buffer-schema
+         "Buffer Schema")
+        ("d" lsp-yaml-download-schema-store-db
+          "Download Schemastore")))))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
