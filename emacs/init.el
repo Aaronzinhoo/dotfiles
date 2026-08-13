@@ -970,126 +970,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (("r" recenter-top-bottom "recenter" :color pink)
         ("M" flycheck-manual "manual")
         ("v" flycheck-verify-setup "verify setup"))))
-  :preface
-  (require 'json)
-  (defun aaronzinhoo-openapi-buffer-p ()
-    "Return non-nil when the current YAML buffer contains an OpenAPI document."
-    (and
-      (derived-mode-p 'yaml-ts-mode 'yaml-mode)
-      (or
-        ;; Common OpenAPI filenames.
-        (and buffer-file-name
-          (string-match-p
-            "\\(?:openapi\\|swagger\\).*\\.ya?ml\\'"
-            (downcase
-              (file-name-nondirectory buffer-file-name))))
-
-        ;; Detect the root OpenAPI or Swagger version property.
-        (save-excursion
-          (goto-char (point-min))
-          (re-search-forward
-            "^[[:space:]]*\\(?:openapi\\|swagger\\):[[:space:]]*"
-            (min (point-max) 4000)
-            t)))))
-  (defun aaronzinhoo-spectral-severity (severity)
-    "Convert Spectral SEVERITY to a Flycheck severity symbol."
-    (pcase severity
-      (0 'error)
-      (1 'warning)
-      (_ 'info)))
-  (defun aaronzinhoo-spectral-error-parser
-    (output checker buffer)
-    "Parse Spectral JSON OUTPUT for CHECKER in BUFFER."
-    (condition-case err
-      (let ((results
-              (json-parse-string
-                output
-                :object-type 'alist
-                :array-type 'list
-                :null-object nil
-                :false-object nil)))
-        (mapcar
-          (lambda (result)
-            (let* ((range
-                     (alist-get 'range result))
-                    (start
-                      (alist-get 'start range))
-                    ;; Spectral locations are zero-based, while
-                    ;; Flycheck locations are one-based.
-                    (line
-                      (1+
-                        (or (alist-get 'line start) 0)))
-                    (column
-                      (1+
-                        (or (alist-get 'character start) 0)))
-                    (severity
-                      (alist-get 'severity result))
-                    (message
-                      (alist-get 'message result))
-                    (code
-                      (alist-get 'code result))
-                    (source
-                      (alist-get 'source result)))
-              (flycheck-error-new-at
-                line
-                column
-                (aaronzinhoo-spectral-severity severity)
-                (if code
-                  (format "%s [%s]" message code)
-                  message)
-                :checker checker
-                :buffer buffer
-                :filename source)))
-          results))
-      (error
-        (message "Could not parse Spectral output: %s"
-          (error-message-string err))
-        nil)))
-  (defvar-local flycheck-local-checkers nil)
-  (defun +flycheck-checker-get(fn checker property)
-    (or (alist-get property (alist-get checker flycheck-local-checkers))
-      (funcall fn checker property)))
-  (advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
   :custom
-  (flycheck-stylelintrc "~/.stylelintrc")
   (flycheck-css-stylelint-executable "stylelint")
-  (flycheck-yamllintrc "~/.yamllintrc")
   (flycheck-rust-cargo-executable (concat user-home-directory "/.cargo/bin/cargo"))
   :config
   (setq-default flycheck-disabled-checkers
     (append flycheck-disabled-checkers
-      '(javascript-jshint c/c++-clang c/c++-cppcheck c/c++-gcc)))
+      '(javascript-jshint
+         c/c++-clang
+         c/c++-cppcheck
+         c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
-  (flycheck-add-mode 'json-jsonlint 'json-ts-mode)
-  ;; eslint requires you to be careful with the configuration
-  ;; ensure to use .json files and setup accordingly
-  ;; test with shell command
-  (flycheck-add-mode 'javascript-eslint 'typescript-mode)
-  (flycheck-add-mode 'css-stylelint 'css-ts-mode)
-  (flycheck-add-mode 'dockerfile-hadolint 'dockerfile-ts-mode)
-  (flycheck-add-mode 'sh-shellcheck 'sh-mode)
-  (flycheck-define-checker openapi-spectral
-    "Validate OpenAPI and Swagger documents using Spectral."
-    :command
-    ("spectral"
-      "lint"
-      "--format" "json"
-      "--quiet"
-      source)
-    :error-parser aaronzinhoo-spectral-error-parser
-    :predicate aaronzinhoo-openapi-buffer-p
-    :modes (yaml-ts-mode)
-    ;; Spectral uses exit status 1 when linting issues are found.
-    :error-explainer
-    (lambda (error)
-      (format "Spectral: %s"
-        (flycheck-error-message error))))
-  ;; Continue to Spectral for OpenAPI documents. Its predicate makes
-  ;; this checker unavailable in ordinary YAML buffers.
-  (add-to-list 'flycheck-checkers 'openapi-spectral)
-  (flycheck-add-next-checker
-   'yaml-yamllint
-   '(t . openapi-spectral)))
+  (flycheck-add-mode 'yaml-yamllint 'openapi-yaml-mode)
+  )
 (use-package flycheck-aspell
   :after flycheck
   :config
@@ -1425,7 +1318,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   ;; Install the JSON-parser advice after the JSON implementation is known.
   (require 'json)
-
   (let ((json-parser
           (if (fboundp 'json-parse-buffer)
             'json-parse-buffer
@@ -1438,7 +1330,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         json-parser
         :around
         #'aaronzinhoo--lsp-booster-json-parse)))
-
   ;; lsp-resolve-final-command exists now because :config runs after loading.
   (unless
     (advice-member-p
@@ -1566,8 +1457,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq lsp-java-vmargs (aaronzinhoo--lsp-java-vmargs))
   :config
   (require 'lsp-java-boot))
-
-
 (use-package lsp-pyright
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
   :custom
@@ -1579,7 +1468,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (python-ts-mode . (lambda ()
                       (require 'lsp-pyright)
                       (lsp-deferred))))
-
 ;;; Debugger Support
 (use-package dap-java
   :after (lsp-java dap)
@@ -2861,8 +2749,8 @@ if one already exists."
       "Navigation"
       (("N" block-nav-next-indentation-level
          "Next Child Node")
-       ("P" block-nav-previous-indentation-level
-         "Prev Parent Node") )
+        ("P" block-nav-previous-indentation-level
+          "Prev Parent Node") )
       "Fold"
       (("f" treesit-fold-toggle "Toggle Fold"))
       "Schema"
@@ -2870,6 +2758,39 @@ if one already exists."
          "Buffer Schema")
         ("d" lsp-yaml-download-schema-store-db
           "Download Schemastore")))))
+(use-package openapi-yaml-mode
+  :straight nil
+  :load-path "~/.emacs.d/elisp"
+  :hook ((openapi-yaml-mode . lsp-deferred))
+  :bind (:map openapi-yaml-mode-map
+          ("s-h" . openapi-hydra/body))
+  :pretty-hydra
+  (openapi-yaml-hydra
+    (:hint nil
+      :title (with-faicon
+               "nf-fa-yen"
+               "YAML Commands"
+               1
+               -0.05)
+      :quit-key "q"
+      :color red)
+    ("Indent"
+      (("i" indent-rigidly "Indent Region"))
+      "Navigation"
+      (("N" block-nav-next-indentation-level
+         "Next Child Node")
+        ("P" block-nav-previous-indentation-level
+          "Prev Parent Node") )
+      "Fold"
+      (("f" treesit-fold-toggle "Toggle Fold"))
+      "Openapi"
+      (("v" openapi-preview "View in Browser")
+        ("s" lsp-yaml-select-buffer-schema
+          "Buffer Schema"))))
+  :config
+  (add-to-list
+    'lsp-language-id-configuration
+    '(openapi-yaml-mode . "yaml")))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
