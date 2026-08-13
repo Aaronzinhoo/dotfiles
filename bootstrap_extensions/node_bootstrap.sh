@@ -34,6 +34,8 @@ dockerfile-language-server-nodejs
 redoc-cli
 vscode-langservers-extracted
 pyright
+stylelint
+stylelint-config-standard-scss
 EOF
 
 nvm install "$NODE_VERSION"
