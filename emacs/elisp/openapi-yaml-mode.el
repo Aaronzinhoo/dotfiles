@@ -57,7 +57,10 @@ configuration continue to apply."
 
 
 ;;; File associations
-
+;;;###autoload
+(add-to-list 'auto-mode-alist '(".*\\(?:openapi\\|swagger\\).*\\.ya?ml\\'" . openapi-yaml-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist  '(".*\\(?:openapi\\|swagger\\)/.*\\.ya?ml\\'" . openapi-yaml-mode))
 
 ;;; OpenAPI detection
 (defun openapi-yaml-buffer-p ()
@@ -148,12 +151,6 @@ configuration continue to apply."
   "C-c C-c" #'flycheck-buffer
   "C-c C-e" #'flycheck-list-errors
   "C-c C-i" #'imenu)
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '(".*\\(?:openapi\\|swagger\\).*\\.ya?ml\\'" . openapi-yaml-mode))
-;;;###autoload
-(add-to-list 'auto-mode-alist  '(".*\\(?:openapi\\|swagger\\)/.*\\.ya?ml\\'" . openapi-yaml-mode))
-
 
 (provide 'openapi-yaml-mode)
 ;;; openapi-yaml-mode.el ends here

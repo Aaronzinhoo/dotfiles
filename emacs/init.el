@@ -2774,12 +2774,14 @@ if one already exists."
          "Buffer Schema")
         ("d" lsp-yaml-download-schema-store-db
           "Download Schemastore")))))
+;; demanding openapi-yaml-mode since need mode file config to be loaded after yaml
 (use-package openapi-yaml-mode
   :straight nil
+  :demand t
   :load-path "~/.emacs.d/elisp"
   :hook ((openapi-yaml-mode . lsp-deferred))
   :bind (:map openapi-yaml-mode-map
-          ("s-h" . openapi-hydra/body))
+          ("s-h" . openapi-yaml-hydra/body))
   :pretty-hydra
   (openapi-yaml-hydra
     (:hint nil
