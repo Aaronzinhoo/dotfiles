@@ -178,12 +178,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
   (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
   :config
-  ;; revert dired buffers but dont state it
-  (global-auto-revert-non-file-buffers t)
-  (auto-revert-verbose nil)
-  (global-auto-revert-mode t)
-  (global-auto-revert-mode nil)
-  (global-auto-revert-mode t)
   (if (fboundp 'dired-compress-file-suffixes)
     (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
   (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
@@ -225,6 +219,14 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
                           `(lambda (c)
                              (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
   (electric-pair-mode t))
+(use-package autorevert
+  :straight nil
+  :demand t
+  :custom
+  (global-auto-revert-non-file-buffers t)
+  (auto-revert-verbose nil)
+  :config
+  (global-auto-revert-mode 1))
 (use-package paren
   :straight nil
   :custom
