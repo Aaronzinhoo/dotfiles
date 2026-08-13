@@ -241,9 +241,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (gcmh-high-cons-threshold (* 128 1024 1024))
   :config
   (gcmh-mode 1))
-(use-package sh-mode
-  :straight nil
-  :hook ((sh-mode . (lambda () (setq flycheck-local-checkers '((lsp . ((next-checkers . (sh-shellcheck))))))))))
 (use-package simple
   :straight nil
   :preface
@@ -296,8 +293,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (dolist (lang treesit-language-source-alist)
     (unless (treesit-language-available-p (car lang))
       (treesit-install-language-grammar (car lang))))
-  (dolist (mapping '((sh-mode . bash-ts-mode)
-                      (c-mode . c-ts-mode)
+  (dolist (mapping '((c-mode . c-ts-mode)
                       (c++-mode . c++-ts-mode)
                       (css-mode . css-ts-mode)
                       (dockerfile-mode . dockerfile-ts-mode)
@@ -1139,8 +1135,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :hook
-  ((bash-ts-mode         . lsp-deferred)
-    (c-ts-mode           . lsp-deferred)
+  ((c-ts-mode           . lsp-deferred)
     (c++-ts-mode         . lsp-deferred)
     (css-ts-mode         . aaronzinhoo--web-lsp-setup)
     (dockerfile-ts-mode  . lsp-deferred)
@@ -1152,8 +1147,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (sql-mode            . lsp-deferred)
     (tsx-ts-mode         . aaronzinhoo--web-lsp-setup)
     (typescript-ts-mode  . aaronzinhoo--web-lsp-setup)
-    (lsp-managed-mode    . aaronzinhoo--configure-lsp-flycheck-chain)
     (lsp-mode            . lsp-enable-which-key-integration)
+    (lsp-managed-mode    . aaronzinhoo--flycheck-add-lsp-chains)
     (lsp-completion-mode . aaronzinhoo--lsp-completion-setup))
   :bind (:map lsp-mode-map
           ("s-l" . lsp-hydra/body)
@@ -1185,6 +1180,26 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ("LI" lsp-install-server "Install")
         ("LR" lsp-workspace-restart "Restart"))))
   :preface
+  (defun aaronzinhoo--flycheck-add-lsp-chains ()
+    "Add secondary checkers after LSP creates its Flycheck checker."
+    (when (and lsp-managed-mode
+            (flycheck-valid-checker-p 'lsp)
+            (not (get 'lsp 'aaronzinhoo-chains-added)))
+      (flycheck-add-next-checker
+        'lsp
+        '(t . yaml-yamllint))
+
+      (flycheck-add-next-checker
+        'lsp
+        '(t . sh-shellcheck)
+        t)
+
+      (flycheck-add-next-checker
+        'lsp
+        '(t . rust-clippy)
+        t)
+
+      (put 'lsp 'aaronzinhoo-chains-added t)))
   (defun aaronzinhoo--lsp-booster-json-parse (old-function &rest args)
     "Parse LSP Booster bytecode, or call OLD-FUNCTION with ARGS."
     (or
@@ -1272,12 +1287,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (aaronzinhoo--activate-project-node)
     (aaronzinhoo--configure-angular-language-server)
     (lsp-deferred))
-  (defun aaronzinhoo--configure-lsp-flycheck-chain ()
-    "Add yamllint after LSP for LSP-managed YAML buffers."
-    (when (derived-mode-p 'yaml-ts-mode 'yaml-mode)
-      (flycheck-add-next-checker
-        'lsp
-        '(t . yaml-yamllint))))
   :custom
   ;; core
   (lsp-enable-xref t)
@@ -1339,6 +1348,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       'lsp-resolve-final-command
       :around
       #'aaronzinhoo--lsp-booster-final-command))
+  ;; setup additinal ignore directories for lsp
   (add-to-list
     'lsp-file-watch-ignored-directories
     (regexp-quote (expand-file-name "~/.config/pyenv")))
@@ -1351,8 +1361,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                "[/\\\\]dist\\'"
                "[/\\\\]coverage\\'"))
     (add-to-list 'lsp-file-watch-ignored-directories directory))
-  (add-to-list 'lsp-disabled-clients 'sql-language-server)
-  (push 'rustic-clippy flycheck-checkers)
   (add-to-list 'lsp-language-id-configuration
     '(protobuf-ts-mode . "protobuf")))
 (use-package lsp-yaml
@@ -2681,6 +2689,14 @@ if one already exists."
 (use-package coverlay
   :commands (coverlay-mode))
 
+;; Shell
+(use-package sh-script
+  :straight nil
+  :mode (("\\.sh\\'" . bash-ts-mode)
+          ("\\.bash\\'" . bash-ts-mode))
+  :hook ((bash-ts-mode . lsp-deferred)
+          (sh-mode . lsp-deferred)))
+
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
@@ -3187,20 +3203,30 @@ if one already exists."
   :hook (cmake-mode . cmake-ts-mode))
 
 ;;; Rust
-(use-package rust-mode)
-(use-package rustic)
+;; Built-in tree-sitter Rust mode.
+;; Optional Cargo command menu.
+(use-package cargo-mode
+  :after rust-ts-mode
+  :commands cargo-minor-mode)
 (use-package rust-ts-mode
   :straight nil
   :mode ("\\.rs\\'" . rust-ts-mode)
-  :preface
-  (defun cargo-run-offline ()
-    (interactive)
-    (rustic-cargo-run-command "--offline")))
-(use-package cargo-mode
-  :hook
-  (rust-ts-mode . cargo-minor-mode)
-  (rust-ts-mode . (lambda () (setq-local flycheck-local-checkers '((rust-clippy . ((next-checkers . (rust-cargo)))))))))
-
+  :preface (defun cargo-run-offline ()
+             "Run the current Cargo project in offline mode."
+             (interactive)
+             (rustic-cargo-run-command "--offline"))
+  :hook ((rust-ts-mode . lsp-deferred)
+          (rust-ts-mode . cargo-minor-mode))
+  :bind (:map rust-ts-mode-map
+          ("C-c C-r" . cargo-run-offline)))
+;; Load Rustic for its Cargo commands, but do not use rustic-mode.
+(use-package rustic
+  :after rust-ts-mode
+  :commands (rustic-cargo-run-command
+              rustic-cargo-run
+              rustic-cargo-test
+              rustic-cargo-clippy
+              rustic-cargo-build))
 ;;; Java | C++ | C
 (use-package groovy-mode
   :defer t)
