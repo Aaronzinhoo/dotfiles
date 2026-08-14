@@ -617,86 +617,107 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; CONTROL VERSION UTILS
-(use-package git-gutter
-  :after (nerd-icons hydra)
-  :straight (:type git :host github :repo "emacsorphanage/git-gutter" :branch "master")
-  :hook (prog-mode . git-gutter-mode)
-  :bind ("s-g" . hydra-git-gutter/body)
-  :commands (git-gutter-mode)
-  :diminish git-gutter-mode
-  :preface
-  (pretty-hydra-define hydra-git-gutter
-    (:hint nil :color "pink" :quit-key "SPC" :title (with-octicon "nf-oct-diff" "Diff" 1 -0.05))
-    ("Nav Hunks"
-     (("n" git-gutter:next-hunk "next")
-      ("p" git-gutter:previous-hunk "prev")
-      ("e" git-gutter:end-of-hunk "end"))
-     "Edit Hunks"
-     (("m" git-gutter:mark-hunk "mark")
-      ("P" git-gutter:popup-hunk "popup")
-      ("s" git-gutter:stage-hunk "stage")
-      ("r" git-gutter:revert-hunk "revert"))
-     "Other"
-     (("q" nil "Quit" :color blue))))
+(use-package diff-hl
+  :straight (:type git :host github :repo "dgutov/diff-hl")
+  :after pretty-hydra
+  :commands (diff-hl-mode
+              diff-hl-next-hunk
+              diff-hl-previous-hunk
+              diff-hl-show-hunk
+              diff-hl-stage-current-hunk
+              diff-hl-revert-hunk)
+  :hook ((prog-mode . diff-hl-mode)
+          (dired-mode . diff-hl-dired-mode))
+  :bind ("s-g" . diff-hl-hydra/body)
+
+  :pretty-hydra
+  (diff-hl-hydra
+    (:hint nil
+      :color pink
+      :quit-key "SPC"
+      :title (with-octicon
+               "nf-oct-diff"
+               "Diff"
+               1
+               -0.05))
+    ("Navigate"
+      (("n" diff-hl-next-hunk "Next hunk")
+        ("p" diff-hl-previous-hunk "Previous hunk"))
+      "Hunk"
+      (("P" diff-hl-show-hunk "Show")
+        ("s" diff-hl-stage-current-hunk "Stage")
+        ("r" diff-hl-revert-hunk "Revert"))
+      "Refresh"
+      (("g" diff-hl-update "Refresh"))
+      "Other"
+      (("q" nil "Quit" :color blue))))
   :custom
-  (git-gutter:ask-p nil)
-  (git-gutter:sign-width 1)
-  (git-gutter:hide-gutter t)
-  (git-gutter:window-width 2)
-  (git-gutter:modified-sign (nerd-icons-codicon "nf-cod-diff_modified"))
-  (git-gutter:added-sign (nerd-icons-codicon "nf-cod-diff_added"))
-  (git-gutter:deleted-sign (nerd-icons-codicon "nf-cod-diff_removed"))
-  (git-gutter:update-interval 1))
+  ;; avoid conflict with flycheck in the fringe
+  (diff-hl-side 'left)
+  ;; Avoid VC checks and processes on remote files.
+  (diff-hl-disable-on-remote t)
+  :config
+  ;; Refresh indicators after Magit changes repository state.
+  (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh))
 (use-package git-timemachine
   :defer t
   :commands (git-timemachine))
 (use-package hl-todo
-  :hook (org-mode . hl-todo-mode)
   :config
-  (global-hl-todo-mode))
+  (global-hl-todo-mode 1))
 (use-package smerge-mode
   :straight nil
-  :config
-  (defhydra smerge-hydra
-    (:color pink :hint nil :post (smerge-auto-leave))
-    "
-^Move^       ^Keep^               ^Diff^                 ^Other^
-^^-----------^^-------------------^^---------------------^^-------
-_n_ext       _b_ase               _<_: upper/base        _C_ombine
-_p_rev       _u_pper              _=_: upper/lower       _r_esolve
-^^           _l_ower              _>_: base/lower        _k_ill current
-^^           _a_ll                _R_efine
-^^           _RET_: current       _E_diff
-"
-    ("n" smerge-next)
-    ("p" smerge-prev)
-    ("b" smerge-keep-base)
-    ("u" smerge-keep-upper)
-    ("l" smerge-keep-lower)
-    ("a" smerge-keep-all)
-    ("RET" smerge-keep-current)
-    ("\C-m" smerge-keep-current)
-    ("<" smerge-diff-base-upper)
-    ("=" smerge-diff-upper-lower)
-    (">" smerge-diff-base-lower)
-    ("R" smerge-refine)
-    ("E" smerge-ediff)
-    ("C" smerge-combine-with-next)
-    ("r" smerge-resolve)
-    ("k" smerge-kill-current)
-    ("ZZ" (lambda ()
-            (interactive)
-            (save-buffer)
-            (bury-buffer))
-     "Save and bury buffer" :color blue)
-    ("q" nil "cancel" :color blue))
-  :hook (magit-diff-visit-file . (lambda ()
-                                   (when smerge-mode
-                                     (smerge-hydra/body)))))
-(use-package llama
-  :straight (:host github :repo "tarsius/llama"))
-(use-package magit-todos)
-(use-package git-commit)
+  :after pretty-hydra
+  :commands (smerge-mode
+              smerge-hydra/body)
+  :hook (magit-diff-visit-file . aaronzinhoo--maybe-open-smerge-hydra)
+  :preface
+  (defun aaronzinhoo--maybe-open-smerge-hydra ()
+    "Open the Smerge Hydra when visiting a conflicted file."
+    (when (bound-and-true-p smerge-mode)
+      (smerge-hydra/body)))
+  :pretty-hydra
+  (smerge-hydra
+    (:hint nil
+      :color pink
+      :quit-key "q"
+      :post (smerge-auto-leave)
+      :title (with-octicon
+               "nf-oct-git_merge"
+               "Resolve Conflicts"
+               1
+               -0.05))
+    ("Navigate"
+      (("n" smerge-next "Next")
+        ("p" smerge-prev "Previous"))
+      "Keep"
+      (("b" smerge-keep-base "Base")
+        ("u" smerge-keep-upper "Upper")
+        ("l" smerge-keep-lower "Lower")
+        ("a" smerge-keep-all "All")
+        ("RET" smerge-keep-current "Current"))
+      "Compare"
+      (("<" smerge-diff-base-upper "Upper / base")
+        ("=" smerge-diff-upper-lower "Upper / lower")
+        (">" smerge-diff-base-lower "Base / lower")
+        ("R" smerge-refine "Refine")
+        ("E" smerge-ediff "Ediff"))
+      "Resolve"
+      (("C" smerge-combine-with-next "Combine next")
+        ("r" smerge-resolve "Resolve")
+        ("k" smerge-kill-current "Kill current"))
+      "Finish"
+      (("ZZ"
+         (lambda ()
+           (interactive)
+           (save-buffer)
+           (bury-buffer))
+         "Save and bury"
+         :color blue)
+        ("q" nil "Quit" :color blue)))))
+(use-package magit-todos
+  :after magit
+  :commands magit-todos-mode)
 (use-package git-identity
   :after magit
   :bind (:map magit-status-mode-map
@@ -706,7 +727,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
    '(("aaron.gonzales.ctr@linquest.com"
       :domains ("github.km.spaceforce.mil")
       :dirs ("~/development/work")
-      :username )
+      :username "Aaron Gonzales")
      ("aaronzinho@ucla.edu"
       :domains ("github.com")
       ;; The identity is applied if the remote URL contains this organization as directory
@@ -726,35 +747,59 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
          ("M-i" . magit-section-backward)
          ("M-k" . magit-section-forward)
          ("M-t" . magit-todos-mode))
-  :hook ((magit-mode . magit-auto-revert-mode)
-         ((git-commit-setup . aaronzinhoo--git-commit-setup)))
+  :hook (git-commit-setup . aaronzinhoo--git-commit-setup)
   :preface
   (defun aaronzinhoo--delete-merged-branches ()
-  (interactive)
-  (magit-fetch-all-prune)
-  (let* ((default-branch
-           (read-string "Default branch: " (magit-get-current-branch)))
-         (merged-branches
-          (magit-git-lines "branch"
-                           "--format" "%(refname:short)"
-                           "--merged"
-                           default-branch))
-         (branches-to-delete
-          (remove default-branch merged-branches)))
-    (if branches-to-delete
-        (if (yes-or-no-p (concat "Delete branches? ["
-                                 (mapconcat 'identity branches-to-delete ", ") "]"))
-            (magit-branch-delete branches-to-delete))
-      (message "Nothing to delete"))))
+    "Delete local branches merged into a selected target branch."
+    (interactive)
+    (magit-fetch-all-prune)
+    (let* ((detected-main
+            (or (magit-main-branch)
+                (magit-get-current-branch)))
+           (target-branch
+            (read-string
+             "Merge target: "
+             detected-main))
+           (merged-branches
+            (magit-git-lines
+             "branch"
+             "--format=%(refname:short)"
+             "--merged"
+             target-branch))
+           ;; Never offer to delete the target or currently checked-out
+           ;; branch.
+           (protected-branches
+            (delq nil
+                  (list target-branch
+                        (magit-get-current-branch))))
+           (branches-to-delete
+            (seq-remove
+             (lambda (branch)
+               (member branch protected-branches))
+             merged-branches)))
+      (if (null branches-to-delete)
+          (message
+           "No branches are merged into %s"
+           target-branch)
+        (when
+            (yes-or-no-p
+             (format
+              "Delete branches merged into %s? [%s] "
+              target-branch
+              (mapconcat
+               #'identity
+               branches-to-delete
+               ", ")))
+          (magit-branch-delete branches-to-delete)))))
   (defun aaronzinhoo--git-commit-setup ()
     (setq-local fill-column 72)
     (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
   (magit-bind-magit-project-status nil)
   :config
+  (magit-auto-revert-mode 1)
   (transient-append-suffix 'magit-branch "C"
-    '("K" "delete all merged" aaronzinhoo--delete-merged-branches))
-  (add-hook 'after-save-hook 'magit-after-save-refresh-status))
+    '("K" "delete all merged" aaronzinhoo--delete-merged-branches)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package matching-paren-overlay
