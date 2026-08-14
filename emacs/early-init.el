@@ -20,7 +20,7 @@
 (defconst user-init-dir "~/.emacs.d/")
 (defconst user-init-file "~/.emacs.d/init.el")
 (defconst user-home-directory (getenv "HOME"))
-(defconst user-mail-address "aaronzinho@g.ucla.edu")
+(defconst user-mail-address "aarongonzales1@gmail.com")
 (defconst user-init-dir-fullpath (file-truename user-init-dir))
 (defconst backup-dir (concat user-emacs-directory "/backups"))
 (defconst autosave-dir (concat user-emacs-directory "/autosave"))

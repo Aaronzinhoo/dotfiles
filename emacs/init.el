@@ -955,7 +955,8 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :straight (:type git :host github :repo "flycheck/flycheck" :branch "master")
   :diminish
   :commands flycheck-mode
-  :hook (prog-mode . flycheck-mode)
+  :hook ((prog-mode . flycheck-mode)
+          (flycheck-mode . flycheck-annotate-mode))
   :bind ("s-f" . flycheck-hydra/body)
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-debug" "Flycheck" 1 -0.05))
@@ -975,6 +976,20 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
         ("M" flycheck-manual "manual")
         ("v" flycheck-verify-setup "verify setup"))))
   :custom
+  ;; Diff HL owns the fringe.
+  (flycheck-indication-mode nil)
+
+  ;; Highlight the diagnostic location.
+  (flycheck-highlighting-mode 'symbols)
+  (flycheck-highlighting-style 'level-face)
+
+  ;; Show one compact inline diagnostic at point.
+  (flycheck-annotate-current-line-style 'eol)
+  (flycheck-annotate-other-lines-style nil)
+  (flycheck-annotate-levels '(error warning))
+
+  ;; Don’t repeat an inline message in the echo area.
+  (flycheck-annotate-suppress-echo t)
   (flycheck-css-stylelint-executable "stylelint")
   (flycheck-rust-cargo-executable (concat user-home-directory "/.cargo/bin/cargo"))
   :config
@@ -985,8 +1000,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
          c/c++-cppcheck
          c/c++-gcc)))
   (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
-  (flycheck-add-mode 'yaml-yamllint 'openapi-yaml-mode)
-  )
+  (flycheck-add-mode 'yaml-yamllint 'openapi-yaml-mode))
 (use-package flycheck-aspell
   :after flycheck
   :config
