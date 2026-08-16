@@ -3513,7 +3513,7 @@ if one already exists."
   (moe-theme-highlight-buffer-id t)
   :config
   (require 'moe-theme-switcher)
-  (moe-theme-auto-switch))
+  (moe-theme-switcher-mode 1))
 (message "Done loading packages")
 
 ;;; init.el ends here
