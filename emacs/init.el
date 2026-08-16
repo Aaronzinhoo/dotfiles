@@ -159,6 +159,13 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     "Inserts a new UUID at the point."
     (interactive)
     (insert (create-uuid)))
+  (defun aaronzinhoo--append-capfs (&rest capfs)
+    "Append CAPFS to the current buffer without adding duplicates."
+    (setq-local completion-at-point-functions
+      (delete-dups
+        (append
+          (copy-sequence completion-at-point-functions)
+          capfs))))
   :init
   (defcustom ccm-vpos-init '(round (window-text-height) 2)
     "This is the screen line position where the cursor initially stays."
@@ -950,7 +957,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :bind (("C--" . text-scale-decrease)
          ("C-=" . text-scale-increase)))
 (use-package eldoc
-  :diminish eldoc-mode)
+  :straight nil
+  :diminish
+  :custom
+  (eldoc-idle-delay 0.3)
+  (eldoc-echo-area-use-multiline-p t))
 (use-package flycheck
   :straight (:type git :host github :repo "flycheck/flycheck" :branch "master")
   :diminish
@@ -1202,6 +1213,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
         ("LI" lsp-install-server "Install")
         ("LR" lsp-workspace-restart "Restart"))))
   :preface
+  (defvar aaronzinhoo--lsp-capf-backends
+    (list
+      #'lsp-completion-at-point
+      #'cape-file)
+    "Completion-at-point functions used in LSP-managed buffers.")
   (defun aaronzinhoo--flycheck-add-lsp-chains ()
     "Add secondary checkers after LSP creates its Flycheck checker."
     (when (and lsp-managed-mode
@@ -1210,17 +1226,6 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
       (flycheck-add-next-checker
         'lsp
         '(t . yaml-yamllint))
-
-      (flycheck-add-next-checker
-        'lsp
-        '(t . sh-shellcheck)
-        t)
-
-      (flycheck-add-next-checker
-        'lsp
-        '(t . rust-clippy)
-        t)
-
       (put 'lsp 'aaronzinhoo-chains-added t)))
   (defun aaronzinhoo--lsp-booster-json-parse (old-function &rest args)
     "Parse LSP Booster bytecode, or call OLD-FUNCTION with ARGS."
@@ -1249,15 +1254,26 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
             resolved-command)
           (cons "emacs-lsp-booster" resolved-command))
         resolved-command)))
+
   (defun aaronzinhoo--lsp-completion-setup ()
-    "Configure LSP completion for Corfu and Cape."
-    (setq-local completion-at-point-functions
-      (list
-        (cape-capf-buster #'lsp-completion-at-point)
-        #'cape-file))
+    "Configure LSP completion for Corfu, Cape, and Orderless."
+    (let ((existing
+            (remove #'lsp-completion-at-point
+              completion-at-point-functions)))
+
+      (setq-local completion-at-point-functions
+        (delete-dups
+          (append
+            (copy-sequence
+              aaronzinhoo--lsp-capf-backends)
+            existing))))
 
     (setq-local completion-category-overrides
-      '((lsp-capf (styles orderless)))))  ;; Configure orderless which can use flex
+      (copy-tree completion-category-overrides))
+
+    (setf (alist-get 'lsp-capf
+            completion-category-overrides)
+      '((styles orderless))))  ;; Configure orderless which can use flex
   (defun aaronzinhoo--angular-project-root ()
     "Return the nearest Angular workspace root."
     (when-let ((file (or buffer-file-name default-directory)))
@@ -1310,39 +1326,45 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
     (aaronzinhoo--configure-angular-language-server)
     (lsp-deferred))
   :custom
-  ;; core
-  (lsp-enable-xref t)
+  ;; Startup and workspace
   (lsp-auto-configure t)
-  (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
-  (lsp-enable-folding nil)              ; I disable folding since I use origami
-  (lsp-enable-indentation nil) ; use other formatter
-  (lsp-enable-links nil)                ; No need since we have `browse-url'
+  (lsp-auto-guess-root t)
+  (lsp-log-io nil)
+  ;; Completion
+  (lsp-completion-enable t)
+  (lsp-completion-provider :none) ; Corfu consumes the CAPFs
+  ;; Diagnostics
+  (lsp-diagnostics-provider :flycheck)
+  (lsp-modeline-diagnostics-enable nil)
+  ;; Eldoc and signatures
+  (lsp-eldoc-enable-hover t)
+  (lsp-eldoc-render-all nil)
+  (lsp-signature-doc-lines 1)
+  (lsp-signature-auto-activate nil)
+  ;; Formatting and indentation
+  (lsp-enable-indentation nil)
   (lsp-enable-on-type-formatting nil)
+  ;; Highlighting and visual features
+  (lsp-enable-semantic-highlighting nil)
+  (lsp-semantic-tokens-enable nil)
   (lsp-enable-symbol-highlighting nil)
-  (lsp-enable-text-document-color nil)   ; This is Treesitter's job
-  ;; modeline
-  (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
-  (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
-  (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
-  (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
-  (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
-  (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
-  ;; lens
-  (lsp-lens-enable nil)                 ; Optional, I don't need it
-  ;; semantic
-  (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
-  ;; misc
+  (lsp-enable-text-document-color nil)
+  (lsp-enable-folding nil)
+  (lsp-lens-enable nil)
+  (lsp-headerline-breadcrumb-enable nil)
+  ;; Navigation and links
+  (lsp-enable-xref t)
+  (lsp-enable-links nil)
+  ;; Modeline
+  (lsp-modeline-code-actions-enable nil)
+  (lsp-modeline-workspace-status-enable nil)
+  ;; Keymap
+  (lsp-keymap-prefix nil)
+  ;; Rust Analyzer
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-rust-analyzer-display-chaining-hints t)
   (lsp-rust-analyzer-display-closure-return-type-hints t)
-  (lsp-completion-provider :none) ;; we use Corfu!
-  (lsp-auto-guess-root t)
-  (lsp-log-io nil)
-  (lsp-headerline-breadcrumb-enable nil) ; Sideline used only for diagnostics
-  (lsp-prefer-flymake nil)
-  (lsp-signature-auto-activate nil)
-  (lsp-keymap-prefix nil)
-  (lsp-completion-enable t)
+  ;; Ruff
   (lsp-ruff-lsp-server-command '("ruff" "server"))
   :init
   (setq lsp-use-plists t)
@@ -1439,19 +1461,25 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :custom
   (lsp-treemacs-sync-mode t))
 (use-package lsp-ui
-  :commands lsp-ui-mode
+  :after lsp-mode
+  :commands
+  (lsp-ui-mode
+    lsp-ui-peek-find-definitions
+    lsp-ui-peek-find-references)
+  :hook
+  (lsp-mode . lsp-ui-mode)
   :bind (:map lsp-ui-mode-map
-              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-              ([remap xref-find-references] . lsp-ui-peek-find-references))
+          ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+          ([remap xref-find-references] . lsp-ui-peek-find-references))
   :custom
-  (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
-  (lsp-ui-sideline-show-code-actions nil)
+  ;; Flycheck Annotate handles diagnostic messages.
+  (lsp-ui-sideline-enable nil)
+  ;; Keep Peek for definitions and references.
   (lsp-ui-peek-enable t)
-  (lsp-ui-doc-use-webkit t)
-  (lsp-ui-doc-enable t)
-  (lsp-ui-doc-include-signature t) ; Show Signature
-  (lsp-ui-doc-position 'at-point)
-  (lsp-ui-doc-enable nil))
+  ;; Enable documentation popups.
+  (lsp-ui-doc-enable nil)
+  ;; Use the standard child-frame renderer.
+  (lsp-ui-doc-use-webkit nil))
 (use-package lsp-java
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-ts-mode . lsp-deferred)
@@ -2004,31 +2032,26 @@ When the number of characters in a buffer exceeds this threshold,
           ([tab]        . corfu-complete-common-or-next)
           ("S-TAB"      . corfu-previous)
           ([backtab]    . corfu-previous)
-          ("<return>"   . corfu-insert)
-          ("C-i"        . corfu-insert)
-          ("M-l"        . corfu-info-location)
-          ("M-p"        . corfu-popupinfo-scroll-up)
-          ("M-n"        . corfu-popupinfo-scroll-down))
-  :hook ((vterm-mode . (lambda () (setq-local corfu-quit-at-boundary t
-                                               corfu-quit-no-match t
-                                               corfu-auto nil)
-                          (corfu-mode)))
-         (eshell-mode . (lambda () (setq-local corfu-quit-at-boundary t
-                                               corfu-quit-no-match t
-                                               corfu-auto t
-                                               completion-at-point-functions (list (cape-capf-buster
-                                                                                    (cape-capf-super
-                                                                                     #'pcomplete-completions-at-point
-                                                                                     #'cape-abbrev))
-                                                                                   #'cape-file))
-                          (corfu-mode))))
+          ("<return>"   . corfu-insert))
+  :hook ((vterm-mode . aaronzinhoo--corfu-vterm-setup)
+          (eshell-mode . aaronzinhoo--corfu-eshell-setup))
   ;; Optional customizations
   :custom
+    ;; Candidate window
   (corfu-min-width 80)
-  (corfu-max-width corfu-min-width)       ; Always have the same width
+  (corfu-max-width 80)
   (corfu-count 15)
   (corfu-scroll-margin 4)
-
+  (corfu-cycle t)
+  ;; Automatic completion
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.1)
+  ;; Candidate selection
+  (corfu-preview-current t)
+  (corfu-preselect 'valid)
+  (corfu-on-exact-match nil)
+  ;; Boundary handling
   ;; `nil' means to ignore `corfu-separator' behavior, that is, use the older
   ;; `corfu-quit-at-boundary' = nil behavior. Set this to separator if using
   ;; `corfu-auto' = `t' workflow (in that case, make sure you also set up
@@ -2038,16 +2061,6 @@ When the number of characters in a buffer exceeds this threshold,
   ;; is inserted.
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match t)
-  (corfu-cycle t)                 ; Allows cycling through candidates
-  (corfu-auto t)                  ; Enable auto completion
-  (corfu-auto-prefix 1)
-  (corfu-auto-delay 0.0)
-  (corfu-popupinfo-delay '(0.5 . 0.2))
-  (corfu-preview-current t)
-  (corfu-preselect 'valid)
-  (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
-  (corfu-popupinfo-max-height 20)
-  (corfu-popupinfo-max-width 70)
   :preface
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or go to next candidate."
@@ -2941,28 +2954,28 @@ if one already exists."
   :hook (web-mode . emmet-mode))
 (use-package css-mode
   :straight nil
-  :hook ((scss-mode . aaronzinhoo--scss-setup-hook))
+  :hook ((scss-mode . aaronzinhoo--scss-completion-setup))
   :preface
-  (defun aaronzinhoo--scss-setup-hook ()
-    (setq-local completion-at-point-functions (list #'css-completion-at-point #'cape-file #'cape-dabbrev #'cape-dict)))
+  (defun aaronzinhoo--scss-completion-setup ()
+    "Add HTML-specific completion sources."
+    (aaronzinhoo--append-capfs
+      #'cape-keyword
+      #'cape-dabbrev))
   :custom
   (css-indent-offset 2))
 (use-package html-ts-mode
   :straight nil
   :mode (("\\.html\\'" . html-ts-mode))
-  :hook ((html-ts-mode . aaronzinhoo--html-setup-hook))
+  :hook ((html-ts-mode . aaronzinhoo--html-setup-hook)
+          (html-ts-mode . aaronzinhoo--html-completion-setup))
   :preface
+  (defun aaronzinhoo--html-completion-setup ()
+    "Add HTML-specific completion sources."
+    (aaronzinhoo--append-capfs
+      #'cape-keyword
+      #'cape-dabbrev))
   (defun aaronzinhoo--html-setup-hook ()
-    (setq-local lsp-lens-enable nil)
-    (setq-local lsp-lens-mode nil)
-    (setq-local aaronzinhoo--lsp-capf-backends (list (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict)))
-  (defun aaronzinhoo--close-pair ()
-    (interactive)
-    (when (eq ?> (char-after))
-      (forward-char))
-    (save-excursion
-      (sgml-close-tag))
-    )
+    (setq-local lsp-lens-mode nil))
   ;; TODO: update hydra with custom tree-sitter based functions
   :pretty-hydra
   ((:hint nil :title (with-faicon "nf-fa-html5" "Html Mode" 1 -0.05) :quit-key "SPC" :color pink)
