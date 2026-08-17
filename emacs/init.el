@@ -1882,31 +1882,32 @@ current buffer."
   (defun +vertico-highlight-directory (file)
     "If FILE ends with a slash, highlight it as a directory."
     (if (string-suffix-p "/" file)
-        (propertize file 'face 'marginalia-file-priv-dir) ; or face 'dired-directory
+      (propertize file 'face 'marginalia-file-priv-dir) ; or face 'dired-directory
       file))
   (defun sort-directories-first (files)
     ;; Still sort by history position, length and alphabetically
     (setq files (vertico-sort-history-length-alpha files))
     ;; But then move directories first
     (nconc (seq-filter (lambda (x) (string-suffix-p "/" x)) files)
-           (seq-remove (lambda (x) (string-suffix-p "/" x)) files)))
-  (defun aaronzinhoo--vertico-highlight-enabled-mode (cmd)
-    "If MODE is enabled, highlight it."
-    (let ((sym (intern cmd)))
-      (if (or (eq sym major-mode)
-              (eq sym aaronzinhoo--last-major-mode)
-              (and
-               (memq sym minor-mode-list)
-               (boundp sym)))
-        (propertize cmd 'face 'font-lock-constant-face)
-        cmd)))
+      (seq-remove (lambda (x) (string-suffix-p "/" x)) files)))
+  (defun aaronzinhoo--vertico-highlight-enabled-mode (command)
+    "Highlight COMMAND when its corresponding mode is enabled."
+    (let ((symbol (intern-soft command)))
+      (if (and symbol
+            (or (eq symbol major-mode)
+              (eq symbol aaronzinhoo--last-major-mode)
+              (and (boundp symbol)
+                (symbol-value symbol))))
+        (propertize command
+          'face 'font-lock-constant-face)
+        command)))
   (defun aaronzinhoo--save-major-mode ()
     "Function to capture major mode of buffer."
     (when (not (or
-                (eq 'minibuffer-mode major-mode)
-                (eq 'fundamental-mode major-mode)
-                (eq 'minibuffer-inactive-mode major-mode)
-                (eq 'special-mode major-mode)))
+                 (eq 'minibuffer-mode major-mode)
+                 (eq 'fundamental-mode major-mode)
+                 (eq 'minibuffer-inactive-mode major-mode)
+                 (eq 'special-mode major-mode)))
       (setq aaronzinhoo--last-major-mode major-mode)))
   (defun aaronzinhoo--vertico-quick-embark (&optional arg)
     "Embark on candidate using quick keys."
