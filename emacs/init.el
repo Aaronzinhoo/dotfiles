@@ -1695,55 +1695,55 @@ current buffer."
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c M-x" . consult-mode-command)
-         ("C-c h" . consult-history)
-         ("C-c k" . consult-kmacro)
-         ("C-c m" . consult-man)
-         ("C-c i" . consult-info)
-         ([remap Info-search] . consult-info)
-         ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x r" . consult-recent-file)            ;; orig. bookmark-jump
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ;; M-g bindings in `goto-map'
-         ("M-g e" . consult-compile-error)
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g M" . consult-global-mark)
-         ("M-g i" . consult-imenu)
+          ("C-c M-x" . consult-mode-command)
+          ("C-c h" . consult-history)
+          ("C-c k" . consult-kmacro)
+          ("C-c m" . consult-man)
+          ("C-c i" . consult-info)
+          ([remap Info-search] . consult-info)
+          ;; C-x bindings in `ctl-x-map'
+          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+          ("C-x r" . consult-recent-file)            ;; orig. bookmark-jump
+          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+          ;; Custom M-# bindings for fast register access
+          ("M-#" . consult-register-load)
+          ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+          ("C-M-#" . consult-register)
+          ;; Other custom bindings
+          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+          ;; M-g bindings in `goto-map'
+          ("M-g e" . consult-compile-error)
+          ("M-g g" . consult-goto-line)             ;; orig. goto-line
+          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+          ("M-g m" . consult-mark)
+          ("M-g f" . consult-fd)
+          ("M-g M" . consult-global-mark)
+          ("M-g i" . consult-imenu)
           ("M-g I" . consult-imenu-multi)
           ;; Search
-         ("C-s" . aaronzinhoo--consult-ripgrep-dwim)
+          ("C-s" . aaronzinhoo--buffer-search)
           ;; M-s bindings in `search-map'
           ;; these should be using S not s, probably want better mapping before turning them on again
-         ;; ("s-s f" . consult-fd)
-         ;; ("s-s p" . consult-ripgrep-thing-at-point)
-         ;; ("M-s D" . consult-locate)
-         ;; ("M-s g" . consult-grep)
-         ;; ("M-s G" . consult-git-grep)
-         ;; ("M-s L" . consult-line-multi)
-         ;; ("M-s k" . consult-keep-lines)
-         ;; ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
-         ;; ("C-M-S" . consult-isearch-history)
-         :map isearch-mode-map
-         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+          ;; ("s-s p" . consult-ripgrep-thing-at-point)
+          ;; ("M-s D" . consult-locate)
+          ;; ("M-s g" . consult-grep)
+          ;; ("M-s G" . consult-git-grep)
+          ;; ("M-s L" . consult-line-multi)
+          ;; ("M-s k" . consult-keep-lines)
+          ;; ("M-s u" . consult-focus-lines)
+          ;; Isearch integration
+          ;; ("C-M-S" . consult-isearch-history)
+          :map isearch-mode-map
+          ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+          ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+          ;; Minibuffer history
+          :map minibuffer-local-map
+          ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+          ("M-r" . consult-history))                ;; orig. previous-matching-history-element
 
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
@@ -1752,100 +1752,41 @@ current buffer."
   :custom
   (completion-in-region-function #'consult-completion-in-region)
   :preface
-  (defun aaronzinhoo--consult-ripgrep-dwim (&optional given-initial)
-    """Pass the region to aaronzinhoo--consult-ripgrep-or-line if available, otherwise just do a plain aaronzinhoo--consult-ripgrep-or-line. DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
-    (interactive "P")
-    (let ((initial
-            (cond
-              ((not (null given-initial)) given-initial)
-              ((use-region-p)
-                (buffer-substring-no-properties (region-beginning) (region-end)))
-              (t ""))))
-      (deactivate-mark)
-      (aaronzinhoo--consult-ripgrep-or-line initial)))
-  (defun consult-ripgrep-thing-at-point (&optional given-initial)
-    """Pass the region to consult-ripgrep if available, DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."""
-  (interactive "P")
-  (let ((initial
-         (or given-initial
-             (cond ((not (use-region-p))
-                    (er/mark-symbol)
-                    (buffer-substring-no-properties (region-beginning) (region-end)))
-                   ((use-region-p)
-                    (buffer-substring-no-properties (region-beginning) (region-end)))))))
-    (deactivate-mark)
-    (aaronzinhoo--consult-ripgrep-or-line initial)))
-  (defun consult--fd-builder (input)
-  (let ((fd-command
-         (if (eq 0 (process-file-shell-command "fdfind"))
-             "fdfind"
-           "fd")))
-    (pcase-let* ((`(,arg . ,opts) (consult--command-split input))
-                 (`(,re . ,hl) (funcall consult--regexp-compiler
-                                        arg 'extended t)))
-      (when re
-        (cons (append
-               (list fd-command
-                     "--color=never" "--full-path"
-                     (consult--join-regexps re 'extended))
-               opts)
-              hl)))))
-
-  (defun consult-fd (&optional dir initial)
-    (interactive "P")
-    (pcase-let* ((`(,prompt ,paths ,dir) (consult--directory-prompt "Fd" dir))
-                 (default-directory dir))
-      (find-file (consult--find prompt #'consult--fd-builder initial))))
-  (defcustom aaronzinhoo--consult-ripgrep-or-line-limit 1000000
-  "Buffer size threshold for `my-consult-ripgrep-or-line'.
-When the number of characters in a buffer exceeds this threshold,
-`consult-ripgrep' will be used instead of `consult-line'."
-  :type 'integer)
-
-  (defun aaronzinhoo--consult-ripgrep-or-line (&optional given-initial)
-    "Call `consult-line' for small buffers or `consult-ripgrep' for large files."
+  (defcustom aaronzinhoo--consult-line-size-limit 1000000
+    "Use Isearch instead of `consult-line' above this buffer size. The value is measured in buffer characters, not file bytes."
+    :type 'integer
+    :group 'consult)
+  (defun aaronzinhoo--buffer-search ()
+    "Search the current buffer or file using Consult."
     (interactive)
-    (if (or (not buffer-file-name)
-            (buffer-narrowed-p)
-            (ignore-errors
-              (file-remote-p buffer-file-name))
-            (jka-compr-get-compression-info buffer-file-name)
-            (<= (buffer-size)
-                (/ aaronzinhoo--consult-ripgrep-or-line-limit
-                  (if (eq major-mode 'org-mode) 4 1))))
-      (if (null given-initial)
-        (consult-line)
-        (consult-line given-initial))
-      (when (file-writable-p buffer-file-name)
-        (save-buffer))
-      (let ((consult-ripgrep-command
-             (concat "rg "
-                     "--null "
-                     "--line-buffered "
-                     "--color=ansi "
-                     "--max-columns=250 "
-                     "--no-heading "
-                     "--line-number "
-                     ;; adding these to default
-                     "--smart-case "
-                     "--hidden "
-                     "--max-columns-preview "
-                     ;; add back filename to get parsing to work
-                     "--with-filename "
-                     ;; defaults
-                     "-e ARG OPTS "
-               (shell-quote-argument buffer-file-name))))
-        (if (null given-initial)
-          (consult-ripgrep)
-          ;; will search in the current files directory
-          (consult-ripgrep (file-name-directory buffer-file-name) given-initial))))
-    )
+    (let ((initial
+            (when (use-region-p)
+              (buffer-substring-no-properties
+                (region-beginning)
+                (region-end)))))
+      (deactivate-mark)
+      (cond
+        ;; `consult-line' includes unsaved buffer changes.
+        ((<= (buffer-size) aaronzinhoo--consult-line-size-limit)
+          (consult-line initial))
+
+        ;; Ripgrep is fast, but searches the saved file on disk.
+        ((and buffer-file-name
+           (not (buffer-modified-p))
+           (not (file-remote-p buffer-file-name)))
+          (consult-ripgrep (list buffer-file-name) initial))
+
+        ;; Unsaved, remote, and non-file buffers.
+        (t
+          (isearch-forward)
+          (when initial
+            (isearch-yank-string initial))))))
   :init
   ;; Optionally configure the register formatting. This improves the register
   ;; preview for `consult-register', `consult-register-load',
   ;; `consult-register-store' and the Emacs built-ins.
   (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
+    register-preview-function #'consult-register-format)
 
   ;; Optionally tweak the register preview window.
   ;; This adds thin lines, sorting and hides the mode line of the window.
@@ -1853,12 +1794,10 @@ When the number of characters in a buffer exceeds this threshold,
 
   ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-
+    xref-show-definitions-function #'consult-xref)
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
-
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
   ;; (setq consult-preview-key 'any)
