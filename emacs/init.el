@@ -56,176 +56,172 @@
   (straight-use-package-by-default t))
 (use-package emacs
   :straight nil
-  :hook ((minibuffer-setup . cursor-intangible-mode))
-  :bind* (("M-<up>" . move-text-up)
-           ("M-<down>" . move-text-down)
-           ("M-q" . yank)
-           ("C-j" . avy-goto-char-timer)
-           ("<pinch>" . 'ignore)
-           ("<C-wheel-up>" . 'ignore)
-           ("<C-wheel-down>" . 'ignore)
-           ("M-h" . 'backward-char)
-           ("M-j" . 'next-line)
-           ("M-k" . 'previous-line)
-           ("M-l" . 'forward-char)
-           ("M-q" . 'yank)
-           ("M-4" . 'pop-local-mark-ring)
-           ("C-," . 'pop-local-mark-ring)
-           ("M-," . 'previous-window-any-frame)
-           ("C-x k" . 'kill-current-buffer)
-           ("C-x C-k" . 'kill-buffer-and-window)
-           ("C-x 2" . 'split-and-follow-horizontally)
-           ("C-x 3" . 'split-and-follow-vertically)
-           ("C-<" . 'previous-buffer)
-           ("C->" . 'next-buffer)
-           ("M-[" . 'backward-up-list)
-           ("M-]" . 'up-list)
-           ;; delete pair of items
-           ;; ("s-p" . 'delete-pair)
-           ;; need this otherwise on windows M-<tab> (changing windows)
-           ;; will activate scroll-lock
-           ("<Scroll_Lock>" . 'ignore)
-           ("s-<tab>" . 'iflipb-next-buffer)
-           ("s-S-<tab>" . 'iflipb-previous-buffer)
-           )
+  :hook
+  (minibuffer-setup . cursor-intangible-mode)
+  :bind*
+  (("M-<up>" . move-text-up)
+    ("M-<down>" . move-text-down)
+    ;; Navigation
+    ("C-j" . avy-goto-char-timer)
+    ("M-h" . backward-char)
+    ("M-j" . next-line)
+    ("M-k" . previous-line)
+    ("M-l" . forward-char)
+    ("M-[" . backward-up-list)
+    ("M-]" . up-list)
+    ;; Yank and mark
+    ("M-q" . yank)
+    ("M-4" . pop-local-mark-ring)
+    ("C-," . pop-local-mark-ring)
+    ;; Windows and buffers
+    ("M-," . previous-window-any-frame)
+    ("C-x k" . kill-current-buffer)
+    ("C-x C-k" . kill-buffer-and-window)
+    ("C-x 2" . split-and-follow-horizontally)
+    ("C-x 3" . split-and-follow-vertically)
+    ("C-<" . previous-buffer)
+    ("C->" . next-buffer)
+    ("s-<tab>" . iflipb-next-buffer)
+    ("s-S-<tab>" . iflipb-previous-buffer)
+    ;; Ignore system gestures
+    ("<pinch>" . ignore)
+    ("<C-wheel-up>" . ignore)
+    ("<C-wheel-down>" . ignore)
+    ("<Scroll_Lock>" . ignore))
   :custom
-  (pixel-scroll-precision-mode t)
-  (delete-selection-mode t)
   (enable-recursive-minibuffers t)
-  ;; Do not allow the cursor in the minibuffer prompt
-  (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (minibuffer-prompt-properties
+    '(read-only t
+       cursor-intangible t
+       face minibuffer-prompt))
   (tab-always-indent 'complete)
-  ;; compilation customization
-  ;; do not set this to false, raises security issues
+
+  ;; Compilation
   (compilation-read-command t)
-  (compilation-scroll-output t)
+  (compilation-scroll-output 'first-error)
+
   :preface
-  (defun aaronzinhoo-frame-recenter (&optional frame)
-  "Center FRAME on the screen.
-FRAME can be a frame name, a terminal name, or a frame.
-If FRAME is omitted or nil, use currently selected frame."
-  (interactive)
-  (unless (eq 'maximised (frame-parameter nil 'fullscreen))
-    (let* ((frame (or (and (boundp 'frame) frame) (selected-frame)))
-           (frame-w (frame-pixel-width frame))
-           (frame-h (frame-pixel-height frame))
-           ;; frame-monitor-workarea returns (x y width height) for the monitor
-           (monitor-w (nth 2 (frame-monitor-workarea frame)))
-           (monitor-h (nth 3 (frame-monitor-workarea frame)))
-           (center (list (/ (- monitor-w frame-w) 2)
-                         (/ (- monitor-h frame-h) 2))))
-      (apply 'set-frame-position (flatten-list (list frame center))))))
   (defun split-and-follow-horizontally ()
-    "Split window horizontally and follow with the previous buffer open."
+    "Split below and select the new window."
     (interactive)
-    (split-window-below)
-    (balance-windows)
-    (other-window 1)
-    (next-buffer))
+    (select-window (split-window-below)))
+
   (defun split-and-follow-vertically ()
-    "Split window vertically and follow with the previous buffer open."
+    "Split right and select the new window."
     (interactive)
-    (split-window-right)
-    (balance-windows)
-    (other-window 1)
-    (next-buffer))
+    (select-window (split-window-right)))
+
   (defun pop-local-mark-ring ()
-    "Move cursor to last mark position of current buffer.
-Call this repeatedly will cycle all positions in `mark-ring'.
-URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
-  Version 2016-04-04"
+    "Move point to the previous position in the local mark ring."
     (interactive)
     (set-mark-command t))
+
   (defun create-uuid ()
-    "Return a newly generated UUID. This uses a simple hashing of variable data."
-    (let ((s (md5 (format "%s%s%s%s%s%s%s%s%s%s"
-                    (user-uid)
-                    (emacs-pid)
-                    (system-name)
-                    (user-full-name)
-                    user-mail-address
-                    (current-time)
-                    (emacs-uptime)
-                    (garbage-collect)
-                    (random)
-                    (recent-keys)))))
-      (format "%s-%s-3%s-%s-%s"
-        (substring s 0 8)
-        (substring s 8 12)
-        (substring s 13 16)
-        (substring s 16 20)
-        (substring s 20 32))))
+    "Return a UUID generated by the macOS `uuidgen' executable."
+    (require 'subr-x)
+    (with-temp-buffer
+      (unless (zerop
+                (call-process "/usr/bin/uuidgen" nil t nil))
+        (user-error "Could not generate UUID"))
+      (downcase
+        (string-trim
+          (buffer-string)))))
+
   (defun insert-uuid ()
-    "Inserts a new UUID at the point."
+    "Insert a newly generated UUID at point."
     (interactive)
     (insert (create-uuid)))
+
   (defun aaronzinhoo--append-capfs (&rest capfs)
-    "Append CAPFS to the current buffer without adding duplicates."
+    "Append CAPFS to the current buffer without duplicates."
     (setq-local completion-at-point-functions
       (delete-dups
         (append
-          (copy-sequence completion-at-point-functions)
+          (copy-sequence
+            completion-at-point-functions)
           capfs))))
+
   :init
-  (defcustom ccm-vpos-init '(round (window-text-height) 2)
-    "This is the screen line position where the cursor initially stays."
-    :group 'centered-cursor
-    :tag "Vertical cursor position"
-    :type '(choice (const :tag "Center" (round (window-text-height) 2))
-             (const :tag "Golden ratio" (round (* 21 (window-text-height)) 34))
-             (integer :tag "Lines from top" :value 10)
-             (const :tag "2 Lines above center" (- (round (window-text-height) 2) 2))))
-  (when (display-graphic-p)
-    (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
-  (when (memq window-system '(mac ns))
-    (setq mac-command-modifier 'meta)
-    (setq mac-right-command-modifier 'control)
-    (setq mac-option-modifier 'super))
-  (define-key key-translation-map (kbd "<menu>") 'event-apply-super-modifier)
-  (add-hook 'after-make-frame-functions #'aaronzinhoo-frame-recenter)
-  (remove-hook 'post-self-insert-hook #'blink-paren-post-self-insert-function)
-  :config
-  (if (fboundp 'dired-compress-file-suffixes)
-    (add-to-list 'dired-compress-file-suffixes '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
-  (add-to-list 'default-frame-alist '(font . "-*-Hack Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1"))
-  (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
-  (toggle-frame-maximized))
+  (pixel-scroll-precision-mode 1)
+  (delete-selection-mode 1)
+  (minibuffer-depth-indicate-mode 1)
+
+  ;; Only relevant to graphical X11 Emacs, not native macOS Emacs.
+  (when (eq window-system 'x)
+    (setq x-select-request-type
+      '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
+
+  (define-key key-translation-map
+    (kbd "<menu>")
+    #'event-apply-super-modifier)
+  :custom-face
+  (variable-pitch
+    ((t (:family "Cantarell"
+          :weight regular)))))
 (use-package elec-pair
   :straight nil
-  :hook ((git-commit-setup . git-commit-add-electric-pairs)
-         (org-mode . org-add-electric-pairs)
-         (markdown-mode . markdown-add-electric-pairs)
-         (go-ts-mode . go-add-electric-pairs)
-         (yaml-ts-mode . yaml-add-electric-pairs)
-         (rust-ts-mode . rust-add-electric-pairs))
+
+  :hook
+  ((git-commit-setup . aaronzinhoo--setup-electric-pairs)
+    (org-mode . aaronzinhoo--setup-electric-pairs)
+    (markdown-mode . aaronzinhoo--setup-electric-pairs)
+    (go-ts-mode . aaronzinhoo--setup-electric-pairs))
+
   :preface
-  (defun git-commit-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`) (?= . ?=))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  ;; setup electric-pairs mode for org-mode
-  (defun org-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?/ . ?/) (?= . ?=))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun markdown-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun go-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?` . ?`))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun yaml-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?\( . ?\)))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
-  (defun rust-add-electric-pairs ()
-    (setq-local electric-pair-pairs (append electric-pair-pairs '((?' . ?'))))
-    (setq-local electric-pair-text-pairs electric-pair-pairs))
+  (defvar-local aaronzinhoo--electric-pair-base-inhibit-predicate nil
+    "Original Electric Pair inhibit predicate for the current buffer.")
+  (defun aaronzinhoo--add-electric-pairs (&rest pairs)
+    "Add PAIRS to the current buffer's Electric Pair configuration."
+    (setq-local electric-pair-pairs
+      (delete-dups
+        (append pairs
+          (copy-tree electric-pair-pairs))))
+
+    (setq-local electric-pair-text-pairs
+      (delete-dups
+        (append pairs
+          (copy-tree electric-pair-text-pairs)))))
+  (defun aaronzinhoo--org-electric-pair-inhibit (character)
+    "Prevent angle-bracket pairing in Org buffers.
+Otherwise delegate to the predicate previously configured for the
+current buffer."
+    (or (eq character ?<)
+      (and aaronzinhoo--electric-pair-base-inhibit-predicate
+        (funcall
+          aaronzinhoo--electric-pair-base-inhibit-predicate
+          character))))
+  (defun aaronzinhoo--setup-electric-pairs ()
+    "Configure additional Electric Pair pairs for the current mode."
+    (cond
+      ((derived-mode-p 'git-commit-mode)
+        (aaronzinhoo--add-electric-pairs
+          '(?` . ?`)))
+
+      ((derived-mode-p 'org-mode)
+        (aaronzinhoo--add-electric-pairs
+          '(?= . ?=))
+
+        ;; Preserve the existing predicate while preventing <> pairing.
+        (unless
+          (eq electric-pair-inhibit-predicate
+            #'aaronzinhoo--org-electric-pair-inhibit)
+          (setq-local
+            aaronzinhoo--electric-pair-base-inhibit-predicate
+            electric-pair-inhibit-predicate))
+
+        (setq-local
+          electric-pair-inhibit-predicate
+          #'aaronzinhoo--org-electric-pair-inhibit))
+
+      ((derived-mode-p 'markdown-mode)
+        (aaronzinhoo--add-electric-pairs
+          '(?` . ?`)))
+
+      ((derived-mode-p 'go-mode 'go-ts-mode)
+        (aaronzinhoo--add-electric-pairs
+          '(?` . ?`)))))
   :init
-  ;; disable <> auto pairing in electric-pair-mode for org-mode
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (setq-local electric-pair-inhibit-predicate
-                          `(lambda (c)
-                             (if (char-equal c ?<) t (,electric-pair-inhibit-predicate c))))))
-  (electric-pair-mode t))
+  (electric-pair-mode 1))
 (use-package autorevert
   :straight nil
   :demand t
@@ -848,6 +844,7 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   (global-hungry-delete-mode))
 (use-package dired
   :straight nil
+  :commands (dired dired-jump)
   :hook ((dired-mode . hl-line-mode)
          (dired-mode . auto-revert-mode))
   :custom
@@ -860,7 +857,11 @@ URL `http://ergoemacs.org/emacs/emacs_jump_to_previous_position.html'
   :init
   (when (memq window-system '(mac ns))
     (setq dired-use-ls-dired t
-          insert-directory-program "gls")))
+      insert-directory-program "gls"))
+  :config
+  (add-to-list
+    'dired-compress-file-suffixes
+    '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
 ;;; use to search files in multiple directories and place in one
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)

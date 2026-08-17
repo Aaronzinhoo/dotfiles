@@ -168,6 +168,17 @@
 (put 'narrow-to-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 
+;; Initial graphical frame
+(add-to-list 'default-frame-alist '(font . "Hack Nerd Font-15"))
+
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+;; macOS modifier keys
+(when (eq system-type 'darwin)
+  (setq mac-command-modifier 'meta
+    mac-right-command-modifier 'control
+    mac-option-modifier 'super))
+
 ;; Suppress the vanilla startup screen completely. We've disabled it with
 ;; `inhibit-startup-screen', but it would still initialize anyway.
 (advice-add #'display-startup-screen :override #'ignore)
