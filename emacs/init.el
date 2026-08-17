@@ -609,7 +609,7 @@ current buffer."
   ("C-/" . undo-fu-only-undo)
   ("s-/" . undo-fu-hydra/body)
   (:map org-mode-map
-        ("s-/" . undo-and-activate-hydra-mode))
+    ("s-/" . undo-and-activate-hydra-mode))
   :pretty-hydra
   (undo-fu-hydra
     (:hint nil :color red :quit-key "SPC" :title (with-faicon "nf-fa-undo" "Undo/Redo" 1 -0.05))
@@ -859,6 +859,8 @@ current buffer."
     (setq dired-use-ls-dired t
       insert-directory-program "gls"))
   :config
+  (require 'dired-aux)
+  ;; may need to install sevenzip
   (add-to-list
     'dired-compress-file-suffixes
     '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
@@ -1573,12 +1575,11 @@ current buffer."
   ;; Projectile users
   )
 
-;;; Minibuffer Compleitions
-
 ;; icons!!
 (use-package nerd-icons
-  :straight t)
-
+  :straight   (nerd-icons :type git :host github :repo "rainstormstudio/nerd-icons.el" :files (:defaults "data"))
+  :custom
+  (nerd-icons-font-family "Symbols Nerd Font Mono"))
 (use-package nerd-icons-corfu
   :after (nerd-icons corfu)
   :demand t
@@ -1589,18 +1590,20 @@ current buffer."
   :hook
   (dired-mode . nerd-icons-dired-mode))
 (use-package treemacs-nerd-icons
-  :after (treemacs)
+  :after (treemacs nerd-icons)
   :config
-  (treemacs-load-theme "nerd-icons"))
+  (treemacs-nerd-icons-config))
 (use-package nerd-icons-ibuffer
+  :after nerd-icons
   :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
 (use-package nerd-icons-completion
-  :demand t
-  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
-  :init
-  (nerd-icons-completion-mode))
+  :after (marginalia nerd-icons)
+  :config
+  (nerd-icons-completion-mode 1)
+  (nerd-icons-completion-marginalia-setup))
+
+;;; Minibuffer Compleitions
 (use-package marginalia
-  :demand t
   :after (vertico)
   :bind (:map vertico-map
               ("M-A" . marginalia-cycle))
@@ -1608,7 +1611,7 @@ current buffer."
   (marginalia-max-relative-age 0)
   (marginalia-align 'right)
   :init
-  (marginalia-mode))
+  (marginalia-mode 1))
 (use-package orderless
   :demand t
   :ensure t
@@ -1632,8 +1635,6 @@ current buffer."
                                    (command (styles orderless))
                                    (symbol (styles orderless))
                                    (variable (styles orderless)))))
-;; consult
-;; Example configuration for Consult
 (use-package consult-dir
   :straight (consult-dir :type git :host github :repo "karthink/consult-dir" :branch "master")
   :bind (("C-x C-d" . consult-dir)
@@ -1650,31 +1651,33 @@ current buffer."
     "Optional list of arguments to pass when querying container hosts."
     :group 'consult-dir
     :type '(repeat string))
-
-  (defun consult-dir--tramp-container-hosts ()
-    "Get a list of hosts from a container host."
-    (cl-loop for line in (cdr
-                           (ignore-errors
-                             (apply #'process-lines consult-dir--tramp-container-executable
-                               (append consult-dir--tramp-container-args (list "ps")))))
-      for cand = (split-string line "[[:space:]]+" t)
-      collect (let ((user (unless (string-empty-p (car cand))
-                            (concat (car cand) "@")))
-                     (hostname (car (last cand))))
-                (format "/docker:%s%s:/" user hostname))))
-  (defvar consult-dir--source-tramp-docker
-    `(:name     "Docker"
-       :narrow   ?d
+  (defvar aaronzinhoo--consult-dir-source-docker
+    `(:name "Docker"
+       :narrow ?d
        :category file
-       :face     consult-file
-       :history  file-name-history
-       :items    ,#'consult-dir--tramp-container-hosts)
-    "Docker candiadate source for `consult-dir'.")
+       :face consult-file
+       :history file-name-history
+       :items ,#'aaronzinhoo--consult-dir-docker-hosts)
+    "Consult-dir source for running Docker containers.")
+  (defun aaronzinhoo--consult-dir-docker-hosts ()
+    "Return running Docker containers as TRAMP paths."
+    (when-let ((docker
+                 (executable-find
+                   consult-dir--tramp-container-executable)))
+      (mapcar
+        (lambda (container)
+          (format "/docker:%s:/" container))
+        (ignore-errors
+          (apply #'process-lines
+            docker
+            (append
+              consult-dir--tramp-container-args
+              '("ps" "--format" "{{.Names}}")))))))
   :custom
   (consult-dir-project-list-function #'consult-dir-projectile-dirs)
   :config
   ;; Adding to the list of consult-dir sources
-  (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-docker t)
+  (add-to-list 'consult-dir-sources 'aaronzinhoo--consult-dir-source-docker t)
   (add-to-list 'consult-dir-sources 'consult-dir--source-tramp-ssh t))
 (use-package consult-flycheck
   :after (consult)
@@ -1864,13 +1867,13 @@ When the number of characters in a buffer exceeds this threshold,
   ;; For some commands and buffer sources it is useful to configure the
   ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
-   consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
-   ;; :preview-key "M-."
-   :preview-key '(:debounce 0.4 any))
+    consult-theme :preview-key '(:debounce 0.2 any)
+    consult-ripgrep consult-git-grep consult-grep
+    consult-bookmark consult-recent-file consult-xref
+    consult-source-bookmark consult-source-file-register
+    consult-source-recent-file consult-source-project-recent-file
+    ;; :preview-key "M-."
+    :preview-key '(:debounce 0.4 any))
 
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
