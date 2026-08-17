@@ -1821,52 +1821,38 @@ current buffer."
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
   ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-)
+  )
 ;; Enable vertico
-(use-package embark
-  :straight t
-  :bind (:map minibuffer-mode-map
-              ("M-e" . embark-act))
-  :config
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-;; Consult users will also want the embark-consult package.
-(use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
 ;;; minibuffer completion
 (use-package vertico
   ;; Special recipe to load extensions conveniently
   :straight (vertico :files (:defaults "extensions/*")
-                     :includes (vertico-indexed
-                                vertico-flat
-                                vertico-grid
-                                vertico-mouse
-                                vertico-quick
-                                vertico-buffer
-                                vertico-repeat
-                                vertico-reverse
-                                vertico-directory
-                                vertico-multiform
-                                vertico-unobtrusive
-                                ))
+              :includes (vertico-indexed
+                          vertico-flat
+                          vertico-grid
+                          vertico-mouse
+                          vertico-quick
+                          vertico-buffer
+                          vertico-repeat
+                          vertico-reverse
+                          vertico-directory
+                          vertico-multiform
+                          vertico-unobtrusive
+                          ))
   :bind (:map vertico-map
-              ("<tab>" . vertico-insert)
-              ;; NOTE 2022-02-05: Cycle through candidate groups
-              ("C-M-n" . vertico-previous-group)
-              ("C-M-p" . vertico-next-group)
-              ;; Multiform toggles
-              ("<backspace>" . vertico-directory-delete-char)
-              ("M-<backspace>" . vertico-directory-delete-word)
-              ("RET" . vertico-directory-enter)
-              ("C-i" . vertico-quick-insert)
-              ("C-o" . vertico-quick-exit)
-              ("C-s" . vertico-save)
-              ("M-o" . aaronzinhoo--vertico-quick-embark))
+          ("TAB" . vertico-insert)
+          ([tab] . vertico-insert)
+          ;; NOTE 2022-02-05: Cycle through candidate groups
+          ("C-M-p" . vertico-previous-group)
+          ("C-M-n" . vertico-next-group)
+          ;; Multiform toggles
+          ("<backspace>" . vertico-directory-delete-char)
+          ("M-<backspace>" . vertico-directory-delete-word)
+          ("RET" . vertico-directory-enter)
+          ("C-'" . vertico-quick-exit)
+          ("C-i" . vertico-quick-insert)
+          ("M-S" . vertico-save)
+          ("M-o" . aaronzinhoo--vertico-quick-embark))
   :hook
   (rfn-eshadow-update-overlay . vertico-directory-tidy)
   (after-change-major-mode . aaronzinhoo--save-major-mode)
@@ -1923,30 +1909,43 @@ current buffer."
   (vertico-grid-lookahead 50)
   (vertico-buffer-display-action '(display-buffer-reuse-window)) ; Default
   (vertico-multiform-categories                                  ; Choose a multiform
-   '((file reverse
-           (vertico-sort-function . sort-directories-first)
-           (+vertico-transform-functions . +vertico-highlight-directory))
-     (consult-grep buffer)
-     (consult-location)
-     (imenu buffer)
-     (library reverse indexed)
-     (org-roam-node reverse indexed)
-     (jinx grid (vertico-grid-annotate . 20))
-     (t reverse)
-     ))
+    '((file reverse
+        (vertico-sort-function . sort-directories-first)
+        (+vertico-transform-functions . +vertico-highlight-directory))
+       (consult-grep buffer)
+       (consult-location)
+       (imenu buffer)
+       (library reverse indexed)
+       (org-roam-node reverse indexed)
+       (jinx grid (vertico-grid-annotate . 20))
+       (t reverse)
+       ))
   (vertico-multiform-commands
-   '((org-refile grid reverse indexed)
-     (consult-yank-pop indexed)
-     (consult-flycheck)
-     (consult-lsp-diagnostics)
-     (execute-extended-command reverse
-                               (+vertico-transform-functions . aaronzinhoo--vertico-highlight-enabled-mode))
-     ))
+    '((org-refile grid reverse indexed)
+       (consult-yank-pop indexed)
+       (execute-extended-command reverse
+         (+vertico-transform-functions . aaronzinhoo--vertico-highlight-enabled-mode))
+       ))
   :init
   ;; variable to enable highlighting major mode in minibuffer
   (setq aaronzinhoo--last-major-mode nil)
   (vertico-mode)
   (vertico-multiform-mode))
+(use-package embark
+  :straight t
+  :bind (:map minibuffer-mode-map
+          ("M-e" . embark-act))
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+    '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+       nil
+       (window-parameters (mode-line-format . none)))))
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
   :init
@@ -2053,26 +2052,44 @@ current buffer."
   :custom
   (avy-all-windows nil))
 ;; TODO add fix for mark outer-tag
+
 (use-package multiple-cursors
   :straight (:type git :host github :repo "magnars/multiple-cursors.el" :branch "master")
-  :bind* (("M-m" . multiple-cursors-hydra/body))
+  :bind (("M-m" . multiple-cursors-hydra/body))
   :init
+  (with-eval-after-load 'mc-hide-unmatched-lines-mode
+    (when (bound-and-true-p mc-hide-unmatched-lines-mode)
+      (mc-hide-unmatched-lines-mode -1))
+
+    (define-key hum/hide-unmatched-lines-mode-map
+      (kbd "C-'")
+      nil)
+
+    (define-key mc/keymap
+      (kbd "C-'")
+      #'aaronzinhoo--mc/complete-in-region))
   (setq mc/list-file
     (locate-user-emacs-file ".mc-lists.el"))
-  (defvar aaronzinhoo--mc-completion-candidate nil)
   :config
   ;; Load previously learned choices before adding configured choices.
   (mc/load-lists)
   (dolist (command
             '(abbrev-prefix-mark
                crux-smart-delete-line
-               hungry-delete-backward
-               hungry-delete-forward
+               crux-move-beginning-of-line
+               crux
                evilnc-comment-or-uncomment-lines))
     (add-to-list 'mc/cmds-to-run-for-all command))
   (dolist (command
             '(pixel-scroll-precision
+               aaronzinhoo--mc/complete-in-region
                avy-goto-char-timer
+               corfu-next
+               corfu-previous
+               corfu-complete
+               corfu-quit
+               corfu-popupinfo-scroll-up
+               corfu-popupinfo-scroll-down
                dap-tooltip-mouse-motion
                multiple-cursors-hydra/body
                multiple-cursors-hydra-hide-unmatched-lines-mode
@@ -2098,62 +2115,253 @@ current buffer."
         ("s" symbol-overlay-mc-mark-all "Mark All Symbol"))
       "Misc."
       (("2" er/expand-region "Expand Region")
-        ("c" mc/complete-in-region "Autocomplete")
+        ("c" aaronzinhoo--mc/complete-in-region "Autocomplete")
         ("h" mc-hide-unmatched-lines-mode "Hide lines" :toggle t)
         ("RET" newline-and-indent "New Line"))))
   :preface
-  (defun aaronzinhoo--complete-in-region-minibuffer ()
-    (interactive)
-    (let ((res (run-hook-wrapped 'completion-at-point-functions
-                 #'completion--capf-wrapper 'all)))
-      (pcase res
-        (`(,hookfun . (,start ,end ,collection . ,plist))
-          (let* ((initial (buffer-substring-no-properties start end))
-                  (predicate (plist-get plist :predicate))
-                  (metadata (completion-metadata initial collection predicate))
-                  ;; TODO: `minibuffer-completing-file-name' is mostly deprecated, but
-                  ;; still in use. Packages should instead use the completion metadata.
-                  (minibuffer-completing-file-name
-                    (eq 'file (completion-metadata-get metadata 'category)))
-                  (threshold (completion--cycle-threshold metadata))
-                  (all (completion-all-completions initial collection predicate (length initial)))
-                  (exit-fun (plist-get completion-extra-properties :exit-function)))
-            (let* ((limit (car (completion-boundaries initial collection predicate "")))
-                    (completion
-                      (cond
-                        ((atom all) nil)
-                        ((and (consp all) (atom (cdr all)))
-                          (concat (substring initial 0 limit) (car all)))
-                        ;; reuse aaronzinhoo--mc-completion-candidate value if already selected
-                        ;; this occurs when the user has initially selected a candidate with the real cursor
-                        ((not (null aaronzinhoo--mc-completion-candidate)) aaronzinhoo--mc-completion-candidate)
-                        ;; list completion candidates in dropdown list if aaronzinhoo--mc-completion-candidate if null
-                        (t
-                          ;; Evaluate completion table in the original buffer.
-                          ;; This is a reasonable thing to do and required by
-                          ;; some completion tables in particular by lsp-mode.
-                          ;; See gh:minad/vertico#61.
-                          (completing-read "Completion: " all predicate nil)))))
+  (defvar aaronzinhoo--mc-completion-candidate nil
+    "Completion candidate shared while completing at multiple cursors.")
+  (defun aaronzinhoo--completion-kind-icon (kind)
+    "Return a Nerd Icon corresponding to completion KIND."
+    (when (and kind
+            (fboundp 'nerd-icons-codicon))
+      (pcase kind
+        ((or 'function 'method 'constructor)
+          (nerd-icons-codicon
+            "nf-cod-symbol_method"
+            :face 'font-lock-function-name-face))
 
-              (if completion
-                (setq-local aaronzinhoo--mc-completion-candidate completion)
-                (message "No completion")))
-            (progn
-              (completion--replace start end (concat aaronzinhoo--mc-completion-candidate))
-              (when exit-fun
-                (funcall exit-fun completion
-                  ;; If completion is finished and cannot be further
-                  ;; completed, return `finished'.  Otherwise return
-                  ;; `exact'.
-                  (if (eq (try-completion completion collection predicate) t)
-                    'finished 'exact)))
-              t)))))
-    )
-  (defun mc/complete-in-region ()
+        ((or 'variable 'field 'property)
+          (nerd-icons-codicon
+            "nf-cod-symbol_variable"
+            :face 'font-lock-variable-name-face))
+
+        ('constant
+          (nerd-icons-codicon
+            "nf-cod-symbol_constant"
+            :face 'font-lock-constant-face))
+
+        ('class
+          (nerd-icons-codicon
+            "nf-cod-symbol_class"
+            :face 'font-lock-type-face))
+
+        ('interface
+          (nerd-icons-codicon
+            "nf-cod-symbol_interface"
+            :face 'font-lock-type-face))
+
+        ((or 'module 'namespace)
+          (nerd-icons-codicon
+            "nf-cod-symbol_namespace"
+            :face 'font-lock-preprocessor-face))
+
+        ('keyword
+          (nerd-icons-codicon
+            "nf-cod-symbol_keyword"
+            :face 'font-lock-keyword-face))
+
+        ('snippet
+          (nerd-icons-codicon
+            "nf-cod-symbol_snippet"
+            :face 'font-lock-string-face))
+
+        ('file
+          (nerd-icons-codicon
+            "nf-cod-file"
+            :face 'font-lock-string-face))
+
+        ('folder
+          (nerd-icons-codicon
+            "nf-cod-folder"
+            :face 'font-lock-string-face))
+
+        (_
+          (nerd-icons-codicon
+            "nf-cod-symbol_misc"
+            :face 'font-lock-builtin-face)))))
+
+  (defun aaronzinhoo--completion-candidate-kind
+    (kind-function candidate category)
+    "Return the kind of CANDIDATE.
+
+Call KIND-FUNCTION when available, otherwise use CATEGORY."
+    (or
+      (when kind-function
+        (condition-case nil
+          (funcall kind-function candidate)
+          (error nil)))
+      category))
+
+  (defun aaronzinhoo--completion-kind-name (kind)
+    "Return a display name for completion KIND."
+    (when kind
+      (capitalize
+        (replace-regexp-in-string
+          "[-_]"
+          " "
+          (if (symbolp kind)
+            (symbol-name kind)
+            (format "%s" kind))))))
+
+  (defun aaronzinhoo--completion-affixate
+    (buffer kind-function annotation-function category candidates)
+    "Add icons, kinds, and annotations to CANDIDATES.
+
+Evaluate completion callbacks inside BUFFER."
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+        (mapcar
+          (lambda (candidate)
+            (let* ((kind
+                     (aaronzinhoo--completion-candidate-kind
+                       kind-function
+                       candidate
+                       category))
+                    (icon
+                      (aaronzinhoo--completion-kind-icon kind))
+                    (kind-name
+                      (aaronzinhoo--completion-kind-name kind))
+                    (annotation
+                      (when annotation-function
+                        (condition-case nil
+                          (funcall annotation-function candidate)
+                          (error nil))))
+                    (prefix
+                      (if icon
+                        (concat icon " ")
+                        ""))
+                    (suffix
+                      (concat
+                        (if kind-name
+                          (propertize
+                            (format "  %s" kind-name)
+                            'face
+                            'completions-annotations)
+                          "")
+                        (or annotation ""))))
+              ;; An affixation function returns:
+              ;; (CANDIDATE PREFIX SUFFIX)
+              (list candidate prefix suffix)))
+          candidates))))
+
+  (defun aaronzinhoo--complete-in-region-minibuffer ()
+    "Complete at the current cursor through the minibuffer.
+
+The first cursor selects a candidate through Vertico. Subsequent
+cursors reuse that candidate while calculating their own CAPF
+replacement boundaries."
     (interactive)
-    (setq-local aaronzinhoo--mc-completion-candidate nil)
-    (mc/execute-command-for-all-cursors 'aaronzinhoo--complete-in-region-minibuffer)
-    (setq-local aaronzinhoo--mc-completion-candidate nil)))
+    (let ((capf
+            (run-hook-with-args-until-success
+              'completion-at-point-functions)))
+      (pcase capf
+        (`(,start ,end ,collection . ,plist)
+          (let* ((source-buffer
+                   (current-buffer))
+                  (initial
+                    (buffer-substring-no-properties start end))
+                  (predicate
+                    (plist-get plist :predicate))
+                  (exit-function
+                    (plist-get plist :exit-function))
+                  (kind-function
+                    (plist-get plist :company-kind))
+
+                  ;; Collect metadata while the source buffer is current.
+                  (metadata
+                    (completion-metadata
+                      initial collection predicate))
+                  (category
+                    (completion-metadata-get
+                      metadata 'category))
+                  (annotation-function
+                    (completion-metadata-get
+                      metadata 'annotation-function))
+
+                  ;; Materialize the completion table before entering the
+                  ;; minibuffer. This is important for CAPE and LSP tables
+                  ;; tied to the source buffer.
+                  (candidates
+                    (all-completions
+                      initial collection predicate))
+
+                  ;; Add icons, kinds, and annotations to the materialized
+                  ;; candidate table.
+                  (affixation-function
+                    (apply-partially
+                      #'aaronzinhoo--completion-affixate
+                      source-buffer
+                      kind-function
+                      annotation-function
+                      category))
+
+                  (candidate-table
+                    (completion-table-with-metadata
+                      candidates
+                      `((category . ,category)
+                         (affixation-function
+                           . ,affixation-function))))
+                  completion)
+
+            (setq completion
+              (cond
+                ;; Reuse the selection made at the first cursor.
+                (aaronzinhoo--mc-completion-candidate
+                  aaronzinhoo--mc-completion-candidate)
+
+                ;; No matching candidates.
+                ((null candidates)
+                  nil)
+
+                ;; Select a sole candidate without opening Vertico.
+                ((null (cdr candidates))
+                  (car candidates))
+
+                ;; Select one candidate through Vertico.
+                (t
+                  (completing-read
+                    "Completion: "
+                    candidate-table
+                    nil
+                    t
+                    initial))))
+
+            (unless completion
+              (user-error "No completion candidate"))
+
+            ;; The same selection must be valid at every cursor.
+            (unless (member completion candidates)
+              (user-error
+                "Candidate `%s' is unavailable at this cursor"
+                completion))
+
+            ;; Save the first selection for the remaining cursors.
+            (unless aaronzinhoo--mc-completion-candidate
+              (setq aaronzinhoo--mc-completion-candidate
+                completion))
+
+            ;; Replace the CAPF-determined region at this cursor.
+            (completion--replace start end completion)
+
+            ;; Notify LSP/CAPE that completion finished.
+            (when exit-function
+              (funcall exit-function completion 'finished))
+
+            t))
+
+        (_
+          (user-error
+            "No completion available at this cursor")))))
+  (defun aaronzinhoo--mc/complete-in-region ()
+    "Select one completion and apply it at every active cursor."
+    (interactive)
+    (let ((aaronzinhoo--mc-completion-candidate nil))
+      (if (bound-and-true-p multiple-cursors-mode)
+        (mc/execute-command-for-all-cursors
+          #'aaronzinhoo--complete-in-region-minibuffer)
+        (aaronzinhoo--complete-in-region-minibuffer))))
+  )
 
 
 ;;; Creating Diagrams
