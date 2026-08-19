@@ -1013,7 +1013,6 @@ current buffer."
          c/c++-clang
          c/c++-cppcheck
          c/c++-gcc)))
-  (flycheck-add-mode 'yaml-yamllint 'docker-compose-mode)
   (flycheck-add-mode 'yaml-yamllint 'openapi-yaml-mode))
 (use-package flycheck-aspell
   :after flycheck
@@ -1024,12 +1023,6 @@ current buffer."
   (add-to-list 'flycheck-checkers 'html-aspell-dynamic))
 (use-package flycheck-projectile
   :commands (flycheck-projectile-list-errors))
-;; (use-package aggressive-indent
-;;   :straight t
-;;   :diminish
-;;   :config
-;;   (global-aggressive-indent-mode 1)
-;;   (setq aggressive-indent-excluded-modes (append aggressive-indent-excluded-modes '(web-mode dockerfile-mode docker-compose-mode))))
 (use-package fix-word
   :bind (([remap capitalize-word] . fix-word-capitalize)
           ([remap upcase-word] . fix-word-upcase)))
@@ -1167,7 +1160,6 @@ current buffer."
   (require 'dap-lldb)
   (require 'dap-gdb-lldb))
 (use-package lsp-mode
-  :after flycheck
   ;; :straight (:type git :host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :hook
@@ -1407,9 +1399,7 @@ current buffer."
                "[/\\\\]node_modules\\'"
                "[/\\\\]dist\\'"
                "[/\\\\]coverage\\'"))
-    (add-to-list 'lsp-file-watch-ignored-directories directory))
-  (add-to-list 'lsp-language-id-configuration
-    '(protobuf-ts-mode . "protobuf")))
+    (add-to-list 'lsp-file-watch-ignored-directories directory)))
 (use-package lsp-yaml
   :straight nil
   :after lsp-mode
@@ -1454,11 +1444,7 @@ current buffer."
     '((name . "Kubernetes")
        (description . "Built-in kubernetes manifest schema definition")
        (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
-       (fileMatch . ["*-k8s.yaml" "*-k8s.yml"])))
-  :config
-  (add-to-list
-   'lsp-language-id-configuration
-   '(docker-compose-mode . "yaml")))
+       (fileMatch . ["*-k8s.yaml" "*-k8s.yml"]))))
 (use-package lsp-treemacs
   :commands (treemacs lsp-treemacs-errors-list)
   :custom
@@ -3469,7 +3455,10 @@ if one already exists."
 ;; protobuf
 (use-package protobuf-ts-mode
   :straight (:type git :host github :repo "emacsattic/protobuf-ts-mode" :branch "master")
-  :mode (("\\.proto\\'" . protobuf-ts-mode)))
+  :mode (("\\.proto\\'" . protobuf-ts-mode))
+  :config
+  (add-to-list 'lsp-language-id-configuration
+    '(protobuf-ts-mode . "protobuf")))
 (use-package flycheck-buf-lint
   :straight t
   :hook ((protobuf-mode protobuf-ts-mode) . (lambda() (flycheck-buf-lint-setup))))
