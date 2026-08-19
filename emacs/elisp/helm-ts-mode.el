@@ -293,8 +293,7 @@ The nearest `values' directory containing `base' is returned."
         directory-files-no-dot-files-regexp)))
      #'string-lessp)))
 
-(defun helm-ts-mode--merge-values-files
-    (files destination)
+(defun helm-ts-mode--merge-values-files (files destination)
   "Merge FILES with yq and write the result to DESTINATION.
 
 Files are merged in the order given. Later files override earlier
@@ -379,12 +378,10 @@ Helm LS workspace."
 
   (let* ((chart-root
            ;; Nearest chart containing the current template.
-           ;; In this case, kahless-ui.
            (helm-ts-mode--chart-root))
 
           (lsp-chart-root
             ;; Outermost parent chart.
-            ;; In this case, kahless-services.
             (helm-ts-mode--top-chart-root
               chart-root))
 
@@ -393,12 +390,10 @@ Helm LS workspace."
             ;; to the nearest chart, as configured previously.
             (helm-ts-mode--values-root
               chart-root))
-
           (base-directory
             (expand-file-name
               helm-ts-mode-base-values-directory
               values-root))
-
           (environment-directory
             (expand-file-name
               environment
@@ -458,9 +453,8 @@ Helm LS workspace."
     ;; the parent chart to resolve:
     ;;
     ;;   global:
-    ;;   kahless-ui:
     ;;
-    ;; for templates inside the kahless-ui subchart.
+    ;; for templates inside subcharts.
     (setq-local
       lsp-kubernetes-helm-ls-main-values-file-path
       (file-relative-name
