@@ -24,14 +24,14 @@
   :group 'languages
   :prefix "helm-ts-mode-")
 
-(defconst helm-ts-mode--range-settings
+(defconst helm-ts-mode--treesit-range-settings
   (treesit-range-rules
-   :embed 'yaml
-   :host 'helm
+    :embed 'yaml
+    :host 'helm
 
-   ;; The Helm grammar exposes non-template content as `text'.
-   ;; All such ranges are combined into the embedded YAML parser.
-   '((text) @capture))
+    ;; The Helm grammar exposes non-template content as `text'.
+    ;; All such ranges are combined into the embedded YAML parser.
+    '((text) @capture))
   "Tree-sitter ranges that embed YAML in Helm text nodes.")
 
 (defconst helm-ts-mode--helm-font-lock-keywords
@@ -57,45 +57,19 @@
        1 font-lock-function-name-face))
   "Supplemental Helm font-lock rules.")
 
-(defcustom helm-ts-mode-main-values-file "values.yaml"
-  "Main Helm values file.
+(defcustom helm-ts-mode-values-root nil
+  "Location of the external Helm values directory.
 
-The path may point outside the chart directory. Helm LS interprets
-the path relative to the directory containing Chart.yaml."
-  :type 'string
-  :group 'helm-ts-mode)
+When nil, search upward from the current chart until a directory named
+`values' is found containing both `base' and `environments'
+subdirectories.
 
-(defcustom helm-ts-mode-lint-overlay-values-file "values.lint.yaml"
-  "Values file merged with the main values file for `helm lint'.
-
-The path may point outside the chart directory."
-  :type 'string
-  :group 'helm-ts-mode)
-
-(defcustom helm-ts-mode-additional-values-files-glob "values*.yaml"
-  "Glob used by Helm LS to find additional values files.
-
-The glob may point outside the chart directory."
-  :type 'string
-  :group 'helm-ts-mode)
-
-(defcustom helm-ts-mode-helm-ls-command
-  '("helm_ls" "serve")
-  "Command used to start Helm LS."
-  :type '(repeat string)
-  :group 'helm-ts-mode)
-
-(defcustom helm-ts-mode-yamlls-command "yaml-language-server"
-  "Executable used internally by Helm LS for YAML features."
-  :type 'string
-  :group 'helm-ts-mode)
-
-(defcustom helm-ts-mode-values-root "../../values"
-  "Path from the Helm chart directory to the external values root.
-
-The values root is expected to contain a `base' directory and an
-`environments' directory."
-  :type 'string
+When set to a string, it may be an absolute path or a path relative to
+the current chart root."
+  :type
+  '(choice
+     (const :tag "Search parent directories automatically" nil)
+     (string :tag "Explicit path"))
   :group 'helm-ts-mode)
 
 (defcustom helm-ts-mode-base-values-directory "base"
@@ -105,7 +79,7 @@ This is relative to `helm-ts-mode-values-root'."
   :type 'string
   :group 'helm-ts-mode)
 
-(defcustom helm-ts-mode-environments-directory "environments"
+(defcustom helm-ts-mode-environments-directory ""
   "Directory containing environment-specific values directories.
 
 This is relative to `helm-ts-mode-values-root'."
@@ -126,30 +100,6 @@ This is relative to `helm-ts-mode-values-root'."
      'safe-local-variable
      #'stringp)
 
-;; These settings can vary by chart through .dir-locals.el.
-(make-variable-buffer-local
-  'helm-ts-mode-main-values-file)
-
-(make-variable-buffer-local
-  'helm-ts-mode-lint-overlay-values-file)
-
-(make-variable-buffer-local
-  'helm-ts-mode-additional-values-files-glob)
-
-;; Permit string values in .dir-locals.el without prompting repeatedly.
-(put 'helm-ts-mode-main-values-file
-  'safe-local-variable
-  #'stringp)
-
-(put 'helm-ts-mode-lint-overlay-values-file
-  'safe-local-variable
-  #'stringp)
-
-(put 'helm-ts-mode-additional-values-files-glob
-  'safe-local-variable
-  #'stringp)
-
-;;;###autoload
 ;;;###autoload
 (define-derived-mode helm-ts-mode yaml-ts-mode "Helm"
   "Major mode for YAML files containing Helm Go templates."
@@ -161,11 +111,12 @@ This is relative to `helm-ts-mode-values-root'."
   (let ((helm-parser
           (or
             (car
+              ;; isnt this always nil?
               (treesit-parser-list
                 nil
-                'go-template-helm))
+                'helm))
             (treesit-parser-create
-              'go-template-helm))))
+              'helm))))
     ;; Required for reliable multi-language font-lock in Emacs 30+.
     (setq-local treesit-primary-parser helm-parser))
 
@@ -173,7 +124,7 @@ This is relative to `helm-ts-mode-values-root'."
   ;; the Helm parser.
   (setq-local
     treesit-range-settings
-    helm-ts-mode--range-settings)
+    helm-ts-mode--treesit-range-settings)
 
   ;; Preserve the YAML Tree-sitter settings inherited from
   ;; `yaml-ts-mode', then supplement them with Helm styling.
@@ -190,6 +141,62 @@ This is relative to `helm-ts-mode-values-root'."
   (treesit-major-mode-setup)
 
   (font-lock-flush))
+
+(defun helm-ts-mode--values-directory-p (directory)
+  "Return non-nil when DIRECTORY looks like the external values root."
+  (and
+    (file-directory-p directory)
+    (file-directory-p
+      (expand-file-name "base" directory))))
+
+(defun helm-ts-mode--find-values-root (starting-directory)
+  "Search upward from STARTING-DIRECTORY for the external values root.
+
+The nearest `values' directory containing `base' is returned."
+  (let ((directory
+          (file-name-as-directory
+            (expand-file-name starting-directory)))
+         parent
+         candidate
+         found)
+    (while (and directory
+             (not found))
+      (setq candidate
+        (expand-file-name "values" directory))
+
+      (if (helm-ts-mode--values-directory-p candidate)
+        (setq found candidate)
+        ;; update parent and directory if not found
+        (setq parent
+          (file-name-directory
+            (directory-file-name directory)))
+        ;; Stop after inspecting the filesystem root.
+        (setq directory
+          (unless (equal parent directory)
+            parent))))
+
+    (when found
+      (file-name-as-directory found))))
+
+(defun helm-ts-mode--values-root (chart-root)
+  "Return the external values root associated with CHART-ROOT."
+  (let ((values-root
+          (if helm-ts-mode-values-root
+            ;; Preserve support for explicit absolute or relative paths.
+            (expand-file-name
+              helm-ts-mode-values-root
+              chart-root)
+            ;; Automatically search this chart and its ancestors.
+            (helm-ts-mode--find-values-root
+              chart-root))))
+    (unless values-root
+      (user-error
+        "Could not find a values directory containing a base/ directory"))
+    (unless (helm-ts-mode--values-directory-p values-root)
+      (user-error
+        "Invalid Helm values root: %s"
+        values-root))
+    values-root))
 
 (defun helm-ts-mode--check-grammars ()
   "Signal an error when a required Tree-sitter grammar is unavailable."
@@ -235,7 +242,7 @@ This is relative to `helm-ts-mode-values-root'."
    (car
     (treesit-parser-list
      nil
-     'go-template-helm)))
+     'helm)))
 
   (treesit-explore-mode 1))
 
@@ -250,12 +257,6 @@ This is relative to `helm-ts-mode-values-root'."
       (user-error
        "Could not find Chart.yaml above %s"
        buffer-file-name)))
-
-(defun helm-ts-mode--values-root (chart-root)
-  "Return the absolute values root for CHART-ROOT."
-  (expand-file-name
-   helm-ts-mode-values-root
-   chart-root))
 
 (defun helm-ts-mode--yaml-files (directory)
   "Return YAML files beneath DIRECTORY in lexical order."
@@ -335,185 +336,204 @@ files."
        'silent))))
 
 (defun helm-ts-mode--restart-workspace ()
-  "Restart the LSP workspace for the current Helm buffer."
-  (if (bound-and-true-p lsp-mode)
-      (lsp-workspace-restart)
+  "Restart the Helm LS workspace for the current buffer."
+  (if-let* ((workspace
+             (seq-find
+               (lambda (candidate)
+                 (eq
+                   (lsp--client-server-id
+                     (lsp--workspace-client candidate))
+                   'helm-ls))
+               (lsp-workspaces))))
+    (lsp-workspace-restart workspace)
     (lsp-deferred)))
-
-(defun helm-ts-mode--register-lsp-client ()
-  "Register Helm LS with `lsp-mode'."
-  (add-to-list
-    'lsp-language-id-configuration
-    '(helm-ts-mode . "helm"))
-
-  (lsp-register-custom-settings
-    '(("helm-ls.logLevel" "info")
-
-       ("helm-ls.valuesFiles.mainValuesFile"
-         helm-ts-mode-main-values-file)
-
-       ("helm-ls.valuesFiles.lintOverlayValuesFile"
-         helm-ts-mode-lint-overlay-values-file)
-
-       ("helm-ls.valuesFiles.additionalValuesFilesGlobPattern"
-         helm-ts-mode-additional-values-files-glob)
-
-       ("helm-ls.helmLint.enabled" t t)
-
-       ("helm-ls.yamlls.enabled" t t)
-
-       ("helm-ls.yamlls.path"
-         helm-ts-mode-yamlls-command)
-
-       ("helm-ls.yamlls.diagnosticsLimit" 50)
-
-       ;; Preserve your normal LSP/Flycheck diagnostics workflow.
-       ("helm-ls.yamlls.showDiagnosticsDirectly" nil t)
-
-       ("helm-ls.yamlls.config.completion" t t)
-
-       ("helm-ls.yamlls.config.hover" t t)))
-
-  (lsp-register-client
-    (make-lsp-client
-      :new-connection
-      (lsp-stdio-connection
-        helm-ts-mode-helm-ls-command)
-
-      :activation-fn
-      (lsp-activate-on "helm")
-
-      :priority 1
-      :multi-root t
-      :server-id 'helm-ls)))
 
 (defun helm-ts-mode-select-environment (environment)
   "Select ENVIRONMENT for Helm completion and diagnostics.
 
-Merge the base values files and the selected environment files into
-generated files, configure Helm LS to use them, and restart the LSP
-workspace."
+Merge the base values files and selected environment files into
+generated files, configure Helm LS to use them, and restart the
+Helm LS workspace."
   (interactive
-   (let* ((chart-root
-           (helm-ts-mode--chart-root))
-          (values-root
-           (helm-ts-mode--values-root chart-root))
-          (environments
-           (helm-ts-mode--environment-names
-            values-root)))
-     (unless environments
-       (user-error
-        "No environment directories were found"))
+    (let* ((chart-root
+             (helm-ts-mode--chart-root))
+            (values-root
+              (helm-ts-mode--values-root
+                chart-root))
+            (environments
+              (helm-ts-mode--environment-names
+                values-root)))
+      (unless environments
+        (user-error
+          "No environment directories were found"))
 
-     (list
-      (completing-read
-       "Helm environment: "
-       environments
-       nil
-       t
-       nil
-       nil
-       helm-ts-mode-selected-environment))))
+      (list
+        (completing-read
+          "Helm environment: "
+          environments
+          nil
+          t
+          nil
+          nil
+          helm-ts-mode-selected-environment))))
 
   (let* ((chart-root
-          (helm-ts-mode--chart-root))
-         (values-root
-          (helm-ts-mode--values-root chart-root))
+           ;; Nearest chart containing the current template.
+           ;; In this case, kahless-ui.
+           (helm-ts-mode--chart-root))
 
-         (base-directory
-          (expand-file-name
-           helm-ts-mode-base-values-directory
-           values-root))
+          (lsp-chart-root
+            ;; Outermost parent chart.
+            ;; In this case, kahless-services.
+            (helm-ts-mode--top-chart-root
+              chart-root))
 
-         (environment-directory
-          (expand-file-name
-           environment
-           (expand-file-name
-            helm-ts-mode-environments-directory
-            values-root)))
+          (values-root
+            ;; Continue locating the external values directory relative
+            ;; to the nearest chart, as configured previously.
+            (helm-ts-mode--values-root
+              chart-root))
 
-         (base-files
-          (helm-ts-mode--yaml-files
-           base-directory))
-
-         (environment-files
-          (helm-ts-mode--yaml-files
-           environment-directory))
-
-         ;; Keep generated files beneath the external values root.
-         (generated-directory
-          (expand-file-name
-           (format ".helm-ls/%s/" environment)
-           values-root))
-
-         (generated-base-file
-          (expand-file-name
-           "base.yaml"
-           generated-directory))
-
-         (generated-overlay-file
-          (expand-file-name
-           "overlay.yaml"
-           generated-directory)))
-
-    (unless (member
-             environment
-             (helm-ts-mode--environment-names
+          (base-directory
+            (expand-file-name
+              helm-ts-mode-base-values-directory
               values-root))
+
+          (environment-directory
+            (expand-file-name
+              environment
+              (expand-file-name
+                helm-ts-mode-environments-directory
+                values-root)))
+
+          (base-files
+            (helm-ts-mode--yaml-files
+              base-directory))
+
+          (environment-files
+            (helm-ts-mode--yaml-files
+              environment-directory))
+
+          ;; Store generated files under:
+          ;;
+          ;; values/.helm-ls/ENVIRONMENT/
+          (generated-directory
+            (expand-file-name
+              (format
+                ".helm-ls/%s/"
+                environment)
+              values-root))
+
+          (generated-base-file
+            (expand-file-name
+              "base.yaml"
+              generated-directory))
+
+          (generated-overlay-file
+            (expand-file-name
+              "overlay.yaml"
+              generated-directory)))
+
+    (unless
+      (member
+        environment
+        (helm-ts-mode--environment-names
+          values-root))
       (user-error
-       "Unknown Helm environment: %s"
-       environment))
+        "Unknown Helm environment: %s"
+        environment))
 
-    ;; Create the two files expected by Helm LS.
+    ;; Merge base files in lexical order. Later files override
+    ;; earlier files.
     (helm-ts-mode--merge-values-files
-     base-files
-     generated-base-file)
+      base-files
+      generated-base-file)
 
+    ;; Merge the selected environment files in lexical order.
     (helm-ts-mode--merge-values-files
-     environment-files
-     generated-overlay-file)
+      environment-files
+      generated-overlay-file)
 
-    ;; Helm LS expects paths relative to the Chart.yaml directory.
+    ;; These paths must be relative to the parent chart. Helm LS uses
+    ;; the parent chart to resolve:
+    ;;
+    ;;   global:
+    ;;   kahless-ui:
+    ;;
+    ;; for templates inside the kahless-ui subchart.
     (setq-local
-     helm-ts-mode-main-values-file
-     (file-relative-name
-      generated-base-file
-      chart-root))
-
-    (setq-local
-     helm-ts-mode-lint-overlay-values-file
-     (file-relative-name
-      generated-overlay-file
-      chart-root))
-
-    ;; Limit completion and hover to the selected environment's
-    ;; generated files.
-    (setq-local
-     helm-ts-mode-additional-values-files-glob
-     (concat
+      lsp-kubernetes-helm-ls-main-values-file-path
       (file-relative-name
-       generated-directory
-       chart-root)
-      "*.yaml"))
+        generated-base-file
+        lsp-chart-root))
 
     (setq-local
-     helm-ts-mode-selected-environment
-     environment)
+      lsp-kubernetes-helm-overlay-values-file-path
+      (file-relative-name
+        generated-overlay-file
+        lsp-chart-root))
+
+    ;; Include both base.yaml and overlay.yaml in completion and hover.
+    (setq-local
+      lsp-kubernetes-helm-additional-values-files-pattern
+      (concat
+        (file-relative-name
+          generated-directory
+          lsp-chart-root)
+        "*.yaml"))
+
+    (setq-local
+      helm-ts-mode-selected-environment
+      environment)
 
     (message
-     "Helm environment: %s; base files: %d; overlay files: %d"
-     environment
-     (length base-files)
-     (length environment-files))
+      (concat
+        "Helm environment: %s; "
+        "template chart: %s; "
+        "LSP chart: %s; "
+        "base files: %d; "
+        "environment files: %d")
+      environment
+      (abbreviate-file-name chart-root)
+      (abbreviate-file-name lsp-chart-root)
+      (length base-files)
+      (length environment-files))
 
     (helm-ts-mode--restart-workspace)))
 
-;; This file can load before or after lsp-mode.
-(with-eval-after-load 'lsp-mode
-  (helm-ts-mode--register-lsp-client))
+(defun helm-ts-mode--parent-chart-root (chart-root)
+  "Return the immediate parent chart of CHART-ROOT, if one exists."
+  (let* ((chart-root
+           (file-name-as-directory
+             (expand-file-name chart-root)))
+          (charts-directory
+            (file-name-directory
+              (directory-file-name chart-root)))
+          (possible-parent
+            (and charts-directory
+              (file-name-directory
+                (directory-file-name charts-directory)))))
+    (when
+      (and possible-parent
+        (equal
+          (file-name-nondirectory
+            (directory-file-name charts-directory))
+          "charts")
+        (file-exists-p
+          (expand-file-name
+            "Chart.yaml"
+            possible-parent)))
+      possible-parent)))
 
-;; Start LSP only after entering Helm mode.
-(add-hook 'helm-ts-mode-hook #'lsp-deferred)
+(defun helm-ts-mode--top-chart-root (chart-root)
+  "Return the outermost parent chart containing CHART-ROOT."
+  (let ((root chart-root)
+         parent)
+    (while
+      (setq parent
+        (helm-ts-mode--parent-chart-root root))
+      (setq root parent))
+    root))
 
 (provide 'helm-ts-mode)
 

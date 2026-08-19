@@ -277,6 +277,7 @@ current buffer."
        (go "https://github.com/tree-sitter/tree-sitter-go" "master" "src")
        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
        (gosum "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")
+       (helm "https://github.com/ngalaiko/tree-sitter-go-template" "master" "dialects/helm/src")
        (html "https://github.com/tree-sitter/tree-sitter-html" "master" "src")
        (java "https://github.com/tree-sitter/tree-sitter-java")
        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
@@ -2950,6 +2951,45 @@ if one already exists."
          "Buffer Schema")
         ("d" lsp-yaml-download-schema-store-db
           "Download Schemastore")))))
+(use-package helm-ts-mode
+  :straight nil
+  :load-path (lambda () (expand-file-name "elisp" user-emacs-directory))
+  ;; Start LSP only after entering Helm mode.
+  :hook ((helm-ts-mode . lsp-deferred))
+  :bind ((:map helm-ts-mode-map
+           ("s-h" . helm-hydra/body)))
+  :mode
+  (("/templates/.*\\.ya?ml\\'" . helm-ts-mode)
+    ("/templates/.*\\.tpl\\'" . helm-ts-mode)
+    ("\\.helm\\.ya?ml\\'" . helm-ts-mode))
+  :pretty-hydra
+  (helm-hydra
+    (:hint nil
+      :title (with-faicon
+               "nf-fa-yen"
+               "YAML Commands"
+               1
+               -0.05)
+      :quit-key "q"
+      :color red)
+    ("Indent"
+      (("i" indent-rigidly "Indent Region"))
+      "Navigation"
+      (("N" block-nav-next-indentation-level
+         "Next Child Node")
+        ("P" block-nav-previous-indentation-level
+          "Prev Parent Node") )
+      "Fold"
+      (("f" treesit-fold-toggle "Toggle Fold"))
+      "Helm"
+      (("e" helm-ts-mode-select-environment "Update Environment")
+        ("t" helm-ts-mode-describe-parsers "Treesit Parsers")
+        ("s" lsp-yaml-select-buffer-schema "Buffer Schema"))))
+  :config
+  ;; Tell LSP which language ID to send for this custom mode.
+  (add-to-list
+    'lsp-language-id-configuration
+    '(helm-ts-mode . "helm-ls")))
 ;; demanding openapi-yaml-mode since need mode file config to be loaded after yaml
 (use-package openapi-yaml-mode
   :straight nil
