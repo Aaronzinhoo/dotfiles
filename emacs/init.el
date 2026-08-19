@@ -2896,30 +2896,27 @@ if one already exists."
            ("TAB" . indent-for-tab-command)
            ("<tab>" . indent-for-tab-command)
            ("<backtab>" . yaml-indent-line)))
-  :hook ((docker-compose-mode . yaml-ts-mode)
-          (yaml-ts-mode . aaronzinhoo--yaml-mode-hook)
-          (yaml-ts-mode . aaronzinhoo--yaml-indentation-setup)
-          (yaml-ts-mode . flycheck-mode)
+  :hook ((yaml-ts-mode . aaronzinhoo--yaml-mode-hook)
+          (yaml-ts-mode . aaronzinhoo--yaml-completion-setup)
           (yaml-ts-mode . lsp-deferred)
-          (yaml-ts-mode . hungry-delete-mode)
-          (yaml-ts-mode . yas-minor-mode))
-  :bind (:map yaml-ts-mode-map ("<backtab>" . yaml-indent-line))
+          (yaml-ts-mode . hungry-delete-mode))
   :custom
   ;; Fallback when dtrt-indent cannot detect the indentation width.
   (yaml-indent-offset 2)
   :preface
-  (defun aaronzinhoo--yaml-indentation-setup ()
+  (defun aaronzinhoo--yaml-completion-setup ()
+    "Add HTML-specific completion sources."
+    (aaronzinhoo--append-capfs
+      #'cape-keyword
+      #'cape-dabbrev))
+  (defun aaronzinhoo--yaml-mode-hook ()
     "Use yaml-mode's indentation logic in yaml-ts-mode."
     (require 'yaml-mode)
     (setq-local
       indent-line-function #'yaml-indent-line
-      indent-tabs-mode nil))
-  (defun aaronzinhoo--yaml-mode-hook ()
-    (setq-local
+      indent-tabs-mode nil
       lsp-java-boot-enabled nil
-      lsp-lens-mode nil
-      completion-at-point-functions (list #'cape-file (cape-capf-super (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev) #'cape-dict))
-    (eldoc-mode -1))
+      lsp-lens-mode nil))
   :pretty-hydra
   (yaml-hydra
     (:hint nil
