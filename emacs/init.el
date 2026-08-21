@@ -1039,76 +1039,447 @@ current buffer."
   :demand t
   :commands (er/expand-region)
   :bind* (("M-2" . er/expand-region)
-          ("M-3" . er/mark-outside-pairs))
+           ("M-3" . er/mark-outside-pairs))
   :preface
-  (defun aaronzinhoo--treesit-node-bounds-match-region-p (node beg end)
-    """Returns `t' if the bounds of the region marked `beg' `end' match the bounds of `node'."""
-    (and
-      (= beg (treesit-node-start node))
-      (= end (treesit-node-end node))))
-  (defun er/treesit-mark-bigger-node ()
+  (defvar-local aaronzinhoo--treesit-extra-region-functions nil
+    "Functions that provide additional semantic Tree-sitter regions.
+
+Each function receives BEGINNING and END and returns a cons cell
+`(NEW-BEGINNING . NEW-END)' or nil.")
+  (defun aaronzinhoo--treesit-region-positions (beginning end)
+    "Return useful parser positions for BEGINNING through END."
+    (delete-dups
+      (list
+        beginning
+        (aaronzinhoo--get-position-in-region
+          beginning
+          end)
+        (if (> end beginning)
+          (1- end)
+          end))))
+  (defun aaronzinhoo--region-size (bounds)
+    "Return the width of BOUNDS."
+    (- (cdr bounds)
+      (car bounds)))
+
+  (defun aaronzinhoo--strictly-larger-region-p
+    (bounds beginning end)
+    "Return non-nil when BOUNDS strictly contains BEGINNING through END."
+    (and bounds
+      (<= (car bounds) beginning)
+      (>= (cdr bounds) end)
+      (or
+        (< (car bounds) beginning)
+        (> (cdr bounds) end))))
+  (defun aaronzinhoo--treesit-node-contains-region-p (node beginning end)
+    "Return non-nil when NODE contains BEGINNING through END."
+    (and node
+      (<= (treesit-node-start node)
+        beginning)
+      (>= (treesit-node-end node)
+        end)))
+
+  (defun aaronzinhoo--treesit-node-matches-region-p (node beginning end)
+    "Return non-nil when NODE exactly matches BEGINNING and END."
+    (and node
+      (= (treesit-node-start node)
+        beginning)
+      (= (treesit-node-end node)
+        end)))
+
+  (defun aaronzinhoo--get-position-in-region (beginning end)
+    "Return a position inside BEGINNING through END. If END and BEGINNING are equal then return BEGINNING"
+    (if (> end beginning)
+      (+ beginning
+        (/ (- end beginning) 2))
+      beginning))
+
+  (defun aaronzinhoo--treesit-next-bigger-node (parser beginning end)
+    "Return PARSER's smallest non-root node larger than the region.
+
+Inspect the beginning, middle, and end of the region so injected
+languages do not prevent discovery of a containing host-language node."
+    (let ((root
+            (treesit-parser-root-node parser))
+           candidates)
+
+      (dolist (position
+                (aaronzinhoo--treesit-region-positions
+                  beginning
+                  end))
+        (when-let* ((node
+                     (ignore-errors
+                       (treesit-node-at
+                         position
+                         parser))))
+
+          ;; Find an ancestor containing the complete selected region.
+          (while
+            (and node
+              (not
+                (aaronzinhoo--treesit-node-contains-region-p
+                  node
+                  beginning
+                  end)))
+            (setq node
+              (treesit-node-parent node)))
+
+          ;; Skip all wrapper nodes having the same textual bounds.
+          (while
+            (and node
+              (aaronzinhoo--treesit-node-matches-region-p
+                node
+                beginning
+                end))
+            (setq node
+              (treesit-node-parent node)))
+
+          (when
+            (and node
+              (not
+                (treesit-node-eq node root))
+              (aaronzinhoo--treesit-node-contains-region-p
+                node
+                beginning
+                end)
+              (or
+                (< (treesit-node-start node)
+                  beginning)
+                (> (treesit-node-end node)
+                  end)))
+            (push node candidates))))
+
+      ;; A parser may produce the same node from several sampled positions.
+      (setq candidates
+        (delete-dups candidates))
+
+      (car
+        (sort
+          candidates
+          (lambda (left right)
+            (let ((left-size
+                    (aaronzinhoo--treesit-node-size left))
+                   (right-size
+                     (aaronzinhoo--treesit-node-size right)))
+              (if (= left-size right-size)
+                (>
+                  (aaronzinhoo--treesit-node-depth left)
+                  (aaronzinhoo--treesit-node-depth right))
+                (< left-size right-size))))))))
+  (defun aaronzinhoo--treesit-node-size (node)
+    "Return the buffer width of NODE."
+    (- (treesit-node-end node)
+      (treesit-node-start node)))
+
+  (defun aaronzinhoo--treesit-node-depth (node)
+    "Return NODE's depth in its syntax tree."
+    (let ((depth 0))
+      (while
+        (setq node
+          (treesit-node-parent node))
+        (setq depth
+          (1+ depth)))
+      depth))
+
+  (defun aaronzinhoo--treesit-smallest-bigger-bounds (beginning end)
+    "Return the smallest larger syntactic or semantic region."
+    (let (candidates)
+
+      ;; Normal parent-node candidates.
+      (dolist (parser
+                (treesit-parser-list))
+        (when-let ((node
+                     (aaronzinhoo--treesit-next-bigger-node
+                       parser
+                       beginning
+                       end)))
+          (let ((bounds
+                  (cons
+                    (treesit-node-start node)
+                    (treesit-node-end node))))
+            (when
+              (aaronzinhoo--strictly-larger-region-p
+                bounds
+                beginning
+                end)
+              (push bounds candidates)))))
+
+      ;; Language-specific sibling/grouping candidates.
+      (dolist (function
+                aaronzinhoo--treesit-extra-region-functions)
+        (when-let ((bounds
+                     (funcall
+                       function
+                       beginning
+                       end)))
+          (when
+            (aaronzinhoo--strictly-larger-region-p
+              bounds
+              beginning
+              end)
+            (push bounds candidates))))
+
+      (car
+        (sort
+          candidates
+          (lambda (left right)
+            (< (aaronzinhoo--region-size left)
+              (aaronzinhoo--region-size right)))))))
+
+  (defun aaronzinhoo--treesit-mark-bigger-node ()
+    "Expand to the smallest larger syntactic or semantic region."
     (interactive)
-    (let* ((root (treesit-buffer-root-node))
-            (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
-            (node-start (treesit-node-start node))
-            (node-end (treesit-node-end node)))
-      ;; Node fits the region exactly. Try its parent node instead.
-      (when (aaronzinhoo--treesit-node-bounds-match-region-p node (region-beginning) (region-end))
-        (when-let* ((node (treesit-parent-until node
-                           (lambda (n) (not (aaronzinhoo--treesit-node-bounds-match-region-p n (region-beginning) (region-end)))))))
-          (setq node-start (treesit-node-start node)
-            node-end (treesit-node-end node))))
-      (set-mark node-end)
-      (goto-char node-start)))
-  (defun aaronzinhoo-mark-line ()
-    "Mark the current line."
+    (let* ((beginning
+             (if (region-active-p)
+               (region-beginning)
+               (point)))
+            (end
+              (if (region-active-p)
+                (region-end)
+                (point)))
+            (bounds
+              (aaronzinhoo--treesit-smallest-bigger-bounds
+                beginning
+                end)))
+      (when bounds
+        (goto-char
+          (car bounds))
+        (set-mark
+          (cdr bounds))
+        (activate-mark))))
+  (defun aaronzinhoo--mark-assignment-list-item ()
+    "Mark the comma-separated assignment item containing point or region.
+
+For example, given:
+
+  NAME=FIRST:value,SECOND:value
+
+mark either `FIRST:value' or `SECOND:value'."
     (interactive)
-    (end-of-line)
-    (set-mark (point))
-    (beginning-of-line-text))
-  (defun er/add-rust-mode-expansions ()
-    (make-variable-buffer-local 'er/try-expand-list)
-    (setq er/try-expand-list (append
-                              er/try-expand-list
-                              '(er/c-mark-statement
-                                er/c-mark-fully-qualified-name
-                                er/c-mark-function-call-1   er/c-mark-function-call-2
-                                er/c-mark-statement-block-1 er/c-mark-statement-block-2
-                                er/c-mark-vector-access-1   er/c-mark-vector-access-2
-                                aaronzinhoo-mark-line))))
-  (defun er/add-rjsx-mode-expansions ()
-    (make-variable-buffer-local 'er/try-expand-list)
-    (setq er/try-expand-list (append
-                              er/try-expand-list
-                              '(er/c-mark-statement
-                                er/c-mark-fully-qualified-name
-                                er/c-mark-function-call-1   er/c-mark-function-call-2
-                                er/c-mark-statement-block-1 er/c-mark-statement-block-2
-                                er/c-mark-vector-access-1   er/c-mark-vector-access-2
-                                aaronzinhoo-mark-line
-                                er/mark-html-attribute
-                                er/mark-inner-tag
-                                 er/mark-outer-tag))))
-  (defun er/add-treesitter-mode-expansions ()
-    (make-variable-buffer-local 'er/try-expand-list)
-    (setq er/try-expand-list '(er/mark-word
-                                er/mark-symbol
-                                er/mark-symbol-with-prefix
-                                er/treesit-mark-bigger-node)))
+    (let* ((current-beginning
+             (if (region-active-p)
+               (region-beginning)
+               (point)))
+            (current-end
+              (if (region-active-p)
+                (region-end)
+                (point)))
+            ;; Use the middle of the active region so expansion stays with the
+            ;; currently selected item instead of moving to the next item.
+            (position
+              (aaronzinhoo--get-position-in-region
+                current-beginning
+                current-end))
+            (line-beginning
+              (save-excursion
+                (goto-char position)
+                (line-beginning-position)))
+            (line-end
+              (save-excursion
+                (goto-char position)
+                (line-end-position)))
+            (assignment
+              (save-excursion
+                (goto-char line-beginning)
+                (search-forward "=" line-end t))))
+
+      ;; Only recognize comma-separated items on the right side of `='.
+      (when (and assignment
+              (>= position assignment))
+        (let ((beginning
+                (save-excursion
+                  (goto-char position)
+                  (if (search-backward "," assignment t)
+                    (1+ (point))
+                    assignment)))
+               (end
+                 (save-excursion
+                   (goto-char position)
+                   (if (search-forward "," line-end t)
+                     (1- (point))
+                     line-end))))
+
+          ;; Exclude whitespace surrounding the item.
+          (save-excursion
+            (goto-char beginning)
+            (skip-chars-forward " \t" end)
+            (setq beginning
+              (point)))
+
+          (save-excursion
+            (goto-char end)
+            (skip-chars-backward " \t" beginning)
+            (setq end
+              (point)))
+
+          ;; Only return a region larger than the current selection.
+          (when (and
+                  (<= beginning current-beginning)
+                  (>= end current-end)
+                  (or (< beginning current-beginning)
+                    (> end current-end)))
+            (goto-char beginning)
+            (set-mark end)
+            (activate-mark))))))
+  (defun aaronzinhoo--mark-assignment-list ()
+    "Mark the complete comma-separated assignment value.
+
+For example, given:
+
+  NAME=FIRST:value,SECOND:value
+
+mark:
+
+  FIRST:value,SECOND:value"
+    (interactive)
+    (let* ((current-beginning
+             (if (region-active-p)
+               (region-beginning)
+               (point)))
+            (current-end
+              (if (region-active-p)
+                (region-end)
+                (point)))
+            (position
+              (aaronzinhoo--get-position-in-region
+                current-beginning
+                current-end))
+            (line-beginning
+              (save-excursion
+                (goto-char position)
+                (line-beginning-position)))
+            (line-end
+              (save-excursion
+                (goto-char position)
+                (line-end-position)))
+            (assignment
+              (save-excursion
+                (goto-char line-beginning)
+                (search-forward "=" line-end t))))
+
+      (when (and assignment
+              (>= position assignment))
+        (let ((beginning assignment)
+               (end line-end))
+
+          ;; Exclude whitespace immediately after `='.
+          (save-excursion
+            (goto-char beginning)
+            (skip-chars-forward " \t" end)
+            (setq beginning
+              (point)))
+
+          ;; Exclude trailing whitespace.
+          (save-excursion
+            (goto-char end)
+            (skip-chars-backward " \t" beginning)
+            (setq end
+              (point)))
+
+          ;; Only offer a region that contains and expands the current one.
+          (when (and
+                  (<= beginning current-beginning)
+                  (>= end current-end)
+                  (or (< beginning current-beginning)
+                    (> end current-end)))
+            (goto-char beginning)
+            (set-mark end)
+            (activate-mark))))))
+  (defun aaronzinhoo--add-shell-ts-mode-expansions ()
+    "Add shell assignment and Tree-sitter expansions."
+    (setq-local
+      er/try-expand-list
+      '(er/mark-word
+         er/mark-symbol
+         er/mark-outside-quotes
+         aaronzinhoo--mark-assignment-list-item
+         aaronzinhoo--mark-assignment-list
+         aaronzinhoo--treesit-mark-bigger-node)))
+  (defun aaronzinhoo--add-yaml-ts-mode-expansions ()
+    "Add YAML, assignment-list, and Tree-sitter expansions."
+    (setq-local
+      er/try-expand-list
+      '(er/mark-word
+         er/mark-symbol
+         ;; Comma-separated assignment structure.
+         aaronzinhoo--mark-assignment-list-item
+         aaronzinhoo--mark-assignment-list
+         ;; Quoted scalar values.
+         er/mark-outside-quotes
+         ;; Generic Tree-sitter structure.
+         aaronzinhoo--treesit-mark-bigger-node)))
+  (defun aaronzinhoo--add-helm-ts-mode-expansions ()
+    "Add Helm, YAML, and Tree-sitter expansions."
+    (setq-local
+      er/try-expand-list
+      '(er/mark-word
+         er/mark-symbol
+
+         aaronzinhoo--mark-assignment-list-item
+         aaronzinhoo--mark-assignment-list
+
+         ;; Bridge from Helm into surrounding YAML.
+         er/mark-outside-quotes
+
+         ;; Ordinary Tree-sitter nodes plus the registered Helm semantic
+         ;; regions: action, containing line, and indentation parent.
+         aaronzinhoo--treesit-mark-bigger-node)))
+  (defun aaronzinhoo--setup-vterm-copy-expansions ()
+    "Configure Expand Region for Vterm copy mode."
+    (when vterm-copy-mode
+      (setq-local
+        er/try-expand-list
+        '(er/mark-word
+           er/mark-symbol
+
+           ;; Environment assignments and comma-separated values.
+           aaronzinhoo--mark-assignment-list-item
+           aaronzinhoo--mark-assignment-list
+
+           er/mark-outside-quotes
+           er/mark-outside-pairs
+           er/mark-paragraph))))
+  (defun aaronzinhoo--add-treesit-mode-expansions ()
+    "Add generic Tree-sitter expansions."
+    (setq-local
+      er/try-expand-list
+      '(er/mark-word
+         er/mark-symbol
+         aaronzinhoo--treesit-mark-bigger-node)))
   :config
-  (er/enable-mode-expansions 'bash-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'css-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'go-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'html-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'java-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'js-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'python-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'rjsx-mode 'er/add-rjsx-mode-expansions)
-  (er/enable-mode-expansions 'rust-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'tsx-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'typescript-ts-mode 'er/add-treesitter-mode-expansions)
-  (er/enable-mode-expansions 'web-mode 'er/add-web-mode-expansions)
-  (er/enable-mode-expansions 'yaml-ts-mode 'er/add-treesitter-mode-expansions)
+  (er/enable-mode-expansions
+    'helm-ts-mode
+    #'aaronzinhoo--add-helm-ts-mode-expansions)
+  (dolist (mode
+            '(bash-ts-mode
+               sh-mode))
+    (er/enable-mode-expansions
+      mode
+      #'aaronzinhoo--add-shell-ts-mode-expansions))
+  (dolist (mode
+            '(yaml-ts-mode
+               openapi-ts-mode))
+    (er/enable-mode-expansions
+      mode
+      #'aaronzinhoo--add-yaml-ts-mode-expansions))
+  (dolist (mode
+            '(c-ts-mode
+               c++-ts-mode
+               css-ts-mode
+               dockerfile-ts-mode
+               go-ts-mode
+               html-ts-mode
+               java-ts-mode
+               js-ts-mode
+               json-ts-mode
+               python-ts-mode
+               rust-ts-mode
+               toml-ts-mode
+               tsx-ts-mode
+               typescript-ts-mode))
+    (er/enable-mode-expansions
+      mode
+      #'aaronzinhoo--add-treesit-mode-expansions))
   )
 (use-package yasnippet
   :defer t
@@ -2182,9 +2553,7 @@ Call KIND-FUNCTION when available, otherwise use CATEGORY."
           (if (symbolp kind)
             (symbol-name kind)
             (format "%s" kind))))))
-
-  (defun aaronzinhoo--completion-affixate
-    (buffer kind-function annotation-function category candidates)
+  (defun aaronzinhoo--completion-affixate (buffer kind-function annotation-function category candidates)
     "Add icons, kinds, and annotations to CANDIDATES.
 
 Evaluate completion callbacks inside BUFFER."
@@ -2223,7 +2592,6 @@ Evaluate completion callbacks inside BUFFER."
               ;; (CANDIDATE PREFIX SUFFIX)
               (list candidate prefix suffix)))
           candidates))))
-
   (defun aaronzinhoo--complete-in-region-minibuffer ()
     "Complete at the current cursor through the minibuffer.
 
@@ -2944,7 +3312,8 @@ if one already exists."
   :straight nil
   :load-path (lambda () (expand-file-name "elisp" user-emacs-directory))
   ;; Start LSP only after entering Helm mode.
-  :hook ((helm-ts-mode . lsp-deferred))
+  :hook ((helm-ts-mode . aaronzinhoo--setup-helm-treesit-regions)
+          (helm-ts-mode . lsp-deferred))
   :bind ((:map helm-ts-mode-map
            ("s-h" . helm-hydra/body)))
   :mode
@@ -2974,6 +3343,17 @@ if one already exists."
       (("e" helm-ts-mode-select-environment "Update Environment")
         ("t" helm-ts-mode-describe-parsers "Treesit Parsers")
         ("s" lsp-yaml-select-buffer-schema "Buffer Schema"))))
+  :preface
+  (defun aaronzinhoo--setup-helm-treesit-regions ()
+    "Register Helm-specific semantic regions."
+    (dolist (function
+              '(helm-ts-mode-action-bounds
+                 helm-ts-mode-indentation-parent-bounds
+                 helm-ts-mode-containing-line-bounds))
+      (add-to-list
+        'aaronzinhoo--treesit-extra-region-functions
+        function
+        t)))
   :config
   ;; Tell LSP which language ID to send for this custom mode.
   (add-to-list
