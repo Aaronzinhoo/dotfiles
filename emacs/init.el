@@ -2356,21 +2356,59 @@ mark:
                  (not (string= str common)))
             (insert (substring common pt))
           (corfu-next)))))
+  (defun aaronzinhoo--corfu-vterm-setup ()
+    "Configure Corfu for Vterm."
+    (setq-local
+      corfu-auto nil
+      corfu-quit-at-boundary t
+      corfu-quit-no-match t)
+    (corfu-mode 1))
+  (defun aaronzinhoo--corfu-eshell-setup ()
+    "Configure Corfu and completion sources for Eshell."
+    (setq-local
+      ;; Manual completion is generally less disruptive in shells.
+      corfu-auto nil
+      corfu-quit-at-boundary t
+      corfu-quit-no-match t
+      completion-at-point-functions
+      (list
+        (cape-capf-buster
+          (cape-capf-super
+            #'pcomplete-completions-at-point
+            #'cape-abbrev))
+        #'cape-file))
+    (corfu-mode 1))
   :init
   ;; local settings for completion at point settings will override this
-  (global-corfu-mode)
-  (corfu-history-mode)
-  (corfu-popupinfo-mode) ; Popup completion info
-  :config
-  (add-hook 'eshell-mode-hook
-    (lambda () (setq-local corfu-quit-at-boundary t
-                 corfu-quit-no-match t
-                 corfu-auto nil)
-      (corfu-mode))
-    nil
-    t)
-  (defvar aaronzinhoo--lsp-capf-backends (list #'cape-file (cape-capf-buster #'lsp-completion-at-point) #'cape-dabbrev #'cape-dict) "Initial list of capf backends to use for lsp-mode")
+  (global-corfu-mode 1)
+  (corfu-history-mode 1)
+  (corfu-popupinfo-mode 1) ; Popup completion info
   )
+(use-package corfu-popupinfo
+  :straight nil
+  :after corfu
+  :commands
+  (corfu-popupinfo-mode
+    corfu-popupinfo-toggle
+    corfu-popupinfo-documentation
+    corfu-popupinfo-location
+    corfu-popupinfo-scroll-up
+    corfu-popupinfo-scroll-down)
+  :bind
+  (:map corfu-popupinfo-map
+    ("M-t"   . corfu-popupinfo-toggle)
+    ("M-l"   . corfu-popupinfo-location)
+    ("C-M-n" . corfu-popupinfo-scroll-up)
+    ("C-M-p" . corfu-popupinfo-scroll-down)
+    ("C-M->" . corfu-popupinfo-end)
+    ("C-M-<" . corfu-popupinfo-beginning))
+  :custom
+  (corfu-popupinfo-delay '(nil . 0.3))
+  (corfu-popupinfo-hide nil)
+  (corfu-popupinfo-max-height 20)
+  (corfu-popupinfo-max-width 80)
+  :config
+  (corfu-popupinfo-mode 1))
 (use-package imenu-list
   :bind (("s-m" . imenu-list-smart-toggle))
   :custom
