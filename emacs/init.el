@@ -157,13 +157,12 @@
           :weight regular)))))
 (use-package elec-pair
   :straight nil
-  :hook
-  ((org-mode
+  :hook ((org-mode
      markdown-mode
      go-mode
      go-ts-mode
      git-commit-setup)
-    . aaronzinhoo--setup-electric-pairs
+    . aaronzinhoo--setup-electric-pairs)
   :preface
   (defvar-local aaronzinhoo--electric-pair-base-inhibit-predicate nil
     "Original Electric Pair inhibit predicate for the current buffer.")
