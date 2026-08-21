@@ -529,6 +529,206 @@ Helm LS workspace."
       (setq root parent))
     root))
 
+(defun helm-ts-mode--region-position (beginning end)
+  "Return a position within BEGINNING through END."
+  (if (> end beginning)
+    (+ beginning
+      (/ (- end beginning) 2))
+    beginning))
+
+(defun helm-ts-mode--parser ()
+  "Return the Helm parser active in the current buffer."
+  (or
+    (car
+      (treesit-parser-list nil 'helm))
+    (car
+      (treesit-parser-list nil 'go-template))))
+
+(defun helm-ts-mode--delimiter-p (node opening)
+  "Return non-nil when NODE is a Helm action delimiter.
+
+When OPENING is non-nil, recognize `{{' and `{{-'. Otherwise,
+recognize `}}' and `-}}'."
+  (when node
+    (let ((type
+            (treesit-node-type node)))
+      (if opening
+        (member type
+          '("{{" "{{-"))
+        (member type
+          '("}}" "-}}"))))))
+
+(defun helm-ts-mode--top-level-action-node
+  (node root)
+  "Return NODE's ancestor directly beneath ROOT."
+  (while
+    (and node
+      (treesit-node-parent node)
+      (not
+        (treesit-node-eq
+          (treesit-node-parent node)
+          root)))
+    (setq node
+      (treesit-node-parent node)))
+  node)
+(defun helm-ts-mode-containing-line-bounds (beginning end)
+  "Return bounds of the Helm-containing line around BEGINNING through END."
+  (let* ((position
+           (helm-ts-mode--region-position
+             beginning
+             end))
+          (line-beginning
+            (save-excursion
+              (goto-char position)
+              (back-to-indentation)
+              (point)))
+          (line-end
+            (save-excursion
+              (goto-char position)
+              (line-end-position)))
+          (contains-helm
+            (save-excursion
+              (goto-char line-beginning)
+              (search-forward
+                "{{"
+                line-end
+                t))))
+    (when
+      (and contains-helm
+        (<= line-beginning beginning)
+        (>= line-end end)
+        (or
+          (< line-beginning beginning)
+          (> line-end end)))
+      (cons line-beginning line-end))))
+(defun helm-ts-mode-indentation-parent-bounds (beginning end)
+  "Return bounds of the nearest indentation parent containing BEGINNING and END.
+
+This is a fallback for mixed Helm/YAML regions where embedded template
+syntax prevents the YAML parser from producing intermediate structural
+nodes. Return `(PARENT-BEGINNING . PARENT-END)', or nil when no suitable
+parent exists."
+  (let* ((current-indent
+           (save-excursion
+             (goto-char beginning)
+             (back-to-indentation)
+             (current-column)))
+          parent-beginning
+          parent-indent)
+
+    ;; Find the nearest preceding nonblank line with less indentation.
+    (save-excursion
+      (goto-char beginning)
+      (beginning-of-line)
+
+      (while
+        (and
+          (not parent-beginning)
+          (= (forward-line -1) 0))
+        (unless
+          (looking-at-p
+            (rx
+              line-start
+              (* whitespace)
+              line-end))
+          (let ((indent
+                  (current-indentation)))
+            (when (< indent current-indent)
+              (setq parent-beginning
+                (progn
+                  (back-to-indentation)
+                  (point)))
+              (setq parent-indent
+                indent))))))
+
+    (when parent-beginning
+      (let ((parent-end
+              (save-excursion
+                (goto-char parent-beginning)
+                (forward-line 1)
+
+                ;; Include blank lines and every line nested more deeply than
+                ;; the discovered parent.
+                (while
+                  (and
+                    (not (eobp))
+                    (or
+                      (looking-at-p
+                        (rx
+                          line-start
+                          (* whitespace)
+                          line-end))
+                      (> (current-indentation)
+                        parent-indent)))
+                  (forward-line 1))
+
+                ;; Stop before the next sibling while excluding the newline
+                ;; immediately before it.
+                (let ((candidate-end
+                        (if (eobp)
+                          (point-max)
+                          (line-beginning-position))))
+                  (goto-char candidate-end)
+                  (skip-chars-backward "\n")
+                  (point)))))
+
+        ;; Only return a strict expansion containing the current region.
+        (when
+          (and
+            (<= parent-beginning beginning)
+            (>= parent-end end)
+            (or
+              (< parent-beginning beginning)
+              (> parent-end end)))
+          (cons
+            parent-beginning
+            parent-end))))))
+(defun helm-ts-mode-action-bounds (beginning end)
+  "Return bounds of the Helm action containing BEGINNING through END.
+
+Return a cons cell `(ACTION-BEGINNING . ACTION-END)', or nil when
+BEGINNING through END is not contained in one Helm action."
+  (when-let* ((parser
+                (helm-ts-mode--parser))
+               (root
+                 (treesit-parser-root-node parser))
+               (position
+                 (helm-ts-mode--region-position
+                   beginning
+                   end))
+               (node
+                 (ignore-errors
+                   (treesit-node-at
+                     position
+                     parser)))
+               (action-node
+                 (helm-ts-mode--top-level-action-node
+                   node
+                   root)))
+    ;; Explicitly include anonymous nodes because Helm delimiters are
+    ;; represented as anonymous literal nodes.
+    (let ((opening
+            (treesit-node-prev-sibling
+              action-node
+              nil))
+           (closing
+             (treesit-node-next-sibling
+               action-node
+               nil)))
+      (when
+        (and
+          (helm-ts-mode--delimiter-p opening t)
+          (helm-ts-mode--delimiter-p closing nil)
+
+          ;; The discovered action must contain the complete input region.
+          (<= (treesit-node-start opening)
+            beginning)
+          (>= (treesit-node-end closing)
+            end))
+        (cons
+          (treesit-node-start opening)
+          (treesit-node-end closing))))))
+
 (provide 'helm-ts-mode)
 
 ;;; helm-ts-mode.el ends here
