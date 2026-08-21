@@ -238,6 +238,173 @@ current buffer."
   (gcmh-high-cons-threshold (* 128 1024 1024))
   :config
   (gcmh-mode 1))
+;;; Themeing
+(use-package doom-modeline
+  :custom
+  ;; If non-nil, cause imenu to see `doom-modeline' declarations.
+  ;; This is done by adjusting `lisp-imenu-generic-expression' to
+  ;; include support for finding `doom-modeline-def-*' forms.
+  ;; Must be set before loading doom-modeline.
+  (doom-modeline-support-imenu t)
+
+  ;; How tall the mode-line should be. It's only respected in GUI.
+  ;; If the actual char height is larger, it respects the actual height.
+  (doom-modeline-height 25)
+
+  ;; How wide the mode-line bar should be. It's only respected in GUI.
+  (doom-modeline-bar-width 4)
+
+  ;; Whether to use hud instead of default bar. It's only respected in GUI.
+  (doom-modeline-hud nil)
+
+  ;; The limit of the window width.
+  ;; If `window-width' is smaller than the limit, some information won't be
+  ;; displayed. It can be an integer or a float number. `nil' means no limit."
+  (doom-modeline-window-width-limit 85)
+
+  ;; How to detect the project root.
+  ;; nil means to use `default-directory'.
+  ;; The project management packages have some issues on detecting project root.
+  ;; e.g. `projectile' doesn't handle symlink folders well, while `project' is unable
+  ;; to hanle sub-projects.
+  ;; You can specify one if you encounter the issue.
+  (doom-modeline-project-detection 'auto)
+
+  ;; Determines the style used by `doom-modeline-buffer-file-name'.
+  ;;
+  ;; Given ~/Projects/FOSS/emacs/lisp/comint.el
+  ;;   auto => emacs/l/comint.el (in a project) or comint.el
+  ;;   truncate-upto-project => ~/P/F/emacs/lisp/comint.el
+  ;;   truncate-from-project => ~/Projects/FOSS/emacs/l/comint.el
+  ;;   truncate-with-project => emacs/l/comint.el
+  ;;   truncate-except-project => ~/P/F/emacs/l/comint.el
+  ;;   truncate-upto-root => ~/P/F/e/lisp/comint.el
+  ;;   truncate-all => ~/P/F/e/l/comint.el
+  ;;   truncate-nil => ~/Projects/FOSS/emacs/lisp/comint.el
+  ;;   relative-from-project => emacs/lisp/comint.el
+  ;;   relative-to-project => lisp/comint.el
+  ;;   file-name => comint.el
+  ;;   buffer-name => comint.el<2> (uniquify buffer name)
+  ;;
+  ;; If you are experiencing the laggy issue, especially while editing remote files
+  ;; with tramp, please try `file-name' style.
+  ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
+  (doom-modeline-buffer-file-name-style 'auto)
+
+  ;; Whether display icons in the mode-line.
+  ;; While using the server mode in GUI, should set the value explicitly.
+  (doom-modeline-icon t)
+
+  ;; Whether display the icon for `major-mode'. It respects `doom-modeline-icon'.
+  (doom-modeline-major-mode-icon t)
+
+  ;; Whether display the colorful icon for `major-mode'.
+  ;; It respects `nerd-icons-color-icons'.
+  (doom-modeline-major-mode-color-icon t)
+
+  ;; Whether display the icon for the buffer state. It respects `doom-modeline-icon'.
+  (doom-modeline-buffer-state-icon t)
+
+  ;; Whether display the modification icon for the buffer.
+  ;; It respects `doom-modeline-icon' and `doom-modeline-buffer-state-icon'.
+  (doom-modeline-buffer-modification-icon t)
+
+  ;; Whether display the time icon. It respects variable `doom-modeline-icon'.
+  (doom-modeline-time-icon t)
+
+  ;; Whether to use unicode as a fallback (instead of ASCII) when not using icons.
+  (doom-modeline-unicode-fallback nil)
+
+  ;; Whether display the buffer name.
+  (doom-modeline-buffer-name t)
+
+  ;; Whether highlight the modified buffer name.
+  (doom-modeline-highlight-modified-buffer-name t)
+
+  ;; Whether display the minor modes in the mode-line.
+  (doom-modeline-minor-modes nil)
+
+  ;; If non-nil, a word count will be added to the selection-info modeline segment.
+  (doom-modeline-enable-word-count nil)
+
+  ;; Major modes in which to display word count continuously.
+  ;; Also applies to any derived modes. Respects `doom-modeline-enable-word-count'.
+  ;; If it brings the sluggish issue, disable `doom-modeline-enable-word-count' or
+  ;; remove the modes from `doom-modeline-continuous-word-count-modes'.
+  (doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode))
+
+  ;; Whether display the buffer encoding.
+  (doom-modeline-buffer-encoding t)
+
+  ;; Whether display the indentation information.
+  (doom-modeline-indent-info nil)
+
+  ;; If non-nil, only display one number for checker information if applicable.
+  (doom-modeline-checker-simple-format t)
+
+  ;; The maximum number displayed for notifications.
+  (doom-modeline-number-limit 99)
+
+  ;; The maximum displayed length of the branch name of version control.
+  (doom-modeline-vcs-max-length 12)
+
+  ;; Whether display the workspace name. Non-nil to display in the mode-line.
+  (doom-modeline-workspace-name t)
+
+  ;; Whether display the `lsp' state. Non-nil to display in the mode-line.
+  (doom-modeline-lsp t)
+
+  ;; Whether display the GitHub notifications. It requires `ghub' package.
+  (doom-modeline-github nil)
+
+  ;; The interval of checking GitHub.
+  (doom-modeline-github-interval (* 30 60))
+
+  ;; Whether display the modal state.
+  ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
+  (doom-modeline-modal t)
+
+  ;; Whether display the modal state icon.
+  ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
+  (doom-modeline-modal-icon t)
+
+  ;; Whether display the battery status. It respects `display-battery-mode'.
+  (setq doom-modeline-battery t)
+
+  ;; Whether display the time. It respects `display-time-mode'.
+  (doom-modeline-time t)
+
+  ;; Whether display the misc segment on all mode lines.
+  ;; If nil, display only if the mode line is active.
+  (doom-modeline-display-misc-in-all-mode-lines t)
+
+  ;; Whether display the environment version.
+  (doom-modeline-env-version t)
+
+  ;; Change the executables to use for the language version string
+  (doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
+  (doom-modeline-env-ruby-executable "ruby")
+  (doom-modeline-env-perl-executable "perl")
+  (doom-modeline-env-go-executable "go")
+  (doom-modeline-env-elixir-executable "iex")
+  (doom-modeline-env-rust-executable "rustc")
+
+  ;; What to display as the version while a new one is being loaded
+  (doom-modeline-env-load-string "...")
+  :init
+  (doom-modeline-mode t))
+(use-package catppuccin-theme
+  :straight (:type git :host github :repo "catppuccin/emacs" :branch "main" :local-repo "catppuccin-theme"))
+(use-package nordtheme
+  :straight (:type git :host github :repo "nordtheme/emacs" :branch "develop" :local-repo "nord-theme"))
+(use-package moe-theme
+  :demand t
+  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
+  :custom
+  (moe-theme-highlight-buffer-id t)
+  :config
+  (require 'moe-theme-switcher)
+  (moe-theme-switcher-mode 1))
 (use-package simple
   :straight nil
   :preface
@@ -476,15 +643,6 @@ current buffer."
   ("s-B" . hydra-bookmark/body)
   :custom
   (hydra-default-hint nil))
-(use-package combobulate
-  :defer t
-  :commands (combobulate)
-  :custom
-  ;; You can customize Combobulate's key prefix here.
-  ;; Note that you may have to restart Emacs for this to take effect!
-  (combobulate-key-prefix "s-c")
-  :bind* (("s-c" . combobulate))
-  :hook ((prog-mode . combobulate-mode)))
 (use-package major-mode-hydra
   :demand t
   :after (hydra s nerd-icons)
@@ -625,7 +783,6 @@ current buffer."
   :hook ((prog-mode . diff-hl-mode)
           (dired-mode . diff-hl-dired-mode))
   :bind ("s-g" . diff-hl-hydra/body)
-
   :pretty-hydra
   (diff-hl-hydra
     (:hint nil
@@ -652,6 +809,7 @@ current buffer."
   (diff-hl-side 'left)
   ;; Avoid VC checks and processes on remote files.
   (diff-hl-disable-on-remote t)
+  (diff-hl-ask-before-revert-hunk nil)
   :config
   ;; Refresh indicators after Magit changes repository state.
   (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh))
@@ -1457,6 +1615,7 @@ mark:
                java-ts-mode
                js-ts-mode
                json-ts-mode
+               nxml-mode
                python-ts-mode
                rust-ts-mode
                toml-ts-mode
@@ -2294,9 +2453,6 @@ mark:
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
-(use-package company-org-block
-  :straight (:type git :host github :repo "aaronzinhoo/company-org-block" :branch "master"))
-;; See the Cape README for more tweaks!
 (use-package cape
   :demand t
   :custom
@@ -2306,11 +2462,10 @@ mark:
   ;; Optionally use TAB for cycling, default is `corfu-complete'.
   :bind (:map corfu-map
           ("M-SPC"      . corfu-insert-separator)
-          ("TAB"        . corfu-complete-common-or-next)
-          ([tab]        . corfu-complete-common-or-next)
+          ("TAB"        . aaronzinhoo--corfu-complete-common-or-next)
+          ([tab]        . aaronzinhoo--corfu-complete-common-or-next)
           ("S-TAB"      . corfu-previous)
-          ([backtab]    . corfu-previous)
-          ("<return>"   . corfu-insert))
+          ([backtab]    . corfu-previous))
   :hook ((vterm-mode . aaronzinhoo--corfu-vterm-setup)
           (eshell-mode . aaronzinhoo--corfu-eshell-setup))
   ;; Optional customizations
@@ -2340,22 +2495,47 @@ mark:
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match t)
   :preface
-  (defun corfu-complete-common-or-next ()
-    "Complete common prefix or go to next candidate."
+  (defun aaronzinhoo--corfu-complete-common-or-next ()
+    "Complete the common prefix or preview the next candidate."
     (interactive)
-    (if (= corfu--total 1)
-        (progn
-          (corfu--goto 1)
-          (corfu-insert))
-      (let* ((input (car corfu--input))
-             (str (if (thing-at-point 'filename) (file-name-nondirectory input) input))
-             (pt (length str))
-             (common (try-completion str corfu--candidates)))
-        (if (and (> pt 0)
-                 (stringp common)
-                 (not (string= str common)))
-            (insert (substring common pt))
-          (corfu-next)))))
+    (cond
+      ;; Start completion when Corfu is not active.
+      ((not completion-in-region-mode)
+        (completion-at-point))
+
+      ;; Immediately insert a sole candidate.
+      ((= corfu--total 1)
+        (corfu--goto 0)
+        (corfu-insert))
+
+      (t
+        (let* ((input
+                 (car corfu--input))
+                (string
+                  (if
+                    (thing-at-point 'filename)
+                    (file-name-nondirectory input)
+                    input))
+                (point
+                  (length string))
+                (common
+                  (try-completion
+                    string
+                    corfu--candidates)))
+
+          (if
+            (and
+              (> point 0)
+              (stringp common)
+              (not
+                (string= string common)))
+            ;; Only insert text shared by every candidate.
+            (insert
+              (substring common point))
+
+            ;; Otherwise change the selected candidate. With
+            ;; `corfu-preview-current' set to t, this remains an overlay.
+            (corfu-next))))))
   (defun aaronzinhoo--corfu-vterm-setup ()
     "Configure Corfu for Vterm."
     (setq-local
@@ -2381,6 +2561,19 @@ mark:
   :init
   ;; local settings for completion at point settings will override this
   (global-corfu-mode 1)
+  :config
+  ;; use corfu send in shells
+  (keymap-set corfu-map "RET" `(menu-item
+                                 ""
+                                 nil
+                                 :filter
+                                 ,(lambda (&optional _)
+                                    (if
+                                      (derived-mode-p
+                                        'eshell-mode
+                                        'comint-mode)
+                                      #'corfu-send
+                                      #'corfu-insert))))
   (corfu-history-mode 1)
   (corfu-popupinfo-mode 1) ; Popup completion info
   )
@@ -2754,29 +2947,9 @@ replacement boundaries."
 (use-package ob-typescript)
 ;;; sudo apt install phantomjs
 (use-package ob-browser)
-;; better way to test APIs (like postman but with org files!)
-;; must keep here since org uses ob-verb
-(use-package verb
-  :bind (:map org-mode-map
-              ("s-v" . verb-hydra/body))
-  :preface
-  (defun aaronzinhoo--verb-kill-this-buffer ()
-    (interactive)
-    (kill-buffer (buffer-file-name)))
-  :pretty-hydra
-  (verb-hydra
-   (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-web" "Verb Mode" 1 -0.05))
-   ("Request"
-    (("rs" verb-send-request-on-point-other-window-stay "Other Window (Stay)")
-     ("ro" verb-send-request-on-point-other-window "Other Window")
-     ("rc" verb-send-request-on-point "Current Window"))
-    "Kill"
-    (("k" aaronzinhoo--verb-kill-this-buffer  "This Response Buffers")
-     ("K" verb-kill-all-response-buffers  "All Response Buffers and Windows")))))
-(use-package swagg
-  :straight (:type git :host github :repo "isamert/swagg.el" :branch "main")
-  :commands (swagg-request swagg-request-with-rest-block))
-;; add agenda commands to hydra
+(use-package corg
+  :straight (:type git :host github :repo "isamert/corg.el")
+  :commands (corg-completion-at-point))
 (use-package org
   :mode (("\\.org$" . org-mode))
   :hook ((org-mode . aaronzinhoo--org-setup)
@@ -2789,20 +2962,6 @@ replacement boundaries."
     ("C-M-<return>" . org-insert-subheading)
     ("s-h". hydra-org-nav/body))
   :preface
-  ;; TODO get this to work with cape
-  (defun org-keyword-backend (command &optional arg &rest ignored)
-    (interactive (list 'interactive))
-    (cl-case command
-      (interactive (company-begin-backend 'org-keyword-backend))
-      (prefix (and (eq major-mode 'org-mode)
-                (cons (company-grab-line "#\\+\\(\\w*\\)" 1)
-                  t)))
-      (candidates (mapcar #'upcase
-                    (cl-remove-if-not
-                      (lambda (c) (string-prefix-p arg c))
-                      (pcomplete-completions))))
-      (ignore-case t)
-      (duplicates t)))
   (defun aaronzinhoo-org-inline-css-hook (exporter)
     "Insert custom inline css"
     (when (eq exporter 'html)
@@ -2820,9 +2979,17 @@ replacement boundaries."
                               "/*]]>*/-->\n"
                               "</style>\n")))))
   (defun aaronzinhoo--org-setup ()
-    (variable-pitch-mode t)
-    (org-indent-mode t)
-    (setq-local completion-at-point-functions (list #'cape-file (cape-company-to-capf #'company-org-block) (cape-capf-super #'cape-dict #'cape-dabbrev))))
+    "Configure the current Org buffer."
+    (variable-pitch-mode 1)
+    (org-indent-mode 1)
+    (setq-local
+      completion-at-point-functions
+      (list
+        #'corg-completion-at-point
+        #'cape-file
+        (cape-capf-super
+          #'cape-dict
+          #'cape-dabbrev))))
   (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
@@ -2949,6 +3116,7 @@ replacement boundaries."
       (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
   (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
   :config
+  (require 'org-tempo)
   (define-key org-mode-map (kbd "s-v") verb-command-map)
   (org-babel-do-load-languages
     'org-babel-load-languages
@@ -2962,29 +3130,36 @@ replacement boundaries."
        (verb       . t)
        (shell      . t)))
   (setq org-file-apps
-    (quote
-      ((auto-mode . emacs)
-        ("\\.mm\\'" . default)
-        ("\\.x?html?\\'" . default)
-        ("\\.pdf\\'" . default))))
-  ;; add modes to the src languages for org-mode blocks
-  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
-  (add-to-list 'org-src-lang-modes '("js" . js2))
-  (add-to-list 'org-src-lang-modes '("python" . python))
-  (add-to-list 'org-src-lang-modes '("ts" . typescript))
-  (add-to-list 'org-src-lang-modes '("browser" . web))
-  (add-to-list 'org-src-lang-modes '("html" . web))
-  (add-to-list 'org-src-lang-modes '("verb" . verb))
+    '((auto-mode . emacs)
+       ("\\.mm\\'" . default)
+       ("\\.x?html?\\'" . default)
+       ("\\.pdf\\'" . default)))
 
-  ;; add quick way to make code block with name "<s"[TAB]
-  ;; arg: results: [output value replace silent]
-  (add-to-list 'org-structure-template-alist '("plantuml" . "src plantuml"))
-  (add-to-list 'org-structure-template-alist '("html" . "src html"))
-  (add-to-list 'org-structure-template-alist '("browser" . "src browser"))
-  (add-to-list 'org-structure-template-alist '("js" . "src js"))
-  (add-to-list 'org-structure-template-alist '("py" . "src python"))
-  (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
-  (add-to-list 'org-structure-template-alist '("verb" . "src verb"))
+  ;; Map Org source-block language names to Emacs major-mode names.
+  (dolist (mapping
+            '(("plantuml"   . plantuml)
+               ("js"         . js-ts)
+               ("python"     . python-ts)
+               ("typescript" . typescript-ts)
+               ("browser"    . js-ts)
+               ("html"       . html-ts)
+               ("verb"       . verb)))
+    (add-to-list
+      'org-src-lang-modes
+      mapping))
+
+  ;; Expand `<key TAB' into an Org structure template.
+  (dolist (template
+            '(("plantuml" . "src plantuml")
+               ("html"     . "src html")
+               ("browser"  . "src browser")
+               ("js"       . "src js")
+               ("py"       . "src python")
+               ("ts"       . "src typescript")
+               ("verb"     . "src verb")))
+    (add-to-list
+      'org-structure-template-alist
+      template))
 
   (setq org-capture-templates
     '(("t" "TODO" entry (file+headline "~/development/org/gtd.org" "Tasks")
@@ -3004,8 +3179,7 @@ replacement boundaries."
          :empty-lines 1               ; properties
          :created t                   ; properties
          )))
-  (require 'ox-publish)
-  )
+  (require 'ox-publish))
 (use-package org-modern
   :hook (org-mode . org-modern-mode))
 (use-package org-contrib
@@ -3347,6 +3521,8 @@ if one already exists."
          "Buffer Schema")
         ("d" lsp-yaml-download-schema-store-db
           "Download Schemastore")))))
+
+;; web dev
 (use-package helm-ts-mode
   :straight nil
   :load-path (lambda () (expand-file-name "elisp" user-emacs-directory))
@@ -3398,6 +3574,31 @@ if one already exists."
   (add-to-list
     'lsp-language-id-configuration
     '(helm-ts-mode . "helm-ls")))
+;; better way to test APIs (like postman but with org files!)
+;; must keep here since org uses ob-verb
+(use-package verb
+  :bind (:map org-mode-map
+          ("s-v" . verb-hydra/body))
+  :preface
+  (defun aaronzinhoo--verb-kill-this-buffer ()
+    (interactive)
+    (kill-buffer (buffer-file-name)))
+  :pretty-hydra
+  (verb-hydra
+    (:hint nil :color pink :quit-key "SPC" :title (with-mdicon "nf-md-web" "Verb Mode" 1 -0.05))
+    ("Create Request"
+      (("c" swagg-request-with-rest-block "Swagg Create"))
+      "Run Request"
+      (("rr" verb-send-request-on-point-other-window-stay "Other Window (Stay)")
+        ("ro" verb-send-request-on-point-other-window "Other Window")
+        ("rc" verb-send-request-on-point "Current Window")
+        ("rs" swagg-request "Swagg Request"))
+      "Kill"
+      (("k" aaronzinhoo--verb-kill-this-buffer  "This Response Buffer")
+        ("K" verb-kill-all-response-buffers  "All Response Buffers and Windows")))))
+(use-package swagg
+  :straight (:type git :host github :repo "isamert/swagg.el" :branch "main")
+  :commands (swagg-request swagg-request-with-rest-block))
 ;; demanding openapi-yaml-mode since need mode file config to be loaded after yaml
 (use-package openapi-yaml-mode
   :straight nil
@@ -3444,11 +3645,10 @@ if one already exists."
   :mode ("\\.env\\'" . dotenv-mode))
 (use-package jenkinsfile-mode
   :mode ("\\Jenkinsfile\\'" . jenkinsfile-mode)
+  :hook (jenkinsfile-mode . aaronzinhoo--jenkinsfile-mode-hook)
   :preface
-  (defun aaronzinhoo-company-jenkinsfile-mode-hook ()
-    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict)))
-  :config
-  (add-hook 'jenkinsfile-mode-hook 'aaronzinhoo-company-jenkinsfile-mode-hook))
+  (defun aaronzinhoo--jenkinsfile-mode-hook ()
+    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; DEVOPS CONFIG
@@ -3477,46 +3677,271 @@ if one already exists."
 (use-package kubed
   :straight (:type git :host github :repo "eshelyaron/kubed" :branch "master")
   :bind* ("s-k" . kubed-transient))
-;; (use-package kubel
-;;   :after (vterm)
-;;   :config (kubel-vterm-setup))
-;; (use-package kubernetes
-;;   :straight (:type git :host github :repo "kubernetes-el/kubernetes-el" :branch "master")
-;;   :defer t
-;;   :commands (kubernetes-overview)
-;;   :custom
-;;   (kubernetes-overview-custom-views-alist '((my-view . (context pods configmaps secrets deployments))))
-;;   (kubernetes-default-overview-view 'my-view)
-;;   :config
-;;   (setq kubernetes-poll-frequency 5
-;;         kubernetes-redraw-frequency 5))
-;; (use-package kele
-;;   :demand t
-;;   :straight (:type git :host github :repo "jinnovation/kele.el" :branch "main")
-;;   :config
-;;   (define-key kele-mode-map (kbd "s-k") kele-command-map)
-;;   (kele-mode t))
 
 ;;; WEB-DEV CONFIG
+;; for hosting a web server and development if needed
+(use-package simple-httpd
+  :defer t)
+(use-package skewer-mode
+  :defer t)
 (use-package dotenv
   :straight (:type git :host github :repo "pkulev/dotenv.el" :branch "main")
   :hook
   (prog-mode . dotenv-update-current-env))
 ;; apache
 (use-package apache-mode
-  :straight (:type git :host github :repo "PommesSchranke/apache-mode" :branch "customizable-faces")
-  :mode (("apache2\\.conf\\'" . apache-mode)
-         ("httpd\\.conf\\'" . apache-mode))
-  :hook ((apache-mode . aaronzinhoo-apache2-company-mode-setup))
+  :mode (("\\(?:apache2\\|httpd\\)\\.conf\\'" . apache-mode)
+          ("\\.htaccess\\'" . apache-mode)
+          ("/ports\\.conf\\'" . apache-mode)
+          ("/sites-\\(?:available\\|enabled\\)/[^/]+\\'" . apache-mode)
+          ("/conf-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode)
+          ("/mods-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode))
+  :hook ((apache-mode . aaronzinhoo--apache-completion-setup))
   :preface
-  (defun aaronzinhoo-apache2-company-mode-setup ()
-    (setq-local completion-at-point-functions (list #'cape-file #'cape-keyword #'cape-dabbrev #'cape-dict))))
+  (defconst aaronzinhoo--apache-value-completions
+    '(("AllowOverride"
+        "None" "All"
+        "AuthConfig" "FileInfo" "Indexes" "Limit" "Nonfatal")
+       ("AuthType"
+         "Basic" "Digest")
+       ("LogLevel"
+         "emerg" "alert" "crit" "error"
+         "warn" "notice" "info" "debug" "trace1" "trace2"
+         "trace3" "trace4" "trace5" "trace6" "trace7" "trace8")
+       ("Options"
+         "None" "All" "ExecCGI" "FollowSymLinks" "Includes"
+         "Indexes" "MultiViews" "SymLinksIfOwnerMatch")
+       ("Require"
+         "all" "env" "group" "host" "ip" "local"
+         "method" "not" "user" "valid-user")
+       ("RewriteEngine"
+         "On" "Off")
+       ("SSLEngine"
+         "On" "Off" "optional")
+       ("SSLHonorCipherOrder"
+         "On" "Off")
+       ("ServerSignature"
+         "On" "Off" "EMail")
+       ("ServerTokens"
+         "Full" "OS" "Minimal" "Minor" "Major" "Prod")
+       ("TraceEnable"
+         "On" "Off" "extended")
+       ("UseCanonicalName"
+         "On" "Off" "DNS"))
+    "Common values associated with Apache directives.")
+  (defconst aaronzinhoo--apache-fallback-directives
+    '("AcceptFilter"
+       "AccessFileName"
+       "AddDefaultCharset"
+       "Alias"
+       "AliasMatch"
+       "AllowOverride"
+       "AllowOverrideList"
+       "AuthName"
+       "AuthType"
+       "CustomLog"
+       "DeflateCompressionLevel"
+       "DirectoryIndex"
+       "DocumentRoot"
+       "EnableSendfile"
+       "ErrorDocument"
+       "ErrorLog"
+       "ExpiresActive"
+       "ExpiresByType"
+       "Header"
+       "Include"
+       "IncludeOptional"
+       "KeepAlive"
+       "KeepAliveTimeout"
+       "LimitRequestBody"
+       "Listen"
+       "LoadModule"
+       "LogFormat"
+       "LogLevel"
+       "MaxKeepAliveRequests"
+       "Options"
+       "ProxyPass"
+       "ProxyPassMatch"
+       "ProxyPassReverse"
+       "Redirect"
+       "RedirectMatch"
+       "Require"
+       "RewriteBase"
+       "RewriteCond"
+       "RewriteEngine"
+       "RewriteRule"
+       "ServerAdmin"
+       "ServerAlias"
+       "ServerName"
+       "ServerRoot"
+       "ServerSignature"
+       "ServerTokens"
+       "SetEnv"
+       "SetEnvIf"
+       "SSLCertificateFile"
+       "SSLCertificateKeyFile"
+       "SSLCipherSuite"
+       "SSLEngine"
+       "SSLHonorCipherOrder"
+       "SSLProtocol"
+       "Timeout"
+       "TraceEnable"
+       "UseCanonicalName"
 
-;; using verb instead because it is better
-(use-package simple-httpd
-  :defer t)
-(use-package skewer-mode
-  :defer t)
+       ;; Section directives
+       "<Directory"
+       "<DirectoryMatch"
+       "<Files"
+       "<FilesMatch"
+       "<If"
+       "<IfModule"
+       "<IfVersion"
+       "<Limit"
+       "<LimitExcept"
+       "<Location"
+       "<LocationMatch"
+       "<Proxy"
+       "<VirtualHost")
+    "Fallback Apache directives used when Apache is unavailable.")
+  (defvar aaronzinhoo--apache-directive-cache nil
+  "Cached directives reported by the local Apache installation.")
+  (defvar aaronzinhoo--apache-directive-cache-initialized-p nil
+    "Whether Apache directive discovery has been attempted.")
+  (defun aaronzinhoo--apache-executable ()
+    "Return an available Apache control executable."
+    (seq-find
+      #'executable-find
+      '("apachectl"
+         "apache2ctl"
+         "httpd")))
+  (defun aaronzinhoo--apache-installed-directives ()
+    "Return directives supported by the installed Apache server."
+    (unless aaronzinhoo--apache-directive-cache-initialized-p
+      (setq aaronzinhoo--apache-directive-cache-initialized-p
+        t)
+
+      (setq aaronzinhoo--apache-directive-cache
+        (when-let ((executable
+                     (aaronzinhoo--apache-executable)))
+          (with-temp-buffer
+            (when
+              (zerop
+                (call-process
+                  executable
+                  nil
+                  t
+                  nil
+                  "-L"))
+              (goto-char
+                (point-min))
+              (let (directives)
+                (while
+                  (re-search-forward
+                    "^[[:blank:]]*\\([^[:blank:]\n]+\\)[[:blank:]]+("
+                    nil
+                    t)
+                  (push
+                    (match-string-no-properties 1)
+                    directives))
+                (delete-dups directives)))))))
+
+    aaronzinhoo--apache-directive-cache)
+  (defun aaronzinhoo--apache-directives ()
+    "Return available Apache completion candidates."
+    (delete-dups
+      (append
+        (aaronzinhoo--apache-installed-directives)
+        aaronzinhoo--apache-fallback-directives)))
+  (defun aaronzinhoo--apache-refresh-directives ()
+    "Clear and rebuild the installed Apache directive cache."
+    (interactive)
+    (setq aaronzinhoo--apache-directive-cache nil
+      aaronzinhoo--apache-directive-cache-initialized-p nil)
+    (aaronzinhoo--apache-installed-directives)
+    (message "Apache directive completion refreshed"))
+  (defun aaronzinhoo--apache-completion-at-point ()
+    "Complete an Apache directive at the beginning of a line."
+    (let ((end
+            (point))
+           beginning)
+      (save-excursion
+        (skip-chars-backward
+          "[:alnum:]_<")
+        (setq beginning
+          (point)))
+
+      (when
+        (string-match-p
+          "\\`[[:blank:]]*\\'"
+          (buffer-substring-no-properties
+            (line-beginning-position)
+            beginning))
+        (list
+          beginning
+          end
+          (aaronzinhoo--apache-directives)
+          :exclusive 'no
+          :company-kind
+          (lambda (_)
+            'keyword)))))
+  (defun aaronzinhoo--apache-value-completion-at-point ()
+    "Complete common values for the directive on the current line."
+    (save-excursion
+      (let ((end
+              (point))
+             beginning
+             directive)
+        (skip-chars-backward
+          "^ \t\n")
+        (setq beginning
+          (point))
+
+        (goto-char
+          (line-beginning-position))
+        (when
+          (looking-at
+            "[[:blank:]]*\\([[:alnum:]]+\\)[[:blank:]]+")
+          (setq directive
+            (match-string-no-properties 1)))
+
+        (when-let* ((values
+                     (cdr
+                       (assoc-string
+                         directive
+                         aaronzinhoo--apache-value-completions
+                         t))))
+          (list
+            beginning
+            end
+            values
+            :exclusive 'no)))))
+  (defun aaronzinhoo--apache-completion-setup ()
+    "Configure Apache completion in the current buffer."
+    (setq-local completion-ignore-case t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'aaronzinhoo--apache-completion-at-point
+      nil
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'aaronzinhoo--apache-value-completion-at-point
+      t
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'cape-file
+      t
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'cape-dabbrev
+      t
+      t)))
 (use-package add-node-modules-path
   :hook ((rjsx-mode . add-node-modules-path)
           (typescript-mode . add-node-modules-path)
@@ -3526,18 +3951,58 @@ if one already exists."
           (typescript-ts-mode . add-node-modules-path)
           ;; add completion for css class names in html files
           (css-mode . add-node-modules-path)))
-;; TODO add electric pair for < or add snippet
 (use-package nxml-mode
   :straight nil
-  :bind ((:map nxml-mode-map
-               ("s-h" . hydra-web/body)))
-  :config
-  (add-to-list 'auto-mode-alist
-               (cons (concat "\\." (regexp-opt '("xml" "xsd" "sch" "rng" "xslt" "svg" "rss") t) "\\'")
-                     'nxml-mode)))
-(use-package emmet-mode
-  :diminish
-  :hook (web-mode . emmet-mode))
+  :mode (("\\.\\(?:xml\\|xsd\\|sch\\|rng\\|xslt\\|xsl\\|svg\\|rss\\)\\'" . nxml-mode))
+  :bind (:map nxml-mode-map
+          ("s-h" . hydra-xml/body))
+  :hook ((nxml-mode . aaronzinhoo--nxml-setup-treesit)
+          (nxml-mode . lsp-deferred)
+          (nxml-mode . yas-minor-mode))
+  :pretty-hydra
+  (hydra-xml
+    (:title "XML"
+      :color amaranth
+      :quit-key "q")
+    ("Navigation"
+      (("n" nxml-forward-element       "next element")
+        ("p" nxml-backward-element      "previous element")
+        ("u" nxml-backward-up-element   "parent element")
+        ("d" nxml-down-element          "child element"))
+
+      "Editing"
+      (("c" nxml-balanced-close-start-tag-inline
+         "close element")
+        ("s" nxml-split-element
+          "split element")
+        ("f" nxml-finish-element
+          "finish element")
+        ("t" nxml-balanced-close-start-tag-block
+          "close as block"))
+
+      "Validation"
+      (("v" rng-validate-mode
+         "toggle validation")
+        ("]" rng-next-error
+          "next error")
+        ("[" rng-previous-error
+          "previous error")
+        ("a" rng-auto-set-schema-and-validate
+          "detect schema")
+        ("S" rng-set-schema-file-and-validate
+          "select schema"))
+
+      "Tools"
+      (("r" nxml-mode
+         "restart mode")
+        ("i" imenu
+          "index"))))
+  :preface
+  (defun aaronzinhoo--nxml-setup-treesit ()
+    "Create an XML Tree-sitter parser in the current NXML buffer."
+    (when
+      (treesit-ready-p 'xml t)
+      (treesit-parser-create 'xml))))
 (use-package css-mode
   :straight nil
   :hook ((scss-mode . aaronzinhoo--scss-completion-setup))
@@ -3614,7 +4079,6 @@ if one already exists."
 
 
 ;; JS/react/angular config
-;; completetion: lsp+company
 ;; refactor: js-prettier
 ;; syntax: flycheck
 ;; linter: flycheck
@@ -3685,7 +4149,6 @@ if one already exists."
 ;; linter/refractor: black
 ;; syntax on-the-fly: flycheck
 ;; style: flake8
-;; completion: company
 ;; install black, flake8 ipython, jedi, rope, autopep8, sphinx-doc
 (use-package pyvenv
   :straight t
@@ -3936,173 +4399,6 @@ if one already exists."
   :commands (elisp-autofmt-mode elisp-autofmt-buffer)
   :hook (emacs-lisp-mode . elisp-autofmt-mode))
 
-;;; Theme
-(use-package doom-modeline
-  :custom
-  ;; If non-nil, cause imenu to see `doom-modeline' declarations.
-  ;; This is done by adjusting `lisp-imenu-generic-expression' to
-  ;; include support for finding `doom-modeline-def-*' forms.
-  ;; Must be set before loading doom-modeline.
-  (doom-modeline-support-imenu t)
-
-  ;; How tall the mode-line should be. It's only respected in GUI.
-  ;; If the actual char height is larger, it respects the actual height.
-  (doom-modeline-height 25)
-
-  ;; How wide the mode-line bar should be. It's only respected in GUI.
-  (doom-modeline-bar-width 4)
-
-  ;; Whether to use hud instead of default bar. It's only respected in GUI.
-  (doom-modeline-hud nil)
-
-  ;; The limit of the window width.
-  ;; If `window-width' is smaller than the limit, some information won't be
-  ;; displayed. It can be an integer or a float number. `nil' means no limit."
-  (doom-modeline-window-width-limit 85)
-
-  ;; How to detect the project root.
-  ;; nil means to use `default-directory'.
-  ;; The project management packages have some issues on detecting project root.
-  ;; e.g. `projectile' doesn't handle symlink folders well, while `project' is unable
-  ;; to hanle sub-projects.
-  ;; You can specify one if you encounter the issue.
-  (doom-modeline-project-detection 'auto)
-
-  ;; Determines the style used by `doom-modeline-buffer-file-name'.
-  ;;
-  ;; Given ~/Projects/FOSS/emacs/lisp/comint.el
-  ;;   auto => emacs/l/comint.el (in a project) or comint.el
-  ;;   truncate-upto-project => ~/P/F/emacs/lisp/comint.el
-  ;;   truncate-from-project => ~/Projects/FOSS/emacs/l/comint.el
-  ;;   truncate-with-project => emacs/l/comint.el
-  ;;   truncate-except-project => ~/P/F/emacs/l/comint.el
-  ;;   truncate-upto-root => ~/P/F/e/lisp/comint.el
-  ;;   truncate-all => ~/P/F/e/l/comint.el
-  ;;   truncate-nil => ~/Projects/FOSS/emacs/lisp/comint.el
-  ;;   relative-from-project => emacs/lisp/comint.el
-  ;;   relative-to-project => lisp/comint.el
-  ;;   file-name => comint.el
-  ;;   buffer-name => comint.el<2> (uniquify buffer name)
-  ;;
-  ;; If you are experiencing the laggy issue, especially while editing remote files
-  ;; with tramp, please try `file-name' style.
-  ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
-  (doom-modeline-buffer-file-name-style 'auto)
-
-  ;; Whether display icons in the mode-line.
-  ;; While using the server mode in GUI, should set the value explicitly.
-  (doom-modeline-icon t)
-
-  ;; Whether display the icon for `major-mode'. It respects `doom-modeline-icon'.
-  (doom-modeline-major-mode-icon t)
-
-  ;; Whether display the colorful icon for `major-mode'.
-  ;; It respects `nerd-icons-color-icons'.
-  (doom-modeline-major-mode-color-icon t)
-
-  ;; Whether display the icon for the buffer state. It respects `doom-modeline-icon'.
-  (doom-modeline-buffer-state-icon t)
-
-  ;; Whether display the modification icon for the buffer.
-  ;; It respects `doom-modeline-icon' and `doom-modeline-buffer-state-icon'.
-  (doom-modeline-buffer-modification-icon t)
-
-  ;; Whether display the time icon. It respects variable `doom-modeline-icon'.
-  (doom-modeline-time-icon t)
-
-  ;; Whether to use unicode as a fallback (instead of ASCII) when not using icons.
-  (doom-modeline-unicode-fallback nil)
-
-  ;; Whether display the buffer name.
-  (doom-modeline-buffer-name t)
-
-  ;; Whether highlight the modified buffer name.
-  (doom-modeline-highlight-modified-buffer-name t)
-
-  ;; Whether display the minor modes in the mode-line.
-  (doom-modeline-minor-modes nil)
-
-  ;; If non-nil, a word count will be added to the selection-info modeline segment.
-  (doom-modeline-enable-word-count nil)
-
-  ;; Major modes in which to display word count continuously.
-  ;; Also applies to any derived modes. Respects `doom-modeline-enable-word-count'.
-  ;; If it brings the sluggish issue, disable `doom-modeline-enable-word-count' or
-  ;; remove the modes from `doom-modeline-continuous-word-count-modes'.
-  (doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode))
-
-  ;; Whether display the buffer encoding.
-  (doom-modeline-buffer-encoding t)
-
-  ;; Whether display the indentation information.
-  (doom-modeline-indent-info nil)
-
-  ;; If non-nil, only display one number for checker information if applicable.
-  (doom-modeline-checker-simple-format t)
-
-  ;; The maximum number displayed for notifications.
-  (doom-modeline-number-limit 99)
-
-  ;; The maximum displayed length of the branch name of version control.
-  (doom-modeline-vcs-max-length 12)
-
-  ;; Whether display the workspace name. Non-nil to display in the mode-line.
-  (doom-modeline-workspace-name t)
-
-  ;; Whether display the `lsp' state. Non-nil to display in the mode-line.
-  (doom-modeline-lsp t)
-
-  ;; Whether display the GitHub notifications. It requires `ghub' package.
-  (doom-modeline-github nil)
-
-  ;; The interval of checking GitHub.
-  (doom-modeline-github-interval (* 30 60))
-
-  ;; Whether display the modal state.
-  ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
-  (doom-modeline-modal t)
-
-  ;; Whether display the modal state icon.
-  ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
-  (doom-modeline-modal-icon t)
-
-  ;; Whether display the battery status. It respects `display-battery-mode'.
-  (setq doom-modeline-battery t)
-
-  ;; Whether display the time. It respects `display-time-mode'.
-  (doom-modeline-time t)
-
-  ;; Whether display the misc segment on all mode lines.
-  ;; If nil, display only if the mode line is active.
-  (doom-modeline-display-misc-in-all-mode-lines t)
-
-  ;; Whether display the environment version.
-  (doom-modeline-env-version t)
-
-  ;; Change the executables to use for the language version string
-  (doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
-  (doom-modeline-env-ruby-executable "ruby")
-  (doom-modeline-env-perl-executable "perl")
-  (doom-modeline-env-go-executable "go")
-  (doom-modeline-env-elixir-executable "iex")
-  (doom-modeline-env-rust-executable "rustc")
-
-  ;; What to display as the version while a new one is being loaded
-  (doom-modeline-env-load-string "...")
-  :init
-  (doom-modeline-mode t))
-(use-package catppuccin-theme
-  :straight (:type git :host github :repo "catppuccin/emacs" :branch "main" :local-repo "catppuccin-theme"))
-(use-package nordtheme
-  :straight (:type git :host github :repo "nordtheme/emacs" :branch "develop" :local-repo "nord-theme"))
-(use-package moe-theme
-  :demand t
-  :straight (moe-theme :type git :host github :repo "kuanyui/moe-theme.el" :branch "dev")
-  :custom
-  (moe-theme-highlight-buffer-id t)
-  :config
-  (require 'moe-theme-switcher)
-  (moe-theme-switcher-mode 1))
 (message "Done loading packages")
 
 ;;; init.el ends here
