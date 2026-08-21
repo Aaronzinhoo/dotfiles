@@ -1424,21 +1424,6 @@ mark:
          ;; Ordinary Tree-sitter nodes plus the registered Helm semantic
          ;; regions: action, containing line, and indentation parent.
          aaronzinhoo--treesit-mark-bigger-node)))
-  (defun aaronzinhoo--setup-vterm-copy-expansions ()
-    "Configure Expand Region for Vterm copy mode."
-    (when vterm-copy-mode
-      (setq-local
-        er/try-expand-list
-        '(er/mark-word
-           er/mark-symbol
-
-           ;; Environment assignments and comma-separated values.
-           aaronzinhoo--mark-assignment-list-item
-           aaronzinhoo--mark-assignment-list
-
-           er/mark-outside-quotes
-           er/mark-outside-pairs
-           er/mark-paragraph))))
   (defun aaronzinhoo--add-treesit-mode-expansions ()
     "Add generic Tree-sitter expansions."
     (setq-local
@@ -3081,6 +3066,7 @@ replacement boundaries."
   :commands (vterm project-vterm)
   :bind (:map vterm-mode-map
           ("M-q" . aaronzinhoo--vterm-yank))
+  :hook ((vterm-copy-mode . aaronzinhoo--setup-vterm-copy-expansions))
   :init
   (setq vterm-install t)
   :custom
@@ -3089,6 +3075,21 @@ replacement boundaries."
   (confirm-kill-processes nil)
   (hscroll-margin 0)
   :preface
+  (defun aaronzinhoo--setup-vterm-copy-expansions ()
+    "Configure Expand Region for Vterm copy mode."
+    (when vterm-copy-mode
+      (setq-local
+        er/try-expand-list
+        '(er/mark-word
+           er/mark-symbol
+
+           ;; Environment assignments and comma-separated values.
+           aaronzinhoo--mark-assignment-list-item
+           aaronzinhoo--mark-assignment-list
+
+           er/mark-outside-quotes
+           er/mark-outside-pairs
+           er/mark-paragraph))))
   (defun aaronzinhoo--vterm-yank ()
     (interactive "p")
     (consult-yank))
