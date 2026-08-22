@@ -1,169 +1,124 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# get all utility functions
-. "$( pwd )/utils.sh"
+set -o errexit
+set -o nounset
+set -o pipefail
+
+script_directory="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+  pwd
+)"
+
+repository_root="$(
+  cd -- "${script_directory}/.."
+  pwd
+)"
+
+# shellcheck source=../utils.sh
+source "${repository_root}/utils.sh"
 
 export PROMPT='[ BrewInstaller ]: '
 
-# install brew if needed
+brewfile="${script_directory}/Brewfile"
 
-echo_with_prompt "Verifying HomeBrew is installed in ${HOMEBREW_ROOT}"
-if [ -f "${HOMEBREW_ROOT}/bin/brew" ]; then
-    echo_with_prompt "HomeBrew is installed! Continuing with installation of packages"
-    eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
-else
-    echo_with_prompt "HomeBrew NOT installed! Installing now!"
-    mkdir "${HOMEBREW_ROOT}" && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C ${HOMEBREW_ROOT}
-    eval "$(${HOMEBREW_ROOT}/bin/brew shellenv)"
-    brew update --force --quiet
-    chmod -R go-w "$(brew --prefix)/share/zsh"
+
+# -------------------------------------------------------------------
+# Xcode Command Line Tools
+# -------------------------------------------------------------------
+
+if ! xcode-select --print-path >/dev/null 2>&1; then
+  echo_with_prompt "Installing Xcode Command Line Tools"
+
+  xcode-select --install
+
+  echo_with_prompt \
+    "Complete the Command Line Tools installation and rerun this script."
+
+  exit 0
 fi
 
-#--------------------
-# necessary packages
-#--------------------
-echo_with_prompt "installing necessary packages\n";
-xcode-select --install
-brew install svn
-svn list  https://svn.code.sf.net/p/netpbm/code/userguide
-brew install bind git coreutils dbus wget autoconf sevenzip automake fd fzf bat ripgrep pandoc git-lfs enchant pkg-config theseal/ssh-askpass/ssh-askpass yq jq sevenzip trivy opensc
-#--------------------
 
-#--------------------
-# shell configuration
-#--------------------
-echo_with_prompt "installing shell dependencies\n"
-brew install shellcheck
-#--------------------
+# -------------------------------------------------------------------
+# Homebrew
+# -------------------------------------------------------------------
 
+if ! command -v brew >/dev/null 2>&1; then
+  echo_with_prompt "Homebrew is not installed. Installing it now."
 
-#--------------------
-# org & pdf-tools
-#--------------------
-echo_with_prompt "installing org packages\n"
-brew install phantomjs
-brew install poppler
-brew install texlive
-brew install imagemagick
-brew install plantuml
-#--------------------
+  /bin/bash -c "$(
+    curl \
+      --fail \
+      --silent \
+      --show-error \
+      --location \
+      https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+  )"
+fi
 
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  brew_executable="/opt/homebrew/bin/brew"
+elif [[ -x /usr/local/bin/brew ]]; then
+  brew_executable="/usr/local/bin/brew"
+elif command -v brew >/dev/null 2>&1; then
+  brew_executable="$(command -v brew)"
+else
+  echo_with_prompt "Homebrew was installed but could not be located."
+  exit 1
+fi
 
-#---------------------
-# gh (github cli client)
-#---------------------
-brew install gh
-#---------------------
+eval "$("${brew_executable}" shellenv)"
+
+echo_with_prompt "Homebrew is available at $(command -v brew)"
 
 
-#---------------------
-# docker
-#---------------------
-echo_with_prompt "installing docker\n"
-brew install ca-certificates
-# install GUI version of docker desktop
-brew install --cask docker
-brew install docker-compose
-brew install lazydocker
-#---------------------
+# -------------------------------------------------------------------
+# Packages
+# -------------------------------------------------------------------
 
-#---------------------
-# Cloud Tooling
-#---------------------
-echo_with_prompt "installing cloud tooling\n"
-brew install minikube
-brew install kubernetes-cli
-brew install kubeseal
-brew install kubetail
-brew install kubespy
-brew install fzf # needed for tools
-brew install helm
-brew install argocd
-brew install opentofu
-#---------------------
+echo_with_prompt "Checking Homebrew dependencies"
 
-#---------------------
-# aws-cli & iam-authenticator
-#----------------------
-echo_with_prompt "installing aws packages\n"
-brew install awscli
-brew install aws-iam-authenticator
-#----------------------
+if brew bundle check --file="${brewfile}"; then
+  echo_with_prompt "All Homebrew dependencies are installed."
+else
+  echo_with_prompt "Installing missing Homebrew dependencies."
 
-#----------------------
-# postgres
-#----------------------
-brew install postgresql@16
-brew install pgformatter
-#----------------------
-
-#----------------------
-# mongo
-#----------------------
-brew tap mongodb/brew
-brew install mongodb-community
-#----------------------
+  brew bundle install \
+    --file="${brewfile}" \
+    --no-upgrade
+fi
 
 
-#---------------------
-# qutebrowser
-#---------------------
-echo_with_prompt "installing qutebrowser"
-brew install --cask qutebrowser
-#---------------------
+# -------------------------------------------------------------------
+# Fonts
+# -------------------------------------------------------------------
 
-#---------------------
-# chrome
-#---------------------
-brew install --cask google-chrome
-#---------------------
+font_source="${repository_root}/fonts"
+font_target="${HOME}/Library/Fonts"
 
+echo_with_prompt "Installing local fonts"
 
-#---------------------
-# misc
-#---------------------
-echo_with_prompt "installing misc. packages\n"
-# show directory structure with formatting
-brew install tree
-brew install tmux
-# psycopg2 M1 support
-brew install libpq --build-from-source
-# fonts
-find -E $( pwd ) -regex ".*\.ttf" | xargs -I % -n 2 cp % ~/Library/Fonts/
-brew install htop
-brew install yamllint
-#---------------------
+mkdir -p "${font_target}"
+
+while IFS= read -r -d '' font; do
+  destination="${font_target}/$(basename "${font}")"
+
+  if [[ ! -f "${destination}" ]] ||
+    ! cmp --silent "${font}" "${destination}"; then
+    cp -f -- "${font}" "${destination}"
+    echo_with_prompt "Installed $(basename "${font}")"
+  fi
+done < <(
+  find "${font_source}" \
+    -type f \
+    \( -name '*.ttf' -o -name '*.otf' \) \
+    -print0
+)
 
 
-#--------------------
-# C++
-#--------------------
-echo_with_prompt "installing C++ dependencies"
-brew install ccls
-brew install cmake
+# -------------------------------------------------------------------
+# Post-installation configuration
+# -------------------------------------------------------------------
 
-# ------------------
-# Dockerfile
-# ------------------
-echo_with_prompt "Installing Docker dependencies";
-brew install hadolint
-# ------------------
+git lfs install
 
-# ------------------
-# networking
-# ------------------
-echo_with_prompt "installing Networking dependencies";
-brew install mtr
-brew install dnsmap
-brew install nmap
-# ------------------
-
-
-# ------------------
-# kafka
-# ------------------
-echo_with_prompt "installing Kafka dependencies";
-brew install openssl
-brew install librdkafka
-brew install pkg-config
-# ------------------
+echo_with_prompt "Homebrew dependency installation complete."

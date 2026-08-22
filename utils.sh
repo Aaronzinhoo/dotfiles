@@ -1,91 +1,236 @@
 #!/usr/bin/env bash
 
-color_blue() {
-  echo -e "\033[34m${1}\033[0m"
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# This file is intended to be sourced by other Bash scripts.
+
+# -------------------------------------------------------------------
+# Colors
+# -------------------------------------------------------------------
+
+readonly COLOR_BLUE=$'\033[34m'
+readonly COLOR_GREEN=$'\033[32m'
+readonly COLOR_YELLOW=$'\033[33m'
+readonly COLOR_RED=$'\033[31m'
+readonly COLOR_RESET=$'\033[0m'
+
+supports_color() {
+  if [[ -n "${NO_COLOR:-}" ]]; then
+    return 1
+  fi
+  if [[ "${FORCE_COLOR:-false}" == 'true' ]]; then
+    return 0
+  fi
+  [[ -t 1 ]] &&
+    [[ "${TERM:-dumb}" != 'dumb' ]]
 }
+
+print_color() {
+  local color="${1:?missing color}"
+  shift
+
+  if supports_color; then
+    printf '%s%s%s%s\n' \
+           "$(date +'%d-%m-%Y %T ')" \
+           "${color}" \
+           "$*" \
+           "${COLOR_RESET}"
+  else
+    printf '%s%s\n'\
+           "$(date +'%d-%m-%Y %T ')" \
+           "$*"
+  fi
+}
+
+print_color_no_newline() {
+  local color="${1:?missing color}"
+  shift
+
+  if supports_color; then
+    printf '%s%s%s%s' \
+           "$(date +'%d-%m-%Y %T ')" \
+           "${color}" \
+           "$*" \
+           "${COLOR_RESET}"
+  else
+    printf '%s%s' \
+           "$(date +'%d-%m-%Y %T ')" \
+           "$*"
+  fi
+}
+
+color_blue() {
+  print_color "${COLOR_BLUE}" "$@"
+}
+
 
 color_green() {
-  echo -e "\033[32m${1}\033[0m"
+  print_color "${COLOR_GREEN}" "$@"
 }
+
 
 color_yellow() {
-  echo -e "\033[33m${1}\033[0m"
+  print_color "${COLOR_YELLOW}" "$@"
 }
+
 
 color_red() {
-  echo -e "\033[31m${1}\033[0m"
+  print_color "${COLOR_RED}" "$@"
 }
 
-echo_with_no_newline_prompt () {
-    # The narcissistic default prompt
-    PROMPT="${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
-    echo -ne "${PROMPT} $*"
+# -------------------------------------------------------------------
+# Prompt output
+# -------------------------------------------------------------------
+
+current_prompt()
+{
+  printf '%s' \
+    "${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
 }
 
-echo_with_prompt () {
-    # The narcissistic default prompt
-    PROMPT="${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
-    color_blue "${PROMPT} $*"
+
+echo_with_no_newline_prompt()
+{
+  print_color_no_newline \
+    "${COLOR_BLUE}" \
+    "$(current_prompt) $*"
 }
 
-echo_with_green_prompt () {
-    # The narcissistic default prompt
-    PROMPT="${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
-    color_green "${PROMPT} $*"
+
+echo_with_prompt()
+{
+  color_blue \
+    "$(current_prompt) $*"
 }
 
-echo_with_yellow_prompt () {
-    # The narcissistic default prompt
-    PROMPT="${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
-    color_yellow "${PROMPT} $*"
+
+echo_with_green_prompt()
+{
+  color_green \
+    "$(current_prompt) $*"
 }
 
-echo_with_red_prompt () {
-    # The narcissistic default prompt
-    PROMPT="${PROMPT:-[ Aaronzinhoo:Dotfiles ]: }"
-    color_red "${PROMPT} $*"
+
+echo_with_yellow_prompt()
+{
+  color_yellow \
+    "$(current_prompt) $*"
 }
 
-execute_func_with_prompt() {
-    # Args
-    # $1 - the function to call
-    # $2 - the thing this function does
-    # Returns 1 if the user cancels the operation
-    # Returns 2 if the function failed
-    # Returns 0 if all went well
 
-	echo_with_prompt "$2"
-	echo_with_no_newline_prompt "Proceed? (y/n): "
-    local response
-	read -r response
-    response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
-	if [ "$response" == 'y' ] ; then
-        # This thing here "calls" the function
-        $1 || return 2
-		echo_with_green_prompt "$1 execution call complete"
-	else
-		echo_with_yellow_prompt "$1 execution canceled"
-        return 1
-	fi
+echo_with_red_prompt()
+{
+  color_red \
+    "$(current_prompt) $*"
 }
 
-install_bootstrap_check() {
-    # Args
-    # $1 - the function to check if confirmation needed
-    # $2 - the extension that is being bootstrapped
-    # Returns 0 if all went well
-    # Returns 1 if the user cancels the operation
-    CONDITION="$1"
-    EXTENSION_NAME="$2"
-    if eval "$CONDITION"; then
-        echo_with_prompt "Bootstrapping for $EXTENSION_NAME seems to be complete already."
-        echo_with_no_newline_prompt "Do you wish to proceed with the bootstrap process? (y/n): "
-        local response
-        read -r response
-        response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
-        if [ ! "$response" == 'y' ]; then
-	        echo_with_yellow_prompt "Skipping $EXTENSION_NAME bootstrapping!"
-            return 1;
-        fi
+
+confirm() {
+  local question="${1:-Proceed?}"
+  local response
+
+  echo_with_no_newline_prompt "${question} (y/n): "
+
+  if ! IFS= read -r response; then
+    # Ensure subsequent output does not remain on the prompt line.
+    printf '\n'
+    return 1
+  fi
+
+  case "${response}" in
+    y|Y|yes|Yes|YES)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# -------------------------------------------------------------------
+# Command execution
+# -------------------------------------------------------------------
+
+command_exists()
+{
+  local command_name="${1:?missing command name}"
+
+  command -v "${command_name}" >/dev/null 2>&1
+}
+
+execute_func_with_prompt()
+{
+  local operation="${1:?missing function or command}"
+  local description="${2:?missing operation description}"
+  local status
+
+  shift 2
+
+  if ! command_exists "${operation}"; then
+    echo_with_red_prompt \
+      "Unknown function or command: ${operation}"
+
+    return 2
+  fi
+
+  echo_with_prompt "${description}"
+
+  if ! confirm 'Proceed?'; then
+    echo_with_yellow_prompt \
+      "${operation} execution cancelled"
+
+    return 1
+  fi
+
+  # Running the command inside `if' prevents `errexit' from
+  # terminating the script before we can handle its status.
+  if "${operation}" "$@"; then
+    echo_with_green_prompt \
+      "${operation} execution complete"
+
+    return 0
+  else
+    status=$?
+
+    echo_with_red_prompt \
+      "${operation} failed with status ${status}"
+
+    return 2
+  fi
+}
+
+
+# -------------------------------------------------------------------
+# Bootstrap checks
+# -------------------------------------------------------------------
+
+install_bootstrap_check()
+{
+  local check_function="${1:?missing bootstrap check function}"
+  local extension_name="${2:?missing extension name}"
+
+  if ! command_exists "${check_function}"; then
+    echo_with_red_prompt \
+      "Unknown bootstrap check function: ${check_function}"
+
+    return 2
+  fi
+
+  # A successful check means the extension appears to be installed.
+  if "${check_function}"; then
+    echo_with_prompt \
+      "Bootstrapping for ${extension_name} appears to be complete."
+
+    if ! confirm \
+      'Do you wish to run the bootstrap process again?'; then
+      echo_with_yellow_prompt \
+        "Skipping ${extension_name} bootstrap"
+
+      return 1
     fi
+  fi
+
+  return 0
 }
