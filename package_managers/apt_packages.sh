@@ -8,13 +8,9 @@ script_directory="$(
   cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
   pwd
 )"
-repository_root="$(
-  cd -- "${script_directory}/.."
-  pwd
-)"
 
 # shellcheck source=../utils.sh
-source "${repository_root}/utils.sh"
+source "${REPOSITORY_ROOT}/utils.sh"
 
 PROMPT='[ AptInstaller ]: '
 
@@ -110,24 +106,53 @@ install_base_packages() {
     imagemagick
     jq
     keychain
+    libacl1-dev
+    libasound2-dev
     libbz2-dev
+    libcairo2-dev
+    libdbus-1-dev
     libenchant-2-dev
     libffi-dev
+    libfontconfig1-dev
+    libfreetype6-dev
+    libgccjit-13-dev
+    libgif-dev
+    libgmp-dev
+    libgnutls28-dev
+    libgtk-3-dev
+    libharfbuzz-dev
     libjansson-dev
+    libjpeg-dev
+    liblcms2-dev
     liblzma-dev
+    libm17n-dev
+    libmagickwand-dev
     libncurses-dev
+    libotf-dev
     libpng-dev
     libpoppler-glib-dev
     libpq-dev
     librdkafka-dev
     libreadline-dev
+    librsvg2-dev
+    libselinux1-dev
     libsqlite3-dev
     libssl-dev
+    libsystemd-dev
+    libtiff-dev
     libtool
     libtool-bin
+    libtree-sitter-dev
+    libwebkit2gtk-4.1-dev
+    libwebp-dev
+    libxft-dev
+    libxinerama-dev
     libxml2-dev
     libxmlsec1-dev
+    libxpm-dev
+    libxrandr-dev
     llvm
+    mailutils
     make
     mtr
     net-tools
@@ -145,6 +170,7 @@ install_base_packages() {
     shellcheck
     software-properties-common
     strace
+    texinfo
     texlive-fonts-extra
     texlive-latex-base
     texlive-latex-extra
@@ -162,6 +188,22 @@ install_base_packages() {
     zlib1g-dev
     zsh
   )
+
+  case "${VERSION_ID}" in
+    24.04)
+       apt_packages+=(libgccjit-13-dev)
+       ;;
+
+    26.04)
+       apt_packages+=(libgccjit-14-dev)
+       ;;
+
+    *)
+      echo_with_red_prompt \
+        "Unsupported Ubuntu version for Emacs native compilation: ${VERSION_ID}"
+      exit 1
+      ;;
+  esac
 
   install_apt_packages "${packages[@]}"
 
@@ -597,6 +639,37 @@ install_yq() {
   rm -f "${temporary_file}"
 }
 
+install_goenv() {
+  if [[ ! -d "${GOENV_ROOT}/.git" ]]; then
+    echo_with_prompt "Installing goenv"
+
+    git clone \
+        https://github.com/go-nv/goenv.git \
+        "${GOENV_ROOT}"
+  else
+    echo_with_yellow_prompt "goenv already install, skipping"
+  fi
+}
+
+install_emacs() {
+  local package="${EMACS_APT_PACKAGE:-emacs-pgtk}"
+
+  echo_with_prompt "Installing Emacs through APT"
+
+  if ! apt-cache show "${package}" >/dev/null 2>&1; then
+    echo_with_yellow_prompt \
+      "${package} is unavailable; falling back to emacs-gtk"
+    package='emacs-gtk'
+  fi
+
+  apt-get install \
+    --yes \
+    "${package}"
+
+  echo_with_green_prompt \
+    "Installed $(emacs --version | head -n 1)"
+}
+
 verify_installation() {
   local commands=(
     argocd
@@ -605,10 +678,12 @@ verify_installation() {
     ccls
     cmake
     docker
+    emacs
     fd
     fzf
     gh
     git
+    goenv
     hadolint
     helm
     jq
@@ -683,6 +758,9 @@ main() {
 
   echo_with_prompt "Installing Argo CD"
   install_argocd
+
+  echo_with_prompt "Installing GoEnv"
+  install_goenv
 
   echo_with_prompt "Installing Hadolint"
   install_hadolint

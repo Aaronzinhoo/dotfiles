@@ -4,6 +4,7 @@
 
 tap "mongodb/brew"
 tap "theseal/ssh-askpass"
+tap "d12frosted/emacs-plus"
 
 
 # -------------------------------------------------------------------
@@ -28,7 +29,6 @@ brew "jq"
 brew "yq"
 brew "pandoc"
 brew "enchant"
-
 
 # -------------------------------------------------------------------
 # Build tooling
@@ -116,6 +116,11 @@ brew "ccls"
 brew "llvm"
 
 # -------------------------------------------------------------------
+# go
+# -------------------------------------------------------------------
+brew "goenv"
+
+# -------------------------------------------------------------------
 # Python / Pyenv Deps
 # -------------------------------------------------------------------
 brew "openssl@3"
@@ -124,6 +129,7 @@ brew "sqlite"
 brew "xz"
 brew "tcl-tk"
 brew "zstd"
+brew "python-tk"
 
 # -------------------------------------------------------------------
 # Networking
@@ -143,9 +149,6 @@ brew "dnsmap"
 
 # Keep only if you use smart cards, PIV or PKCS#11.
 brew "opensc"
-
-# Keep only if GUI Emacs/Git needs an SSH password dialog.
-brew "theseal/ssh-askpass/ssh-askpass"
 
 
 # -------------------------------------------------------------------
