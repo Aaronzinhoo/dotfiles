@@ -1,0 +1,19 @@
+alias fd='fdfind'
+alias cat='bat'
+
+# kubernetes aliases
+alias k=kubectl
+alias kt=kubetail
+alias kube-kahless='kubectl config use-context kahless'
+
+# python
+alias pip="python -m pip "
+
+# emacs
+alias e="emacs &"
+
+# 7zip
+alias 7z="7zz"
+
+# wsl
+alias fixtime='sudo hwclock -s'

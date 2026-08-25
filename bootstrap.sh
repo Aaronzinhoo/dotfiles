@@ -4,19 +4,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-root_directory="$(
-  cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
-  pwd
-)"
-
 # shellcheck source=utils.sh
-source "${root_directory}/utils.sh"
+source "${REPOSITORY_ROOT}/utils.sh"
 
 PROMPT='[ Bootstrap ]: '
-
-get_symlink_files(){
-  find . -mindepth 1| grep -vE './.git/|\.gitignore|\.gitmodules|bootstrap_extensions|fonts|os|.*.md|.*\.sh|.*.emacs/|wsl'
-}
 
 link_path() {
   local source="${1:?missing source}"
@@ -48,6 +39,50 @@ link_path() {
   ln -s "${source}" "${destination}"
 }
 
+link_configuration_directory() {
+  local source_directory="${1:?missing source directory}"
+  local destination_directory="${2:?missing destination directory}"
+  local source
+  local destination
+
+  [[ -d "${source_directory}" ]] || return 0
+
+  mkdir -p "${destination_directory}"
+
+  while IFS= read -r -d '' source; do
+    destination="${destination_directory}/$(basename "${source}")"
+
+    link_path \
+      "${source}" \
+      "${destination}"
+  done < <(
+    find "${source_directory}" \
+      -mindepth 1 \
+      -maxdepth 1 \
+      -print0
+  )
+}
+
+link_configuration() {
+  : "${EMACS_INSTALL_DIR:?EMACS_INSTALL_DIR must be configured}"
+  : "${XDG_CONFIG_HOME:?XDG_CONFIG_HOME must be configured}"
+
+  # Link the complete Emacs configuration directory.
+  link_path \
+    "${REPOSITORY_ROOT}/emacs" \
+    "${EMACS_INSTALL_DIR}"
+
+  # Files stored under configs/home go directly into $HOME.
+  link_configuration_directory \
+    "${REPOSITORY_ROOT}/configs/home" \
+    "${HOME}"
+
+  # Directories stored under configs/xdg go into $XDG_CONFIG_HOME.
+  link_configuration_directory \
+    "${REPOSITORY_ROOT}/configs/xdg" \
+    "${XDG_CONFIG_HOME}"
+}
+
 install_macos_packages() {
   echo_with_prompt "Detected macOS"
   echo_with_prompt \
@@ -56,7 +91,7 @@ install_macos_packages() {
   if confirm "Proceed with Homebrew installation?"; then
     echo_with_prompt "Installing Homebrew dependencies"
 
-    "${root_directory}/package_managers/brew_packages.sh"
+    "${REPOSITORY_ROOT}/package_managers/brew_packages.sh"
   else
     echo_with_prompt "Homebrew installation cancelled"
   fi
@@ -75,7 +110,7 @@ install_apt_packages() {
     echo_with_prompt "Installing apt dependencies"
 
     # Let the package script use sudo only for commands that require it.
-    "${root_directory}/package_managers/apt_packages.sh"
+    "${REPOSITORY_ROOT}/package_managers/apt_packages.sh"
   else
     echo_with_prompt "Apt installation cancelled"
   fi
@@ -119,7 +154,7 @@ run_bootstrap_extensions() {
   local bootstrap_name
   local zsh_bootstrap
 
-  bootstrap_directory="${root_directory}/bootstrap_extensions"
+  bootstrap_directory="${REPOSITORY_ROOT}/bootstrap_extensions"
   zsh_bootstrap="${bootstrap_directory}/zsh_bootstrap.sh"
 
   # Configure the shell first if the extension exists.
@@ -153,9 +188,14 @@ run_bootstrap_extensions() {
 }
 
 main() {
-  execute_func_with_prompt link_configuration "Attempting to link configuration files"
-  install_packages
-  run_bootstrap_extensions
+  echo_with_prompt "Running Bootstrap."
+  if [[ "$DRY_RUN" == false ]]; then
+    execute_func_with_prompt link_configuration "Attempting to link configuration files"
+    install_packages
+    run_bootstrap_extensions
+  else
+    echo_with_prompt "Skipping linking, installing, and running bootstrap and friends since DRY_RUN=${DRY_RUN}."
+  fi
   echo_with_prompt "Bootstrap completed."
 }
 

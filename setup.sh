@@ -12,14 +12,15 @@ NODE_DEFAULT_VERSION='24.11.1'
 GO_DEFAULT_VERSION='1.25.4'
 EMACS_DEFAULT_VERSION='31'
 KUBECTL_DEFAULT_VERSION='1.36'
-
-repository_root="$(
+REPOSITORY_ROOT="$(
   cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
   pwd
 )"
+readonly REPOSITORY_ROOT
+export REPOSITORY_ROOT
 
 # shellcheck source=./utils.sh
-source "${repository_root}/utils.sh"
+source "${REPOSITORY_ROOT}/utils.sh"
 
 help() {
   local status="${1:-0}"
@@ -123,6 +124,8 @@ configure_paths() {
   export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
   export XDG_CACHE_HOME="${XDG_CACHE_HOME:-${HOME}/.cache}"
   export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
+  export XDG_STATE_HOME="${XDG_STATE_HOME:-${HOME}/.local/state}"
+
 
   export EMACS_INSTALL_DIR="${HOME}/.emacs.d"
   export DEVELOPMENT_DIR_PATH="${HOME}/development"
@@ -131,9 +134,12 @@ configure_paths() {
   export EDITOR='emacs'
 
   export CARGO_HOME="${XDG_CONFIG_HOME}/cargo"
+  export RUSTUP_HOME="${XDG_CONFIG_HOME}/rustup"
   export KREW_ROOT="${XDG_CONFIG_HOME}/krew"
-  export GOENV_GOPATH_PREFIX="${XDG_CONFIG_HOME}/go"
   export GOENV_ROOT="${XDG_CONFIG_HOME}/goenv"
+  export GOPATH="${XDG_DATA_HOME}/go"
+  export GOBIN="${GOPATH}/bin"
+  export HOMEBREW_ROOT="${XDG_CONFIG_HOME}/homebrew"
   export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
   export PYENV_ROOT="${XDG_CONFIG_HOME}/pyenv"
   export RUSTUP_HOME="${XDG_CONFIG_HOME}/multirust"
@@ -142,24 +148,27 @@ configure_paths() {
   # Verify this name against your Zsh plugin. It may be intended to be
   # ZSHZ_DATA or _Z_DATA rather than ZHSZ_DATA.
   export ZHSZ_DATA="${XDG_CONFIG_HOME}/z"
+  export ZDOTDIR="${XDG_CONFIG_HOME}/zsh"
 }
 
 create_directories() {
   echo_with_prompt 'Creating required directories'
 
   mkdir -p \
-    "${GOENV_GOPATH_PREFIX}" \
     "${DEVELOPMENT_DIR_PATH}" \
+    "${GOENV_ROOT}" \
+    "${GOBIN}" \
+    "${HOME}/.local/bin" \
+    "${HOME}/.ssh/github" \
     "${ORG_DIR_PATH}" \
     "${ORG_DIR_PATH}/notebook" \
     "${ORG_DIR_PATH}/references" \
     "${ORG_DIR_PATH}/work" \
-    "${HOME}/.local/bin" \
-    "${HOME}/.ssh/github" \
     "${XDG_CONFIG_HOME}" \
     "${XDG_CACHE_HOME}" \
     "${XDG_DATA_HOME}" \
     "${XDG_CONFIG_HOME}/emacs/backups" \
+    "${XDG_CACHE_HOME}/zsh" \
     "${NVM_DIR}"
 }
 
@@ -191,9 +200,9 @@ main() {
   echo_with_prompt 'Installing packages and bootstrapping'
 
   if [[ "${DRY_RUN}" == false ]]; then
-    "${repository_root}/bootstrap.sh"
+    "${REPOSITORY_ROOT}/bootstrap.sh"
   else
-    echo_with_prompt "Skipping ${repository_root}/bootstrap.sh because DRY_RUN=${DRY_RUN}"
+    echo_with_prompt "Skipping ${REPOSITORY_ROOT}/bootstrap.sh because DRY_RUN=${DRY_RUN}"
   fi
 
   echo_with_prompt 'Finished! Enjoy!'
