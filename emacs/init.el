@@ -1550,7 +1550,7 @@ current buffer."
   ;; Don’t repeat an inline message in the echo area.
   (flycheck-annotate-suppress-echo t)
   (flycheck-css-stylelint-executable "stylelint")
-  (flycheck-rust-cargo-executable (concat user-home-directory "/.cargo/bin/cargo"))
+  (flycheck-rust-cargo-executable "cargo")
   :config
   (setq-default flycheck-disabled-checkers
     (append flycheck-disabled-checkers
@@ -2390,7 +2390,8 @@ mark:
        (url . "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.2-standalone-strict/all.json")
        (fileMatch . ["*-k8s.yaml" "*-k8s.yml"]))))
 (use-package lsp-treemacs
-  :commands (treemacs lsp-treemacs-errors-list)
+  :defer t
+  :commands (lsp-treemacs-errors-list)
   :custom
   (lsp-treemacs-sync-mode t))
 (use-package lsp-ui
@@ -2430,7 +2431,7 @@ mark:
     (let ((lombok-file
            (expand-file-name
             "deps/lombok.jar"
-            user-init-dir-fullpath)))
+            user-emacs-directory)))
       (append
        '("-XX:+UseParallelGC"
          "-XX:GCTimeRatio=4"
@@ -2450,15 +2451,29 @@ mark:
   (require 'lsp-java-boot))
 (use-package lsp-pyright
   :straight (:type git :host github :repo "emacs-lsp/lsp-pyright" :branch "master")
+  :after lsp-mode
   :custom
   (lsp-pyright-langserver-command "basedpyright")
-  (lsp-pyright-venv-directory (concat pyenv-root-folder "/versions"))
-  (lsp-pyright-venv-path (concat pyenv-root-folder "/versions"))
-  (lsp-pyright-python-executable-cmd "python3")
-  :hook
-  (python-ts-mode . (lambda ()
-                      (require 'lsp-pyright)
-                      (lsp-deferred))))
+  ;; Let Ruff own import organization.
+  (lsp-pyright-disable-organize-imports t)
+  ;; let pyright handle import completion for missing imports
+  (lsp-pyright-auto-import-completions t)
+  (lsp-pyright-type-checking-mode "standard")
+  ;; Use "openFilesOnly" if workspace-wide diagnostics become noisy or
+  ;; expensive on large projects.
+  (lsp-pyright-diagnostic-mode "workspace")
+  ;; Resolve this after your project environment has been activated.
+  (lsp-pyright-python-executable-cmd "python"))
+(use-package lsp-ruff
+  :straight nil
+  :after lsp-mode
+  :custom
+  (lsp-ruff-server-command '("ruff" "server"))
+  (lsp-ruff-advertize-organize-imports t)
+  (lsp-ruff-advertize-fix-all t)
+  (lsp-ruff-lint-enable t)
+  (lsp-ruff-log-level 'error)
+  (lsp-ruff-show-notifications 'onError))
 ;;; Debugger Support
 (use-package dap-java
   :after (lsp-java dap)
@@ -2507,30 +2522,33 @@ mark:
 
 ;; icons!!
 (use-package nerd-icons
-  :straight   (nerd-icons :type git :host github :repo "rainstormstudio/nerd-icons.el" :files (:defaults "data"))
+  :straight t
   :custom
   (nerd-icons-font-family "Symbols Nerd Font Mono"))
 (use-package nerd-icons-corfu
-  :after (nerd-icons corfu)
+  :straight t
   :demand t
-  :straight (:type git :host github :repo "LuigiPiucco/nerd-icons-corfu" :branch "master")
+  :after corfu
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 (use-package nerd-icons-dired
-  :hook
-  (dired-mode . nerd-icons-dired-mode))
-(use-package treemacs-nerd-icons
-  :after (treemacs nerd-icons)
-  :config
-  (treemacs-nerd-icons-config))
+  :straight t
+  :hook (dired-mode . nerd-icons-dired-mode))
 (use-package nerd-icons-ibuffer
-  :after nerd-icons
+  :straight t
   :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
 (use-package nerd-icons-completion
-  :after (marginalia nerd-icons)
+  :straight t
+  :after marginalia
   :config
   (nerd-icons-completion-mode 1)
-  (nerd-icons-completion-marginalia-setup))
+  :hook (marginalia-mode
+          . nerd-icons-completion-marginalia-setup))
+(use-package treemacs-nerd-icons
+  :straight t
+  :after treemacs
+  :config
+  (treemacs-nerd-icons-config))
 
 ;;; Minibuffer Compleitions
 (use-package marginalia
@@ -3539,7 +3557,7 @@ replacement boundaries."
     )
   :init
   ;; view items using emacs browser
-  (if my/wsl
+  (if (aaronzinhoo--wsl-p)
     (progn
       (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "wslview")))
   (add-hook 'org-export-before-processing-hook 'aaronzinhoo-org-inline-css-hook)
