@@ -3531,6 +3531,7 @@ replacement boundaries."
        (up . :html-link-up)
        (home . :html-link-home)))
   (org-plantuml-exec-mode "plantuml")
+  (org-plantuml-executable-path (executable-find "plantuml"))
   (org-auto-align-tags nil)
   (org-tags-column 0)
   (org-catch-invisible-edits 'show-and-error)
