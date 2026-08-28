@@ -25,3 +25,23 @@ zsh/.zhistory
 
 # mac
 **/.DS_store
+
+# Emacs runtime state
+emacs/auto-save-list/
+emacs/eln-cache/
+
+# Emacs native and byte compilation
+*.eln
+*.elc
+
+# Emacs temporary files
+*~
+\#*\#
+.\#*
+
+# macOS
+.DS_Store
+
+# Local environment files
+.env
+.env.local

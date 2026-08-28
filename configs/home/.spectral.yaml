@@ -1,0 +1,29 @@
+# Project-wide Spectral rules for OpenAPI documents.
+# Install with: npm install --save-dev @stoplight/spectral-cli
+# Run with:     npx spectral lint "**/*.{yaml,yml,json}"
+
+extends:
+  - spectral:oas
+
+rules:
+  # Require stable identifiers so generated clients and documentation can
+  # refer to operations consistently.
+  operation-operationId: error
+  operation-operationId-unique: error
+
+  # Keep operations organized under tags declared at the document root.
+  operation-tags: error
+  operation-tag-defined: error
+
+  # Treat missing human-readable documentation as warnings while a contract
+  # is still being developed.
+  info-description: warn
+  operation-description: warn
+  tag-description: warn
+
+  # A contact object is useful for public APIs but often unnecessary for
+  # internal contracts.
+  info-contact: "off"
+
+  # Surface missing OpenAPI 3 server definitions without blocking builds.
+  oas3-api-servers: warn

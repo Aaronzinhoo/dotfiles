@@ -68,18 +68,9 @@ For a detailed help message
 
 ## TODO
 
-- Yaml
-  - yaml mode tab for complete command
 - Markdown
-  - adding markdown-ts support to markdown mode
+  - move to markdown-ts-mode
 - General
+  - imenu for openapi ts mode and helm-ts-mode
   - investigate embark, vertico, avy
   - look into using casual suite of tools
-  - corg.el
-  - search in large file should default to within file first or provide key to search with isearch
-  - fix multiple cursors forgets settings fix
-  - ordering for markdown mode should be in alphabetical order
-- Web mode
-  - replacing web-mode functionality (web-mode-element-next, previous, element-wrap)
-  - html mode s-h keybinding
-  - better treesit support for angular

@@ -1,0 +1,39 @@
+extends: default
+
+rules:
+  # Most YAML projects do not require the `---` document marker.
+  document-start: disable
+
+  # Use two-space indentation.
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Permit practical line lengths while still flagging very long lines.
+  line-length:
+    max: 140
+    level: warning
+    allow-non-breakable-inline-mappings: true
+
+  # Require at least one space before an inline comment.
+  comments:
+    min-spaces-from-content: 1
+
+  # Prevent YAML 1.1 values such as yes/no/on/off from being treated
+  # as booleans. Do not apply this restriction to mapping keys.
+  truthy:
+    allowed-values:
+      - "true"
+      - "false"
+    check-keys: false
+
+  # Prevent ambiguous numbers such as 010.
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: false
+
+  # Retain useful structural and whitespace checks.
+  key-duplicates: enable
+  new-line-at-end-of-file: enable
+  trailing-spaces: enable

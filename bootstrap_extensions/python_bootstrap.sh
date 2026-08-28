@@ -1,35 +1,102 @@
-. "$( pwd )/utils.sh"
+#!/usr/bin/env bash
 
-PROMPT="[ PyenvExtensionLoader ]: "
+set -o errexit
+set -o nounset
+set -o pipefail
 
-install_bootstrap_check "[ -f ${PYENV_ROOT}/default-packages ]" "python" || exit 0;
+script_directory="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+  pwd
+)"
 
-echo_with_prompt "Installing pyenv dependencies"
-brew install python-tk
+# shellcheck source=../utils.sh
+source "${REPOSITORY_ROOT}/utils.sh"
 
-echo_with_prompt "Installing pyenv"
-curl https://pyenv.run | bash
-git clone https://github.com/jawshooah/pyenv-default-packages.git $(pyenv root)/plugins/pyenv-default-packages
+PROMPT="[ PythonExtensionLoader ]: "
 
-# env vars to get functionality on unix
-export PATH="$PYENV_ROOT/bin:$PATH"
-export PATH="/usr/local/opt/openssl@3/bin:$PATH"
-export LDFLAGS="-L/usr/local/opt/openssl@3/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl@3/include"
-eval "$(pyenv init --path)"
+# ensure env vars set
+: "${PYENV_ROOT:?PYENV_ROOT must be configured}"
+: "${PYTHON_ROOT:?PYTHON_ROOT must be configured}"
+: "${PYTHON_VERSION}:?PYTHON_VERSION must be configured"
 
-cat >"$(pyenv root)/default-packages"<<EOF
-ipython
-ruff-lsp
-matplotlib
-autopep8
-isort
-pyflakes
-ansible
-EOF
+PACKAGES=(
+  "ansible"
+  "basedpyright"
+  "black"
+  "cookiecutter"
+  "httpie"
+  "ipython"
+  "matplotlib"
+  "mypy"
+  "poetry"
+  "pre-commit"
+  "ruff"
+)
 
-pyenv install "${PYTHON_VERSION}"
-pyenv global "${PYTHON_VERSION}"
+install_pyenv() {
+  export PATH="$PYENV_ROOT/bin:$PATH"
 
-pip install --upgrade pip
-pip install virtualenvwrapper
+  # configure openssl
+  openssl_prefix="$(brew --prefix openssl@3)"
+  export LDFLAGS="-L${openssl_prefix}/lib"
+  export CPPFLAGS="-I${openssl_prefix}/include"
+  export PKG_CONFIG_PATH="${openssl_prefix}/lib/pkgconfig"
+  export CONFIGURE_OPTS="--with-openssl=${openssl_prefix}"
+
+  echo_with_prompt "Installing pyenv"
+
+  if [[ -x "${PYENV_ROOT}/bin/pyenv" ]]; then
+    echo_with_prompt "pyenv already installed"
+    return
+  else
+    curl --fail --location --silent --show-error https://pyenv.run | bash
+  fi
+
+
+  # install pyenv extensions for default package management
+  if [[ ! -d "$(pyenv root)/plugins/pyenv-default-packages" ]]; then
+    git clone https://github.com/jawshooah/pyenv-default-packages.git "$(pyenv root)/plugins/pyenv-default-packages"
+  else
+    echo_with_prompt "pyenv-default-packages installed already"
+  fi
+
+  # Initialize pyenv for this running Bash process.
+  eval "$(pyenv init - bash)"
+
+  if pyenv commands | command grep -qx 'virtualenv-init'; then
+    eval "$(pyenv virtualenv-init -)"
+  fi
+}
+
+configure_python_packages() {
+  printf '%s\n' \
+    "${PACKAGES[@]}" \
+    >"${PYENV_ROOT}/default-packages"
+}
+
+install_python() {
+  echo_with_prompt "Installing python ${PYTHON_VERSION}"
+  pyenv install --skip-existing "${PYTHON_VERSION}"
+  pyenv global "${PYTHON_VERSION}"
+  pyenv rehash
+
+  export PYENV_VERSION="${PYTHON_VERSION}"
+
+  echo_with_prompt "Installing python dependencies"
+}
+
+install_python_dependencies() {
+  pip install --upgrade pip
+  pip install virtualenvwrapper
+  pip install -r "$(pyenv root)/plugins/pyenv-default-packages"
+}
+
+main() {
+  install_pyenv
+  configure_default_packages
+  install_python
+  install_python_dependencies
+  echo_with_green_prompt "Finished python bootstrapping!"
+}
+
+main "@"
