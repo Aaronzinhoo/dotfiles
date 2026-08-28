@@ -1201,6 +1201,7 @@ current buffer."
     (setq-local fill-column 72)
     (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev #'cape-dict)))
   :custom
+  (magit-commit-show-diff t)
   (magit-bind-magit-project-status nil)
   :config
   (transient-append-suffix 'magit-branch "C"
