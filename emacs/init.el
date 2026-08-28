@@ -1155,6 +1155,13 @@ current buffer."
          ("M-t" . magit-todos-mode))
   :hook (git-commit-setup . aaronzinhoo--git-commit-setup)
   :preface
+  ;; https://github.com/magit/magit/issues/2258 fix for commit messages not cancelling when commit header exists
+  (defun fixed-with-editor-return (with-editor-return &rest arguments)
+    (unwind-protect
+        (progn
+          (advice-add 'delete-file :around 'ignore)
+          (apply with-editor-return arguments))
+      (advice-remove 'delete-file 'ignore)))
   (defun aaronzinhoo--delete-merged-branches ()
     "Delete local branches merged into a selected target branch."
     (interactive)
@@ -1204,6 +1211,7 @@ current buffer."
   (magit-commit-show-diff t)
   (magit-bind-magit-project-status nil)
   :config
+  (advice-add 'with-editor-return :around 'fixed-with-editor-return)
   (transient-append-suffix 'magit-branch "C"
     '("K" "delete all merged" aaronzinhoo--delete-merged-branches)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
