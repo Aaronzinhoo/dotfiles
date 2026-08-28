@@ -3411,7 +3411,6 @@ replacement boundaries."
   :bind
   ("C-c l" . org-store-link)
   ("C-c A" . org-agenda)
-  ("C-c c" . org-capture)
   (:map org-mode-map
     ("C-M-<return>" . org-insert-subheading)
     ("s-h". hydra-org-nav/body))

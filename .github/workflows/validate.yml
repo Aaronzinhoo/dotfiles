@@ -1,0 +1,134 @@
+name: Validate dotfiles
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    name: Syntax (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Emacs
+        uses: purcell/setup-emacs@master
+        with:
+          version: release-snapshot
+
+      - name: Install Zsh on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes zsh
+
+      - name: Show tool versions
+        run: |
+          emacs --version
+          zsh --version
+
+      - name: Check Emacs Lisp syntax
+        run: |
+          emacs --batch -Q --eval '
+          (progn
+            (require (quote lisp-mode))
+            (let ((files (process-lines
+                          "git" "ls-files" "--" "*.el"))
+                  (failures 0))
+              (unless files
+                (error "No tracked .el files found"))
+              (dolist (file files)
+                (with-temp-buffer
+                  (condition-case err
+                      (progn
+                        (insert-file-contents file)
+                        (emacs-lisp-mode)
+                        (check-parens)
+                        (goto-char (point-min))
+                        (while
+                            (progn
+                              (forward-comment (point-max))
+                              (not (eobp)))
+                          (read (current-buffer)))
+                        (message "PASS %s" file))
+                    (error
+                     (setq failures (1+ failures))
+                     (message "FAIL %s:%d: %s"
+                              file
+                              (line-number-at-pos)
+                              (error-message-string err))))))
+              (when (> failures 0)
+                (error "%d Elisp files failed" failures))))'
+
+      - name: Check Zsh syntax
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z"]
+          ).split(b"\0")
+
+          startup_names = {
+              ".zshrc", ".zshenv", ".zprofile",
+              ".zlogin", ".zlogout",
+              "zshrc", "zshenv", "zprofile",
+              "zlogin", "zlogout",
+          }
+
+          files = [
+              Path(os.fsdecode(raw))
+              for raw in tracked
+              if raw
+          ]
+          files = [
+              path for path in files
+              if path.suffix == ".zsh"
+              or path.name in startup_names
+          ]
+
+          if not files:
+              raise SystemExit("No tracked Zsh files found")
+
+          failed = []
+          for path in files:
+              result = subprocess.run(
+                  ["zsh", "-f", "-n", str(path)]
+              )
+              print(
+                  f"{'PASS' if result.returncode == 0 else 'FAIL'} {path}",
+                  flush=True,
+              )
+              if result.returncode:
+                  failed.append(path)
+
+          if failed:
+              raise SystemExit(
+                  f"{len(failed)} Zsh files failed"
+              )
+          PY
