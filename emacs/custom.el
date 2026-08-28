@@ -5,7 +5,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(bmkp-last-as-first-bookmark-file "~/.config/emacs/var/bmkp/current-bookmark.el")
- '(company-dabbrev-ignore-case nil)
+  '(company-dabbrev-ignore-case nil)
  '(custom-safe-themes
     '("4c7228157ba3a48c288ad8ef83c490b94cb29ef01236205e360c2c4db200bb18"
        default))
@@ -36,21 +36,6 @@
         "master")))
  '(safe-local-variable-values
     '((jinx-local-words . "config")
-       (elisp-lint-indent-specs (when-let . 1)))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(dired-subtree-depth-1-face ((t unspecified)))
- '(dired-subtree-depth-2-face ((t unspecified)))
- '(dired-subtree-depth-3-face ((t unspecified)))
- '(git-gutter:added ((t (:background unspecified :foreground "limegreen"))))
- '(git-gutter:deleted ((t (:background unspecified))))
- '(git-gutter:modified ((t (:background unspecified :foreground "dodgerblue" :weight bold))))
- '(ivy-minibuffer-match-face-2 ((t (:background "steel blue" :foreground "#eeeeee" :weight bold))))
- '(swiper-background-match-face-2 ((t (:background "steel blue" :foreground "gainsboro"))))
- '(swiper-match-face-1 ((t (:background "light cyan" :foreground "dim gray" :weight bold))))
- '(swiper-match-face-2 ((t (:background "light coral" :foreground "white smoke" :weight bold)))))
+       (elisp-lint-indent-specs (when-let* . 1)))))
 (provide 'custom)
 ;;; custom.el ends here

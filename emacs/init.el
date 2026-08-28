@@ -1,160 +1,345 @@
-;;; package --- Summary --- -*- lexical-binding: t -*-
+;;; init.el --- Aaron's Emacs configuration -*- lexical-binding: t; -*-
+
 ;;; Commentary:
-;;;init.el --- Emacs configuration
+
+;; Main Emacs configuration.
+;; Generated files are redirected from `early-init.el'.
 
 ;;; Code:
-;; TODO add build for shell scripts, and add help menu for go
-;; load the early init file if this is not a recent emacs
-(message "Initializing custom settings...")
-(load custom-file)
-(require 'custom)
-(message "Loading Straight package manager")
-;; dont check all my straight repos for changes. Really slows down speed
-;; keep eye on https://github.com/raxod502/straight.el/pull/694#issuecomment-805197632 for updates on watcher
-(setq straight-check-for-modifications '(find-when-checking))
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously  "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-                                     'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-(straight-use-package 'org)
-(setq straight-use-package-by-default t)
-(setq use-package-always-defer t)
 
-(message "Loading packages")
-;;; Packages
-;; built-in
-(use-package delsel
-  :straight nil
-  :config
-  (delete-selection-mode t))
-(use-package display-line-numbers
-  :straight nil
-  :hook ((conf-mode . display-line-numbers-mode)
-          (text-mode . display-line-numbers-mode)
-          (prog-mode . display-line-numbers-mode))
-  :config
-  (dolist (mode '(org-mode-hook
-                  term-mode-hook
-                  dashboard-mode-hook
-                  shell-mode-hook
-                  treemacs-mode-hook
-                  compilation-mode-hook
-                  vterm-mode-hook
-                  eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0)))))
-(use-package straight
-  :custom
-  ;; add project and flymake to the pseudo-packages variable so straight.el doesn't download a separate version than what eglot downloads.
-  (straight-built-in-pseudo-packages '(emacs nadvice python image-mode project flymake xref))
-  (straight-use-package-by-default t))
+(message "Loading init.el...")
+
+;;;; Straight.el
+
+;; Configure Straight before bootstrapping it.
+(setq straight-check-for-modifications
+  '(find-when-checking)
+  straight-use-package-by-default t
+  straight-built-in-pseudo-packages
+  '(emacs
+     flymake
+     image-mode
+     nadvice
+     project
+     python
+     seq
+     xref))
+
+(defvar bootstrap-version)
+
+(let ((bootstrap-file
+        (expand-file-name
+          "straight/repos/straight.el/bootstrap.el"
+          straight-base-dir))
+      (bootstrap-version 7))
+  (unless
+    (file-exists-p bootstrap-file)
+    (with-current-buffer
+      (url-retrieve-synchronously
+        "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+        'silent
+        'inhibit-cookies)
+      (goto-char
+        (point-max))
+      (eval-print-last-sexp)))
+
+  (load bootstrap-file nil 'nomessage))
+
+;; Explicitly install use-package before using it.
+(straight-use-package 'use-package)
+(require 'use-package)
+
+(setq use-package-always-defer t
+      use-package-compute-statistics t)
+
+;; Prevent Straight from installing external copies of these built-in
+;; compatibility libraries.
+(straight-use-package
+  '(seq :type built-in))
+
+;;;; Core Emacs behavior
+
 (use-package emacs
   :straight nil
-  :hook
-  (minibuffer-setup . cursor-intangible-mode)
-  :bind*
-  (("M-<up>" . move-text-up)
-    ("M-<down>" . move-text-down)
-    ;; Navigation
-    ("C-j" . avy-goto-char-timer)
-    ("M-h" . backward-char)
-    ("M-j" . next-line)
-    ("M-k" . previous-line)
-    ("M-l" . forward-char)
-    ("M-[" . backward-up-list)
-    ("M-]" . up-list)
-    ;; Yank and mark
-    ("M-q" . yank)
-    ("M-4" . pop-local-mark-ring)
-    ("C-," . pop-local-mark-ring)
-    ;; Windows and buffers
-    ("M-," . previous-window-any-frame)
-    ("C-x k" . kill-current-buffer)
-    ("C-x C-k" . kill-buffer-and-window)
-    ("C-x 2" . split-and-follow-horizontally)
-    ("C-x 3" . split-and-follow-vertically)
-    ("C-<" . previous-buffer)
-    ("C->" . next-buffer)
-    ("s-<tab>" . iflipb-next-buffer)
-    ("s-S-<tab>" . iflipb-previous-buffer)
-    ;; Ignore system gestures
-    ("<pinch>" . ignore)
-    ("<C-wheel-up>" . ignore)
-    ("<C-wheel-down>" . ignore)
-    ("<Scroll_Lock>" . ignore))
+  :hook ((minibuffer-setup . cursor-intangible-mode)
+         (prog-mode . aaronzinhoo--enable-trailing-whitespace-cleanup))
+  :bind* (("M-<up>" . move-text-up)
+          ("M-<down>" . move-text-down)
+          ;; Navigation.
+          ("C-j" . avy-goto-char-timer)
+          ("M-h" . backward-char)
+          ("M-j" . next-line)
+          ("M-k" . previous-line)
+          ("M-l" . forward-char)
+          ("M-[" . backward-up-list)
+          ("M-]" . up-list)
+          ;; Yank and mark.
+          ("M-q" . yank)
+          ("M-4" . pop-to-mark-command)
+          ;; Windows and buffers.
+          ("M-," . previous-window-any-frame)
+          ("C-x k" . kill-current-buffer)
+          ("C-x C-k" . kill-buffer-and-window)
+          ("C-x 2" . aaronzinhoo--split-window-below)
+          ("C-x 3" . aaronzinhoo--split-window-right)
+          ("C-<" . previous-buffer)
+          ("C->" . next-buffer)
+          ("s-<tab>" . iflipb-next-buffer)
+          ("s-S-<tab>" . iflipb-previous-buffer)
+          ;; Ignore system gestures.
+          ("<pinch>" . ignore)
+          ("<C-wheel-up>" . ignore)
+          ("<C-wheel-down>" . ignore)
+          ("<Scroll_Lock>" . ignore))
   :custom
+  ;; Minibuffer.
   (enable-recursive-minibuffers t)
   (minibuffer-prompt-properties
-    '(read-only t
-       cursor-intangible t
-       face minibuffer-prompt))
+   '(read-only t
+               cursor-intangible t
+               face minibuffer-prompt))
+  ;; Editing.
   (tab-always-indent 'complete)
-
-  ;; Compilation
-  (compilation-read-command t)
-  (compilation-scroll-output 'first-error)
-
-  :preface
-  (defun split-and-follow-horizontally ()
-    "Split below and select the new window."
-    (interactive)
-    (select-window (split-window-below)))
-
-  (defun split-and-follow-vertically ()
-    "Split right and select the new window."
-    (interactive)
-    (select-window (split-window-right)))
-
-  (defun pop-local-mark-ring ()
-    "Move point to the previous position in the local mark ring."
-    (interactive)
-    (set-mark-command t))
-  (defun create-uuid ()
-    "Return a UUID generated by the macOS `uuidgen' executable."
-    (require 'subr-x)
-    (with-temp-buffer
-      (unless (zerop
-                (call-process "/usr/bin/uuidgen" nil t nil))
-        (user-error "Could not generate UUID"))
-      (downcase
-        (string-trim
-          (buffer-string)))))
-  (defun insert-uuid ()
-    "Insert a newly generated UUID at point."
-    (interactive)
-    (insert (create-uuid)))
-  (defun aaronzinhoo--append-capfs (&rest capfs)
-    "Append CAPFS to the current buffer without duplicates."
-    (setq-local completion-at-point-functions
-      (delete-dups
-        (append
-          (copy-sequence
-            completion-at-point-functions)
-          capfs))))
-
-  :init
-  (pixel-scroll-precision-mode 1)
-  (delete-selection-mode 1)
-  (minibuffer-depth-indicate-mode 1)
-
-  ;; Only relevant to graphical X11 Emacs, not native macOS Emacs.
-  (when (eq window-system 'x)
-    (setq x-select-request-type
-      '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
-
-  (define-key key-translation-map
-    (kbd "<menu>")
-    #'event-apply-super-modifier)
+  (delete-pair-blink-delay 0)
+  (default-input-method nil)
+  ;; Persistence.
+  (auto-save-default t)
+  (backup-by-copying t)
+  (create-lockfiles nil)
+  (delete-by-moving-to-trash t)
+  (delete-old-versions t)
+  (kept-new-versions 10)
+  (kept-old-versions 0)
+  (make-backup-files t)
+  ;; Display.
+  (blink-cursor-blinks -1)
+  (select-enable-clipboard t)
   :custom-face
   (variable-pitch
-    ((t (:family "Cantarell"
-          :weight regular)))))
+   ((t
+     (:family "Cantarell"
+							:weight regular))))
+  :preface
+  (defun aaronzinhoo--enable-trailing-whitespace-cleanup ()
+    "Delete trailing whitespace when saving the current buffer."
+    (add-hook
+     'before-save-hook
+     #'delete-trailing-whitespace
+     nil
+     t))
+  (defun aaronzinhoo--wsl-p ()
+    "Return non-nil when Emacs is running under WSL."
+    (and
+     (eq system-type 'gnu/linux)
+     (or
+      (getenv "WSL_DISTRO_NAME")
+      (and
+       (file-readable-p
+        "/proc/sys/kernel/osrelease")
+       (with-temp-buffer
+         (insert-file-contents
+          "/proc/sys/kernel/osrelease")
+         (goto-char
+          (point-min))
+         (re-search-forward
+          "microsoft"
+          nil
+          t))))))
+  (defun aaronzinhoo--split-window-below ()
+    "Split below, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-below))
+    (switch-to-prev-buffer))
+  (defun aaronzinhoo--split-window-right ()
+    "Split right, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-right))
+    (switch-to-prev-buffer))
+  (defun aaronzinhoo-create-uuid ()
+    "Return a newly generated UUID."
+    (require 'subr-x)
+    (let ((executable
+           (executable-find "uuidgen")))
+      (unless executable
+        (user-error "The uuidgen executable is unavailable"))
+      (with-temp-buffer
+        (unless
+						(zerop
+             (call-process
+              executable
+              nil
+              t))
+          (user-error "Could not generate a UUID"))
+        (downcase
+         (string-trim
+          (buffer-string))))))
+  (defun aaronzinhoo-insert-uuid ()
+    "Insert a newly generated UUID at point."
+    (interactive)
+    (insert
+     (aaronzinhoo-create-uuid)))
+  (defun aaronzinhoo--append-capfs (&rest capfs)
+    "Append CAPFS to the current buffer without duplicates."
+    (setq-local
+     completion-at-point-functions
+     (delete-dups
+      (append
+       (copy-sequence
+        completion-at-point-functions)
+       capfs))))
+  :init
+  ;; Settings and modes needed during initialization.
+  (setq-default
+   user-full-name "Aaron Gonzales"
+   user-mail-address "aarongonzales1@gmail.com"
+   calendar-latitude 33.916403
+   calendar-longitude -118.352575
+   indent-tabs-mode nil
+   scroll-up-aggressively 0.01
+   scroll-down-aggressively 0.01
+   tab-width 4
+   tab-stop-list (number-sequence 4 120 4)
+   cursor-in-non-selected-windows nil)
+  (pixel-scroll-precision-mode 1)
+  (minibuffer-depth-indicate-mode 1)
+  ;; Only relevant to graphical X11 Emacs.
+  (when
+      (eq window-system 'x)
+    (setq x-select-request-type
+          '(UTF8_STRING
+            COMPOUND_TEXT
+            TEXT
+            STRING)))
+  (define-key
+   key-translation-map
+   (kbd "<menu>")
+   #'event-apply-super-modifier)
+  :config
+  (global-auto-revert-mode 1)
+  ;;;; Character encoding
+  (set-language-environment "UTF-8")
+  (prefer-coding-system 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  ;;;; Enabled commands
+  (put 'erase-buffer 'disabled nil)
+  (put 'narrow-to-region 'disabled nil)
+  (put 'downcase-region 'disabled nil))
+(use-package delsel
+  :straight nil
+  :init
+  (delete-selection-mode 1))
+(use-package display-line-numbers
+  :straight nil
+  :hook
+  ((conf-mode . display-line-numbers-mode)
+   (prog-mode . display-line-numbers-mode)
+   (text-mode . display-line-numbers-mode)))
+(use-package window
+  :straight nil
+  :custom
+  ;; Use pixel measurements when resizing graphical windows.
+  (window-resize-pixelwise t)
+  ;; Avoid rearranging dedicated windows such as Treemacs.
+  (transpose-dedicated-windows nil)
+  :preface
+  (defun aaronzinhoo--window-layout-rotate-180 ()
+    "Rotate the current frame's window layout by 180 degrees."
+    (interactive)
+    (window-layout-rotate-clockwise)
+    (window-layout-rotate-clockwise))
+  (defcustom aaronzinhoo--window-resize-step 5
+    "Number of rows or columns used when resizing a window."
+    :type 'positive-integer
+    :group 'windows)
+  :init
+  (winner-mode 1))
+(use-package hideshow
+  :straight nil
+  :commands(hs-minor-mode
+            hs-toggle-hiding
+            hs-hide-block
+            hs-show-block
+            hs-hide-all
+            hs-show-all
+            hs-hide-level)
+  :hook
+  ((bash-ts-mode . hs-minor-mode)
+   (c-ts-mode . hs-minor-mode)
+   (c++-ts-mode . hs-minor-mode)
+   (css-ts-mode . hs-minor-mode)
+   (go-ts-mode . hs-minor-mode)
+   (html-ts-mode . hs-minor-mode)
+   (java-ts-mode . hs-minor-mode)
+   (js-ts-mode . hs-minor-mode)
+   (python-ts-mode . hs-minor-mode)
+   (rust-ts-mode . hs-minor-mode)
+   (tsx-ts-mode . hs-minor-mode)
+   (typescript-ts-mode . hs-minor-mode)
+   (yaml-ts-mode . hs-minor-mode)
+
+   ;; Custom modes based on YAML Tree-sitter.
+   (helm-ts-mode . hs-minor-mode)
+   (openapi-yaml-mode . hs-minor-mode))
+  :preface
+  (defun aaronzinhoo--hs-block-beginning ()
+    "Move to the beginning of the innermost foldable block."
+    (unless
+      hs-minor-mode
+      (user-error
+        "Hideshow mode is not enabled"))
+    (unless
+      (hs-find-block-beginning)
+      (user-error
+        "No foldable block found")))
+  (defun aaronzinhoo--hs-toggle-block ()
+    "Toggle the innermost foldable block containing point."
+    (interactive)
+    (save-excursion
+      (aaronzinhoo--hs-block-beginning)
+      (hs-toggle-hiding)))
+  (defun aaronzinhoo--hs-hide-block ()
+    "Hide the innermost foldable block containing point."
+    (interactive)
+    (save-excursion
+      (aaronzinhoo--hs-block-beginning)
+      (hs-hide-block)))
+  (defun aaronzinhoo--hs-show-block ()
+    "Show the innermost folded block containing point."
+    (interactive)
+    (save-excursion
+      (aaronzinhoo--hs-block-beginning)
+      (hs-show-block))))
+(use-package package
+  :straight (:type built-in)
+  :demand t
+  :custom
+  (package-enable-at-startup nil)
+  (package-user-dir
+    (expand-file-name
+      "elpa/"
+      aaronzinhoo-emacs-generated-directory))
+  (package-gnupghome-dir
+    (expand-file-name
+      "elpa/gnupg/"
+      aaronzinhoo-emacs-generated-directory)))
+(use-package compat
+  :straight (:type built-in)
+  :demand t)
+(use-package compile
+  :straight (:type built-in)
+  :commands (compile recompile)
+  :custom
+  (compilation-read-command t)
+  (compilation-always-kill t)
+  (compilation-ask-about-save nil)
+  (compilation-scroll-output t)
+  :bind (("C-c c" . compile)
+          ("C-c r" . recompile)))
+(use-package seq
+  :straight (:type built-in)
+  :demand t)
 (use-package elec-pair
   :straight nil
   :hook ((org-mode
@@ -490,20 +675,7 @@ current buffer."
   :config
   (which-key-setup-side-window-right-bottom)
   (which-key-mode t))
-(use-package winner
-  :straight nil
-  :config
-  (winner-mode 1))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package cond-let
-  :straight (:type git :host github :repo "tarsius/cond-let" :branch "main"))
-(use-package system-packages
-  :straight t
-  :custom
-  (system-packages-use-sudo nil)
-  :init
-  (when (eq system-type 'darwin)
-    (setq system-packages-package-manager 'brew)))
 (use-package s :straight t
   :preface
   (defun snake-case-word (start end)
@@ -519,12 +691,7 @@ current buffer."
   :straight t)
 (use-package gh :straight t)
 (use-package async :straight t)
-(use-package f
-  :straight (:type git :host github :repo "rejeep/f.el" :branch "master"))
 (use-package pcre2el :straight t)
-(use-package compat
-  :demand t
-  :straight (:type git :host github :repo "emacs-compat/compat" :branch "main"))
 ;; log event/command history of all buffers
 (use-package command-log-mode
   :commands (command-log-mode))
@@ -545,6 +712,7 @@ current buffer."
 (use-package pos-tip)
 (use-package posframe
   :straight (:type git :host github :repo "tumashu/posframe" :branch "master"))
+;; automatically byte-compiles Emacs Lisp files (.el → .elc). The built-in compile library runs external commands such as make, linters, tests, and your bootstrap scripts in
 (use-package auto-compile
   :straight (:type git :host github :repo "emacscollective/auto-compile" :branch "main")
   :config
@@ -639,12 +807,15 @@ current buffer."
   :custom
   (block-nav-move-skip-shallower t)
   (block-nav-center-after-scroll t))
+(use-package transient
+  :straight t
+  :demand t)
 (use-package hydra
   :demand t
-  :bind
-  ("s-SPC" . hydra-nav/body)
-  ("s-o" . hydra-org/body)
-  ("s-B" . hydra-bookmark/body)
+  :bind (("s-SPC" . hydra-nav/body)
+         ("s-w" . hydra-window/body)
+         ("s-o" . hydra-org/body)
+         ("s-B" . hydra-bookmark/body))
   :custom
   (hydra-default-hint nil))
 (use-package major-mode-hydra
@@ -732,7 +903,80 @@ current buffer."
      "Jump"
      (("j" consult-bookmark "Jump to bookmark"))
      "List"
-     (("l" bookmark-bmenu-list "List Bookmarks")))))
+     (("l" bookmark-bmenu-list "List Bookmarks"))))
+  (pretty-hydra-define hydra-window
+    (:title "Windows and Frames"
+            :color amaranth
+            :quit-key "q")
+    ("Select"
+     (("h" windmove-left
+       "left")
+      ("j" windmove-down
+       "down")
+      ("k" windmove-up
+       "up")
+      ("l" windmove-right
+       "right")
+      ("o" other-window
+       "other")
+      ("a" ace-window
+       "ace"
+       :color blue))
+     "Resize"
+     (("H" (shrink-window-horizontally aaronzinhoo--window-resize-step) "shrink width")
+      ("L" (enlarge-window-horizontally aaronzinhoo--window-resize-step) "grow width")
+      ("J" (shrink-window aaronzinhoo--window-resize-step) "shrink height")
+      ("K" (enlarge-window aaronzinhoo--window-resize-step) "grow height")
+      ("=" balance-windows
+       "balance")
+      ("+" fit-window-to-buffer
+       "fit to buffer"))
+     "Create/Delete"
+     (("v" split-window-right
+       "split right")
+      ("s" split-window-below
+       "split below")
+      ("d" delete-window
+       "delete")
+      ("1" delete-other-windows
+       "delete others"))
+     "Layout"
+     (("t" window-layout-transpose
+       "transpose")
+      (">" window-layout-rotate-clockwise
+       "rotate clockwise")
+      ("<" window-layout-rotate-anticlockwise
+       "rotate counterclockwise")
+      ("|" window-layout-flip-leftright
+       "flip left/right")
+      ("_" window-layout-flip-topdown
+       "flip top/down")
+      ("2" aaronzinhoo--window-layout-rotate-180
+       "rotate 180")
+      ("]" rotate-windows
+       "cycle buffers")
+      ("[" rotate-windows-back
+       "cycle buffers back"))
+     "History"
+     (("u" winner-undo
+       "undo")
+      ("r" winner-redo
+       "redo"))
+     "Frames"
+     (("f" make-frame-command
+       "new frame"
+       :color blue)
+      ("D" delete-frame
+       "delete frame"
+       :color blue)
+      ("n" other-frame
+       "next frame")
+      ("m" toggle-frame-maximized
+       "maximize"
+       :color blue)
+      ("F" toggle-frame-fullscreen
+       "fullscreen"
+       :color blue)))))
 (use-package helpful
   :after (major-mode-hydra)
   :custom
@@ -775,6 +1019,10 @@ current buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; CONTROL VERSION UTILS
+;; depenedncy for magit
+(use-package cond-let
+  :straight t
+  :demand t)
 (use-package diff-hl
   :straight (:type git :host github :repo "dgutov/diff-hl")
   :after pretty-hydra
@@ -955,7 +1203,6 @@ current buffer."
   :custom
   (magit-bind-magit-project-status nil)
   :config
-  (magit-auto-revert-mode 1)
   (transient-append-suffix 'magit-branch "C"
     '("K" "delete all merged" aaronzinhoo--delete-merged-branches)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -963,10 +1210,6 @@ current buffer."
 (use-package matching-paren-overlay
   :straight (:type git :host codeberg :repo "acdw/matching-paren-overlay.el" :branch "main")
   :hook (prog-mode . matching-paren-overlay-mode))
-(use-package emojify
-  :if (display-graphic-p)
-  :hook ((prog-mode . (lambda () (emojify-mode 0)))
-          (vterm-mode . emojify-mode)))
 (use-package better-defaults
   :defer t)
 (use-package grep
@@ -987,11 +1230,22 @@ current buffer."
   :straight (:type git :host github :repo "dajva/rg.el" :branch "master")
   :commands (rg rg-dwim rg-menu)
   :bind* ("s-r" . rg-menu)
-  :hook (rg-mode . (lambda () (switch-to-buffer-other-window (current-buffer))))
   :custom
   (rg-executable "rg")
+  :preface
+  (defun aaronzinhoo--rg-select-results-window (&rest _)
+    "Select the window displaying the current rg results."
+    (when-let* ((buffer
+                 (get-buffer
+                  (rg-buffer-name)))
+                (window
+                 (get-buffer-window
+                  buffer
+                  (selected-frame))))
+      (select-window window)))
   :config
-  (rg-enable-menu))
+  (rg-enable-default-bindings)
+  (advice-add #'rg-run :after #'aaronzinhoo--rg-select-results-window))
 (use-package hungry-delete
   :demand t
   :straight t
@@ -1000,33 +1254,179 @@ current buffer."
 (use-package dired
   :straight nil
   :commands (dired dired-jump)
+  :bind (:map dired-mode-map
+          ("s-h" . dired-hydra/body)
+          ("<backspace>" . dired-up-directory)
+          ("DEL" . dired-up-directory))
   :hook ((dired-mode . hl-line-mode)
-         (dired-mode . auto-revert-mode))
+          (dired-mode . dired-hide-details-mode))
   :custom
+  ;; Suggest another visible Dired buffer as the copy/move target.
   (dired-dwim-target t)
+  ;; Reuse the current Dired buffer during navigation.
+  (dired-kill-when-opening-new-dired-buffer t)
+  ;; Automatically refresh directory contents.
+  (dired-auto-revert-buffer t)
+  ;; File operations.
   (delete-by-moving-to-trash t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
-  (dired-auto-revert-buffer 1)
-  (dired-listing-switches "-lAXGh --group-directories-first")
+  ;; GNU ls formatting.
+  (dired-listing-switches
+    "-lAXGh --group-directories-first")
   :init
-  (when (memq window-system '(mac ns))
-    (setq dired-use-ls-dired t
-      insert-directory-program "gls"))
+  ;; macOS BSD ls does not support all the listing options above.
+  (when
+    (eq system-type 'darwin)
+    (if-let ((gls
+               (executable-find "gls")))
+      (setq
+        insert-directory-program gls
+        dired-use-ls-dired t)
+      (setq
+        dired-use-ls-dired nil)
+      (warn
+        "GNU ls was not found; install Homebrew coreutils for full Dired support")))
+
   :config
   (require 'dired-aux)
-  ;; may need to install sevenzip
-  (add-to-list
-    'dired-compress-file-suffixes
-    '("\\.7z\\'" "" "7zz x -aoa -o%o %i")))
-;;; use to search files in multiple directories and place in one
+  (require 'subr-x)
+  ;; Sevenzip archive extraction.
+  (when-let* ((sevenzip
+               (or
+                 (executable-find "7zz")
+                 (executable-find "7z"))))
+    (add-to-list
+      'dired-compress-file-suffixes
+      `("\\.7z\\'"
+         ""
+         ,(format
+            "%s x -aoa -o%%o %%i"
+            (shell-quote-argument sevenzip)))))
+  :pretty-hydra
+  (dired-hydra
+    (:title "Dired"
+      :color amaranth
+      :quit-key "q")
+    ("Navigation"
+      (("n" dired-next-line
+         "next")
+       ("p" dired-previous-line
+         "previous")
+       ("RET" dired-find-file
+         "open"
+         :color blue)
+       ("<backspace>" dired-up-directory
+         "parent"
+         :color blue)
+       ("DEL" dired-up-directory
+         "parent"
+         :color blue)
+       ("j" dired-goto-file
+         "go to file")
+       ("J" dired-jump
+         "jump"
+         :color blue))
+     "Subtree"
+      (("<tab>" dired-subtree-toggle
+         "toggle")
+       ("TAB" dired-subtree-toggle
+         "toggle")
+       ("<backtab>" dired-subtree-cycle
+         "cycle")
+       ("C-<tab>" dired-subtree-remove
+         "remove"))
+     "Mark"
+      (("m" dired-mark
+         "mark")
+       ("u" dired-unmark
+         "unmark")
+       ("U" dired-unmark-all-marks
+         "unmark all")
+       ("t" dired-toggle-marks
+         "toggle")
+       ("r" dired-mark-files-regexp
+         "regexp"))
+     "Operate"
+      (("C" dired-do-copy
+         "copy")
+       ("R" dired-do-rename
+         "move")
+       ("D" dired-do-delete
+         "delete")
+       ("M" dired-do-chmod
+         "chmod")
+       ("O" dired-do-chown
+         "chown")
+       ("d" dired-flag-file-deletion
+         "flag")
+       ("x" dired-do-flagged-delete
+         "expunge")
+       ("+" dired-create-directory
+         "mkdir")
+       ("Z" dired-do-compress
+         "compress")
+       ("c" dired-do-compress-to
+         "compress to")
+       ("!" dired-do-shell-command
+         "shell")
+       ("&" dired-do-async-shell-command
+         "async"))
+     "View/Edit"
+      (("g" revert-buffer
+         "refresh")
+       ("h" dired-hide-details-mode
+         "details")
+       ("o" dired-omit-mode
+         "omit")
+       ("s" dired-sort-toggle-or-edit
+         "sort")
+       ("w" wdired-change-to-wdired-mode
+         "editable"
+         :color blue)
+       ("i" dired-maybe-insert-subdir
+         "insert directory")
+       ("k" dired-kill-subdir
+         "remove directory"))
+     "Recursive Find"
+      (("f" fd-dired
+         "fd find"
+         :color blue)
+       ("N" find-name-dired "filename"
+         :color blue)
+        ("G" find-grep-dired "contents"
+         :color blue)
+       ("F" dired-do-find-regexp
+         "marked regexp"
+         :color blue)
+       ("E" dired-do-find-regexp-and-replace
+         "regexp replace"
+         :color blue)))))
+(use-package dired-x
+  :straight nil
+  :after dired)
+(use-package dired-subtree
+  :after dired
+  :demand t
+  :bind
+  (:map dired-mode-map
+    ("<tab>" . dired-subtree-toggle)
+    ("TAB" . dired-subtree-toggle)
+    ("<backtab>" . dired-subtree-cycle)
+    ("C-<tab>" . dired-subtree-remove)))
 (use-package fd-dired
   :commands (fd-dired fd-name-dired fd-grep-dired)
-  :config
-  (setq fd-dired-program "fdfind"))
+  :init
+  (setq
+    fd-dired-program
+    (or
+      (executable-find "fd")
+      (executable-find "fdfind")
+      "fd")))
 (use-package dired-recent
+  :demand t
   :config
-  (dired-recent-mode  1))
+  (dired-recent-mode 1))
 (use-package recentf
   :demand t
   :custom
@@ -1061,17 +1461,12 @@ current buffer."
   (global-set-key (kbd "C-k") 'crux-smart-delete-line))
 
 ;;; WINDOW CONTROL
-(use-package resize-window
-  :straight (:type git :host github :repo "dpsutton/resize-window" :branch "master")
-  :bind ("s-w" . resize-window))
 (use-package ace-window
   :commands ace-window
   :bind* ("s-b" . ace-window)
   :custom
   (aw-ignore-current t)
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
-(use-package transpose-frame
-  :commands (transpose-frame  rotate-frame-anticlockwise rotate-frame-clockwise))
 ;;; window management hydra?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1104,12 +1499,6 @@ current buffer."
   (dashboard-setup-startup-hook))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package beacon
-  :commands (beacon-blink)
-  :diminish
-  :custom
-  (beacon-color "#111FFF"))
 (use-package default-text-scale
   :defer 2
   :bind (("C--" . text-scale-decrease)
@@ -1223,7 +1612,22 @@ Each function receives BEGINNING and END and returns a cons cell
     "Return the width of BOUNDS."
     (- (cdr bounds)
       (car bounds)))
+  (defun aaronzinhoo--treesit-structural-node-p
+    (parser node)
+    "Return non-nil when NODE is structurally useful for expansion.
 
+Ignore Helm `text' nodes because they merely represent uninterpreted
+YAML text between Helm actions. YAML structure is provided by the
+YAML parser, while Helm action boundaries are provided separately by
+the registered semantic-region functions."
+    (not
+      (and
+        (memq
+          (treesit-parser-language parser)
+          '(helm go-template))
+        (string-equal
+          (treesit-node-type node)
+          "text"))))
   (defun aaronzinhoo--strictly-larger-region-p
     (bounds beginning end)
     "Return non-nil when BOUNDS strictly contains BEGINNING through END."
@@ -1240,7 +1644,6 @@ Each function receives BEGINNING and END and returns a cons cell
         beginning)
       (>= (treesit-node-end node)
         end)))
-
   (defun aaronzinhoo--treesit-node-matches-region-p (node beginning end)
     "Return non-nil when NODE exactly matches BEGINNING and END."
     (and node
@@ -1343,33 +1746,38 @@ languages do not prevent discovery of a containing host-language node."
           (1+ depth)))
       depth))
 
-  (defun aaronzinhoo--treesit-smallest-bigger-bounds (beginning end)
+  (defun aaronzinhoo--treesit-smallest-bigger-bounds
+    (beginning end)
     "Return the smallest larger syntactic or semantic region."
     (let (candidates)
 
-      ;; Normal parent-node candidates.
+      ;; Ordinary structural parent-node candidates.
       (dolist (parser
                 (treesit-parser-list))
-        (when-let ((node
+        (when-let* ((node
                      (aaronzinhoo--treesit-next-bigger-node
                        parser
                        beginning
                        end)))
-          (let ((bounds
-                  (cons
-                    (treesit-node-start node)
-                    (treesit-node-end node))))
-            (when
-              (aaronzinhoo--strictly-larger-region-p
-                bounds
-                beginning
-                end)
-              (push bounds candidates)))))
+          (when
+            (aaronzinhoo--treesit-structural-node-p
+              parser
+              node)
+            (let ((bounds
+                    (cons
+                      (treesit-node-start node)
+                      (treesit-node-end node))))
+              (when
+                (aaronzinhoo--strictly-larger-region-p
+                  bounds
+                  beginning
+                  end)
+                (push bounds candidates))))))
 
-      ;; Language-specific sibling/grouping candidates.
+      ;; Helm action, containing-line, and indentation-parent regions.
       (dolist (function
                 aaronzinhoo--treesit-extra-region-functions)
-        (when-let ((bounds
+        (when-let* ((bounds
                      (funcall
                        function
                        beginning
@@ -1383,9 +1791,10 @@ languages do not prevent discovery of a containing host-language node."
 
       (car
         (sort
-          candidates
+          (delete-dups candidates)
           (lambda (left right)
-            (< (aaronzinhoo--region-size left)
+            (<
+              (aaronzinhoo--region-size left)
               (aaronzinhoo--region-size right)))))))
 
   (defun aaronzinhoo--treesit-mark-bigger-node ()
@@ -1622,6 +2031,7 @@ mark:
                nxml-mode
                python-ts-mode
                rust-ts-mode
+               terraform-mode
                toml-ts-mode
                tsx-ts-mode
                typescript-ts-mode))
@@ -1754,14 +2164,13 @@ mark:
             (not (functionp 'json-rpc-connection))
             (executable-find "emacs-lsp-booster"))
         (progn
-          (when-let ((executable
+          (when-let* ((executable
                        (executable-find (car resolved-command))))
             (setcar resolved-command executable))
           (message "Using emacs-lsp-booster for %S"
             resolved-command)
           (cons "emacs-lsp-booster" resolved-command))
         resolved-command)))
-
   (defun aaronzinhoo--lsp-completion-setup ()
     "Configure LSP completion for Corfu, Cape, and Orderless."
     (let ((existing
@@ -1783,9 +2192,8 @@ mark:
       '((styles orderless))))  ;; Configure orderless which can use flex
   (defun aaronzinhoo--angular-project-root ()
     "Return the nearest Angular workspace root."
-    (when-let ((file (or buffer-file-name default-directory)))
+    (when-let* ((file (or buffer-file-name default-directory)))
       (locate-dominating-file file "angular.json")))
-
   (defun aaronzinhoo--activate-project-node ()
     "Activate the project's NVM version and local executables."
     (when-let* ((file (or buffer-file-name default-directory))
@@ -2182,7 +2590,7 @@ mark:
     "Consult-dir source for running Docker containers.")
   (defun aaronzinhoo--consult-dir-docker-hosts ()
     "Return running Docker containers as TRAMP paths."
-    (when-let ((docker
+    (when-let* ((docker
                  (executable-find
                    consult-dir--tramp-container-executable)))
       (mapcar
@@ -2493,8 +2901,7 @@ mark:
           ([tab]        . aaronzinhoo--corfu-complete-common-or-next)
           ("S-TAB"      . corfu-previous)
           ([backtab]    . corfu-previous))
-  :hook ((vterm-mode . aaronzinhoo--corfu-vterm-setup)
-          (eshell-mode . aaronzinhoo--corfu-eshell-setup))
+  :hook ((eshell-mode . aaronzinhoo--corfu-eshell-setup))
   ;; Optional customizations
   :custom
     ;; Candidate window
@@ -2563,13 +2970,6 @@ mark:
             ;; Otherwise change the selected candidate. With
             ;; `corfu-preview-current' set to t, this remains an overlay.
             (corfu-next))))))
-  (defun aaronzinhoo--corfu-vterm-setup ()
-    "Configure Corfu for Vterm."
-    (setq-local
-      corfu-auto nil
-      corfu-quit-at-boundary t
-      corfu-quit-no-match t)
-    (corfu-mode 1))
   (defun aaronzinhoo--corfu-eshell-setup ()
     "Configure Corfu and completion sources for Eshell."
     (setq-local
@@ -3291,84 +3691,93 @@ replacement boundaries."
 
 ;; Environment | Shell
 (use-package exec-path-from-shell
-  :if (or (memq window-system '(mac ns x)) (string-equal system-type "gnu/linux"))
+  :straight t
+  :demand t
+  :if (or
+        (daemonp)
+        (memq window-system '(mac ns x pgtk)))
   :custom
-  (exec-path-from-shell-arguments nil)
-  (exec-path-from-shell-check-startup-files nil)
+  (exec-path-from-shell-shell-name "/bin/zsh")
+  (exec-path-from-shell-arguments '("-l"))
+  (exec-path-from-shell-variables '("PATH"
+                                     "LIBRARY_PATH"
+                                     "C_INCLUDE_PATH"
+                                     "PKG_CONFIG_PATH"
+                                     "MANPATH"
+                                     "LANG"
+                                     "SSH_AUTH_SOCK"
+
+                                     "XDG_CONFIG_HOME"
+                                     "XDG_CACHE_HOME"
+                                     "XDG_DATA_HOME"
+                                     "XDG_STATE_HOME"
+
+                                     "CARGO_HOME"
+                                     "RUSTUP_HOME"
+                                     "GOENV_ROOT"
+                                     "GOPATH"
+                                     "GOBIN"
+                                     "NVM_DIR"
+                                     "PYENV_ROOT"
+                                     "SDKMAN_DIR"
+                                     "KREW_ROOT"))
   :config
   (exec-path-from-shell-initialize))
 (use-package list-environment
   :commands (list-environment))
-;; NOTE C-c C-t vterm-copy-mode for copying vterm text!
-(use-package vterm
-  :straight (:type git :host github :repo "akermu/emacs-libvterm" :branch "master")
-  :commands (vterm project-vterm)
-  :bind (:map vterm-mode-map
-          ("M-q" . aaronzinhoo--vterm-yank))
-  :hook ((vterm-copy-mode . aaronzinhoo--setup-vterm-copy-expansions))
-  :init
-  (setq vterm-install t)
+(use-package ghostel
+  :straight t
+  :commands (ghostel ghostel-project ghostel-project-list-buffers consult-ghostel-history consult-ghostel consult-ghostel-project)
+  :bind (:map ghostel-semi-char-mode-map
+              ("C-c t" . consult-ghostel-history))
+  :hook ((ghostel-mode . aaronzinhoo--setup-ghostel-expansions))
   :custom
-  (vterm-kill-buffer-on-exit t)
-  (vterm-max-scrollback 5000)
-  (confirm-kill-processes nil)
-  (hscroll-margin 0)
+  (ghostel-kill-buffer-on-exit t)
+  ;; Prefer live navigation over frozen copy mode.
+  (ghostel-readonly-default-mode 'emacs)
+  ;; Typing returns from read-only navigation to terminal input.
+  (ghostel-readonly-fast-exit t)
   :preface
-  (defun aaronzinhoo--setup-vterm-copy-expansions ()
-    "Configure Expand Region for Vterm copy mode."
-    (when vterm-copy-mode
-      (setq-local
-        er/try-expand-list
-        '(er/mark-word
-           er/mark-symbol
+  (defun aaronzinhoo--setup-ghostel-expansions ()
+    "Configure Expand Region for Ghostel buffers."
+    (setq-local
+     er/try-expand-list
+     '(er/mark-word
+       er/mark-symbol
 
-           ;; Environment assignments and comma-separated values.
-           aaronzinhoo--mark-assignment-list-item
-           aaronzinhoo--mark-assignment-list
+       ;; Environment assignments and comma-separated values.
+       aaronzinhoo--mark-assignment-list-item
+       aaronzinhoo--mark-assignment-list
 
-           er/mark-outside-quotes
-           er/mark-outside-pairs
-           er/mark-paragraph))))
-  (defun aaronzinhoo--vterm-yank ()
-    (interactive "p")
-    (consult-yank))
-  (defun vterm-directory-sync ()
-  "Synchronize current working directory."
-  (interactive)
-  (when vterm--process
-    (let* ((pid (process-id vterm--process))
-           (dir (file-truename (format "/proc/%d/cwd/" pid))))
-      (setq default-directory dir))))
-  (defun project-vterm ()
-    "Start an vterm shell in the current project's root directory.
-If a buffer already exists for running a vterm shell in the project's root,
-switch to it.  Otherwise, create a new vterm buffer.
-With \\[universal-argument] prefix arg, create a new inferior vterm buffer even
-if one already exists."
-    (interactive)
-    (require 'comint)
-    (let* ((default-directory (project-root (project-current t)))
-            (default-project-shell-name (project-prefixed-buffer-name "vterm"))
-            (shell-buffer (get-buffer default-project-shell-name)))
-      (if (and shell-buffer (not current-prefix-arg))
-        (if (comint-check-proc shell-buffer)
-          (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
-          (vterm shell-buffer))
-        (vterm (generate-new-buffer-name default-project-shell-name)))))
-  )
-(use-package multi-vterm
-  :commands multi-vterm)
+       er/mark-inside-quotes
+       er/mark-outside-quotes
+       er/mark-inside-pairs
+       er/mark-outside-pairs
+       er/mark-paragraph))))
+(use-package ghostel-compile
+  :straight nil
+  :after ghostel
+  :commands (ghostel-compile ghostel-recompile))
+(use-package ghostel-comint
+  :straight nil
+  :after ghostel
+  :hook (shell-mode . ghostel-comint-mode))
+(use-package comint
+  :straight (:type built-in)
+  :bind (:map comint-mode-map
+              ("C-M-i" . completion-at-point))
+  :custom
+  (comint-prompt-read-only t)
+  (comint-input-ignoredups t)
+  ;; Return to the prompt when typing.
+  (comint-scroll-to-bottom-on-input 'this)
+  ;; Follow output at the bottom, but allow scrolling back.
+  (comint-move-point-for-output nil)
+  ;; Keep the latest output at the bottom of the window.
+  (comint-scroll-show-maximum-output t))
 (use-package ansi-color
-  :hook (compilation-filter . colorize-compilation-buffer)
-  :preface
-  ;; Support for ANSI escape color codes in emacs compilation buffer
-  ;; Fixes build and test execution output in LSP and DAP
-  ;; from https://github.com/kipcd/dotfiles/blob/main/emacs/.emacs.default/init.el#L97
-  (defun colorize-compilation-buffer ()
-    (when (derived-mode-p 'compilation-mode)
-      (ansi-color-process-output nil)
-      (setq-local comint-last-output-start (point-marker)))))
-
+  :straight (:type built-in)
+  :hook ((compilation-filter . ansi-color-compilation-filter)))
 ;; Programming/Project Management
 ;; commenting does not have support for native tree sitter yet
 (use-package turbo-log
@@ -3402,6 +3811,7 @@ if one already exists."
   )
 (use-package project
   :straight nil
+  :demand t
   :after (major-mode-hydra)
   :bind* ("s-p" . project-hydra/body)
   :pretty-hydra
@@ -3420,7 +3830,8 @@ if one already exists."
       "Other"
       (("C" project-forget-zombie-projects "Clear out old projects")
         ("c" project-compile "Compile")
-        ("v" project-vterm "Run vterm")
+        ("v" ghostel-project "Run ghostel")
+        ("V" consult-ghostel-project "Run ghostel")
         ("R" project-remember-projects-under "Register Proj(s). under Dir"))
       "Search & Replace"
       (("r" project-query-replace-regexp "regexp replace")
@@ -3452,11 +3863,6 @@ if one already exists."
             (save-buffer)))
         (message "[%s] Saved %d buffer(s)" current-project-name (length modified-buffers))))))
 ;;; Languages Support
-;; folding
-(use-package treesit-fold
-  :commands (treesit-fold-toggle)
-  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold"))
-
 ;; Code Coverage
 (use-package cov
   :defer t)
@@ -3521,7 +3927,6 @@ if one already exists."
     (require 'yaml-mode)
     (setq-local
       indent-line-function #'yaml-indent-line
-      indent-tabs-mode nil
       lsp-java-boot-enabled nil
       lsp-lens-mode nil))
   :pretty-hydra
@@ -3542,7 +3947,18 @@ if one already exists."
         ("P" block-nav-previous-indentation-level
           "Prev Parent Node") )
       "Fold"
-      (("f" treesit-fold-toggle "Toggle Fold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Schema"
       (("s" lsp-yaml-select-buffer-schema
          "Buffer Schema")
@@ -3580,7 +3996,18 @@ if one already exists."
         ("P" block-nav-previous-indentation-level
           "Prev Parent Node") )
       "Fold"
-      (("f" treesit-fold-toggle "Toggle Fold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Helm"
       (("e" helm-ts-mode-select-environment "Update Environment")
         ("t" helm-ts-mode-describe-parsers "Treesit Parsers")
@@ -3652,7 +4079,18 @@ if one already exists."
         ("P" block-nav-previous-indentation-level
           "Prev Parent Node") )
       "Fold"
-      (("f" treesit-fold-toggle "Toggle Fold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Openapi"
       (("v" openapi-preview "View in Browser")
         ("s" lsp-yaml-select-buffer-schema
@@ -3848,7 +4286,7 @@ if one already exists."
         t)
 
       (setq aaronzinhoo--apache-directive-cache
-        (when-let ((executable
+        (when-let* ((executable
                      (aaronzinhoo--apache-executable)))
           (with-temp-buffer
             (when
@@ -3996,7 +4434,6 @@ if one already exists."
         ("p" nxml-backward-element      "previous element")
         ("u" nxml-backward-up-element   "parent element")
         ("d" nxml-down-element          "child element"))
-
       "Editing"
       (("c" nxml-balanced-close-start-tag-inline
          "close element")
@@ -4006,7 +4443,6 @@ if one already exists."
           "finish element")
         ("t" nxml-balanced-close-start-tag-block
           "close as block"))
-
       "Validation"
       (("v" rng-validate-mode
          "toggle validation")
@@ -4018,7 +4454,6 @@ if one already exists."
           "detect schema")
         ("S" rng-set-schema-file-and-validate
           "select schema"))
-
       "Tools"
       (("r" nxml-mode
          "restart mode")
@@ -4289,7 +4724,18 @@ if one already exists."
       (("j" godef-jump "Jump to definition")
         ("b" pop-tag-mark "Jump back"))
       "Fold"
-      (("f" treesit-fold-toggle "fold/unfold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Refactor"
       (("rf" lsp-format-buffer "Format buffer"))
       "Run"
@@ -4371,7 +4817,18 @@ if one already exists."
         ("cu" lsp-java-add-unimplemented-methods "Add Unimplemented Methods")
         ("ct" lsp-java-add-throws "Add Throws"))
       "Fold"
-      (("f" treesit-fold-toggle "fold/unfold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Imports"
       (("a" lsp-java-add-import "Add")
         ("o" lsp-java-organize-imports "Organize"))

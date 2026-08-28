@@ -13,176 +13,197 @@
 ;;
 ;;; Code:
 
-;; Setup variables
-(defconst aaronzinhoo-emacs-directory (expand-file-name "~/.config/emacs"))
-(defconst user-emacs-directory aaronzinhoo-emacs-directory)
-(defconst user-full-name "Aaron Gonzales")
-(defconst user-init-dir "~/.emacs.d/")
-(defconst user-init-file "~/.emacs.d/init.el")
-(defconst user-home-directory (getenv "HOME"))
-(defconst user-mail-address "aarongonzales1@gmail.com")
-(defconst user-init-dir-fullpath (file-truename user-init-dir))
-(defconst backup-dir (concat user-emacs-directory "/backups"))
-(defconst autosave-dir (concat user-emacs-directory "/autosave"))
-(defconst calendar-latitude 33.916403)
-(defconst calendar-longitude -118.352575)
-(defconst node-home-folder (file-name-directory (getenv "NVM_BIN")) "Path to currently used nvm node version with trailing slash.")
-(defconst nvm-home-folder (getenv "NVM_DIR") "Path to currently used nvm node version with trailing slash.")
-(defconst pyenv-root-folder (getenv "PYENV_ROOT") "Path to pyenv root folder without trailing slash.")
-(defconst my/wsl (not (null (string-match "Linux.*Microsoft" (shell-command-to-string "uname -a")))))
-(setq package-user-dir (concat aaronzinhoo-emacs-directory "/elpa"))
-(setq package-gnupghome-dir (concat aaronzinhoo-emacs-directory "/elpa/gnupg"))
-(setq-default custom-theme-directory (concat aaronzinhoo-emacs-directory "/themes"))
+;;; early-init.el --- Early initialization -*- lexical-binding: t; no-byte-compile: t; -*-
 
-;; Defer garbage collection further back in the startup process
-(setq gc-cons-threshold most-positive-fixnum)
-(setq read-process-output-max (* 1024 1024))
+;;; Commentary:
 
-;; Disable Emacs 27's automatic package.el initialization before the init.el
-;; file is loaded. I use straight.el instead of package.el.
-(setq package-enable-at-startup nil)
-;; Emacs comes with several built-in packages, such as Org-mode, that are
-;; essential for many users. However, these built-in packages are often not the
-;; latest versions available. Ensure that your built-in packages are always up
-;; to date with:
-(setq package-install-upgrade-built-in t)
+;; Configuration evaluated before package and graphical initialization.
 
+;;; Code:
+
+;;;; Directories
+
+;; `user-emacs-directory' remains ~/.emacs.d/, which is symlinked to
+;; the version-controlled dotfiles/emacs directory.
+
+(defconst aaronzinhoo-emacs-generated-directory
+  (file-name-as-directory
+    (expand-file-name
+      "emacs/"
+      (or
+        (getenv "XDG_CONFIG_HOME")
+        "~/.config/")))
+  "Directory containing generated Emacs data.")
+
+(defconst aaronzinhoo-emacs-backup-directory
+  (expand-file-name
+    "backups/"
+    aaronzinhoo-emacs-generated-directory))
+
+(defconst aaronzinhoo-emacs-auto-save-directory
+  (expand-file-name
+    "auto-save/"
+    aaronzinhoo-emacs-generated-directory))
+;;;; Package-generated directories
+
+;; no-littering reads these variables when it loads.
+(setq no-littering-etc-directory
+  (expand-file-name
+    "etc/"
+    aaronzinhoo-emacs-generated-directory))
+(setq no-littering-var-directory
+  (expand-file-name
+    "var/"
+    aaronzinhoo-emacs-generated-directory))
+
+;; Built-in Tree-sitter installs grammars into the first directory in
+;; `treesit-extra-load-path'.
+(defconst aaronzinhoo-emacs-treesit-directory
+  (expand-file-name
+    "tree-sitter/"
+    aaronzinhoo-emacs-generated-directory)
+  "Directory containing compiled Tree-sitter grammars.")
+
+(dolist (directory
+          (list
+            aaronzinhoo-emacs-generated-directory
+            aaronzinhoo-emacs-backup-directory
+            aaronzinhoo-emacs-auto-save-directory
+            aaronzinhoo-emacs-treesit-directory))
+  (make-directory directory t))
+
+;; Keep Customize output in the version-controlled configuration.
 (setq custom-file
-      (concat
-       (expand-file-name
-        (file-name-directory (or load-file-name buffer-file-name)))
-       "custom.el"))
+  (expand-file-name
+    "custom.el"
+    user-emacs-directory))
 
-;; UnsetFNHA
-(defvar file-name-handler-alist-orginal file-name-handler-alist)
-(setq file-name-handler-alist nil)
-;; -UnsetFNHA
+;; Generated package data.
+(setq package-user-dir
+  (expand-file-name
+    "elpa/"
+    aaronzinhoo-emacs-generated-directory))
 
-;; Prevent the glimpse of un-styled Emacs by disabling these UI elements early.
-;; Disable unneeded UI modes
-(push '(menu-bar-lines . 0)   default-frame-alist)
-(push '(tool-bar-lines . 0)   default-frame-alist)
-(push '(vertical-scroll-bars . 0) default-frame-alist)
-(push '(horizontal-scroll-bars) default-frame-alist)
-(setq tool-bar-mode nil
-      scroll-bar-mode nil)
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
-;; Disable GUIs because theyr are inconsistent across systems, desktop
-;; environments, and themes, and they don't match the look of Emacs.
-(setq use-file-dialog nil)
-(setq use-dialog-box nil)
-(unless (memq window-system '(mac ns))
-  ;; (menu-bar-mode -1)
-  (setq menu-bar-mode nil))
+(setq package-gnupghome-dir
+  (expand-file-name
+    "elpa/gnupg/"
+    aaronzinhoo-emacs-generated-directory))
 
-(when (fboundp 'horizontal-scroll-bar-mode)
-  (horizontal-scroll-bar-mode -1))
+;; This must be set before straight.el is bootstrapped.
+(setq straight-base-dir
+  aaronzinhoo-emacs-generated-directory)
+
+;; Keep manually maintained themes in the repository.
+(setq custom-theme-directory
+  (expand-file-name
+    "themes/"
+    user-emacs-directory))
+
+;; Keep native-compilation output outside the repository.
+(when
+  (fboundp 'startup-redirect-eln-cache)
+  (startup-redirect-eln-cache
+    (expand-file-name
+      "eln-cache/"
+      aaronzinhoo-emacs-generated-directory)))
+
+;; Backups and auto-save data.
+(setq backup-directory-alist
+  `(("." . ,aaronzinhoo-emacs-backup-directory)))
+
+(setq auto-save-file-name-transforms
+  `((".*" ,aaronzinhoo-emacs-auto-save-directory t)))
+
+(setq auto-save-list-file-prefix
+  (expand-file-name
+    ".saves-"
+    aaronzinhoo-emacs-auto-save-directory))
+
+;; Finder-launched Emacs instances can otherwise start in /Applications.
+(let ((home-directory
+        (file-name-as-directory
+          (expand-file-name "~"))))
+  (setq default-directory home-directory)
+  (setq-default default-directory home-directory))
+
+;;;; Personal
+
+;;;; Package initialization
+
+;; straight.el manages third-party packages.
+(setq package-enable-at-startup nil)
+
+
+;;;; Startup performance
+
+;; Temporarily reduce garbage collection during startup.
+(setq gc-cons-threshold most-positive-fixnum
+      gc-cons-percentage 0.6)
+
+(defun aaronzinhoo--restore-garbage-collection ()
+  "Restore reasonable garbage-collection settings after startup."
+  (setq gc-cons-threshold
+    (* 32 1024 1024))
+  (setq gc-cons-percentage 0.1))
+
+(add-hook
+  'after-init-hook
+  #'aaronzinhoo--restore-garbage-collection)
+
+;; Increase the amount read from subprocesses in one operation.
+(setq read-process-output-max
+  (* 1024 1024))
+
+;;;; Graphical startup
 
 ;; Resizing the Emacs frame can be a terribly expensive part of changing the
 ;; font. By inhibiting this, we easily halve startup times with fonts that are
 ;; larger than the system default.
-(setq frame-inhibit-implied-resize t)
+(setq frame-inhibit-implied-resize t
+      inhibit-startup-screen t
+      initial-scratch-message nil
+      use-dialog-box nil
+      use-file-dialog nil)
 
-;; Always load newer code
-(setq load-prefer-newer t)
+(dolist (parameter
+          '((menu-bar-lines . 0)
+             (tool-bar-lines . 0)
+             (vertical-scroll-bars . 0)
+             (horizontal-scroll-bars . 0)
+             (font . "Hack Nerd Font-15")
+             (fullscreen . maximized)))
+  (add-to-list
+    'default-frame-alist
+    parameter))
 
-;; AfterInitHook
-(add-hook
- 'after-init-hook
- (lambda ()
-   (setq file-name-handler-alist file-name-handler-alist-orginal)))
-;; -AfterInitHook
+(when (bound-and-true-p tooltip-mode)
+  (tooltip-mode -1))
 
-;; Allow for shorter responses: "y" for yes and "n" for no.
-(if (boundp 'use-short-answers)
-    (setq use-short-answers t)
-  (advice-add #'yes-or-no-p :override #'y-or-n-p))
-(defalias #'view-hello-file #'ignore) ; Never show the hello file
+;;;; General startup behavior
 
+(setq load-prefer-newer t
+      auto-mode-case-fold nil
+      message-log-max 16384
+      ring-bell-function #'ignore)
 
-;;; Native compilation and Byte compilation
-;; Suppress compiler warnings and don't inundate users with their popups.
-(setq
-  native-comp-jit-compilation t
-  native-comp-async-report-warnings-errors 'silent
-  native-comp-warning-on-missing-source 'nil
-  package-native-compile t)
+(if
+  (boundp 'use-short-answers)
+  (setq use-short-answers t)
+  (advice-add
+    #'yes-or-no-p
+    :override
+    #'y-or-n-p))
 
+;;;; macOS
+
+(when
+  (eq system-type 'darwin)
+  (setq mac-command-modifier 'meta
+        mac-right-command-modifier 'control
+        mac-option-modifier 'super))
+
+;;;; LSP serialization
 (setenv "LSP_USE_PLISTS" "true")
 
-;; Set-language-environment sets default-input-method, which is unwanted.
-;; UTF-8 as default encoding
-(set-language-environment "UTF-8")
-(prefer-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(setq default-input-method nil)
-(setq-default cursor-in-non-selected-windows nil)
-(setq highlight-nonselected-windows nil)
-
-;; Set of default values
-(setq
-  ;; A second, case-insensitive pass over `auto-mode-alist' is time wasted.
-  ;; No second pass of case-insensitive search over auto-mode-alist.
-  auto-mode-case-fold nil
-  auto-save-default t
-  global-auto-revert-mode t
-  ;;cursor options
-  blink-cursor-blinks -1
-  delete-pair-blink-delay 0
-  message-log-max 16384
-  ;; Disable warnings from the legacy advice API. They aren't useful.
-  ad-redefinition-action 'accept
-  ;; disable lockfiles since they cause some trouble
-  create-lockfiles nil
-  select-enable-clipboard t
-  ;; Reduce *Message* noise at startup. An empty scratch buffer (or the
-  ;; dashboard) is more than enough, and faster to display.
-  inhibit-startup-screen t
-  initial-scratch-message nil
-  backup-directory-alist `((".*" . ,backup-dir))
-  byte-compile-warnings nil
-  byte-compile-verbose nil
-  make-backup-files t
-  backup-by-copying t ;; safest method to backup
-  delete-old-versions t ;; delete excess backups
-  delete-by-moving-to-trash t
-  kept-old-versions 0
-  kept-new-versions 10
-  ring-bell-function 'ignore)
-
-;; setq will only set for local-buffer so must use setq-default
-;; for variables that are not buffer specific
-(setq-default
- indent-tabs-mode nil
- tab-width 4
- tab-stop-list (number-sequence 4 120 4))
-
-;; delete whitespace always... can use whitespace-mode to make efficient
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;; let Emacs know youre a pro el-oh-el
-(put 'erase-buffer 'disabled nil)
-(put 'narrow-to-region 'disabled nil)
-(put 'downcase-region 'disabled nil)
-
-;; Initial graphical frame
-(add-to-list 'default-frame-alist '(font . "Hack Nerd Font-15"))
-
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
-
-;; macOS modifier keys
-(when (eq system-type 'darwin)
-  (setq mac-command-modifier 'meta
-    mac-right-command-modifier 'control
-    mac-option-modifier 'super))
-
-;; Suppress the vanilla startup screen completely. We've disabled it with
-;; `inhibit-startup-screen', but it would still initialize anyway.
-(advice-add #'display-startup-screen :override #'ignore)
-
 (provide 'early-init)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; early-init.el ends here
