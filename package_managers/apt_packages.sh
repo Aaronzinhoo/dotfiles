@@ -670,6 +670,133 @@ install_emacs() {
     "Installed $(emacs --version | head -n 1)"
 }
 
+install_tofu_ls() {
+  local architecture
+  local release_api
+  local release_json
+  local release_version
+  local archive_name
+  local archive_url
+  local checksums_url
+  local temporary_directory
+
+  case "$(dpkg --print-architecture)" in
+    amd64)
+      architecture='amd64'
+      ;;
+    arm64)
+      architecture='arm64'
+      ;;
+    *)
+      echo_with_red_prompt \
+        "Unsupported tofu-ls architecture: $(dpkg --print-architecture)"
+      return 1
+      ;;
+  esac
+
+  if [[ -n "${TOFU_LS_VERSION:-}" ]]; then
+    release_api="https://api.github.com/repos/opentofu/tofu-ls/releases/tags/${TOFU_LS_VERSION}"
+  else
+    release_api='https://api.github.com/repos/opentofu/tofu-ls/releases/latest'
+  fi
+
+  echo_with_prompt "Resolving tofu-ls release"
+
+  release_json="$(
+    curl \
+      --fail \
+      --silent \
+      --show-error \
+      --location \
+      "${release_api}"
+  )"
+
+  release_version="$(
+    jq --raw-output \
+      '.tag_name' \
+      <<<"${release_json}"
+  )"
+
+  archive_url="$(
+    jq \
+      --raw-output \
+      --arg pattern "linux_${architecture}\\.zip$" \
+      '.assets[]
+       | select(.name | test($pattern))
+       | .browser_download_url' \
+      <<<"${release_json}" |
+      head -n 1
+  )"
+
+  checksums_url="$(
+    jq \
+      --raw-output \
+      '.assets[]
+       | select(.name | endswith("SHA256SUMS"))
+       | .browser_download_url' \
+      <<<"${release_json}" |
+      head -n 1
+  )"
+
+  if [[ -z "${archive_url}" || "${archive_url}" == 'null' ]]; then
+    echo_with_red_prompt \
+      "Could not find the tofu-ls Linux ${architecture} archive"
+    return 1
+  fi
+
+  if [[ -z "${checksums_url}" || "${checksums_url}" == 'null' ]]; then
+    echo_with_red_prompt \
+      "Could not find the tofu-ls checksum file"
+    return 1
+  fi
+
+  archive_name="${archive_url##*/}"
+  temporary_directory="$(mktemp -d)"
+
+  (
+    trap 'rm -rf "${temporary_directory}"' EXIT
+
+    echo_with_prompt \
+      "Downloading tofu-ls ${release_version} for Linux ${architecture}"
+
+    curl \
+      --fail \
+      --silent \
+      --show-error \
+      --location \
+      --output "${temporary_directory}/${archive_name}" \
+      "${archive_url}"
+
+    curl \
+      --fail \
+      --silent \
+      --show-error \
+      --location \
+      --output "${temporary_directory}/SHA256SUMS" \
+      "${checksums_url}"
+
+    cd "${temporary_directory}"
+
+    grep \
+      --fixed-strings \
+      " ${archive_name}" \
+      SHA256SUMS |
+      sha256sum --check -
+
+    unzip \
+      -q \
+      "${archive_name}"
+
+    sudo install \
+      -m 0755 \
+      tofu-ls \
+      /usr/local/bin/tofu-ls
+  )
+
+  echo_with_green_prompt \
+    "Installed $(tofu-ls -v)"
+}
+
 verify_installation() {
   local commands=(
     argocd
@@ -779,6 +906,12 @@ main() {
 
   echo_with_prompt "Installing yq"
   install_yq
+
+  echo_with_prompt "Install emacs"
+  install_emacs
+
+  echo_with_prompt "Install tofu-ls"
+  install_tofu_ls
 
   echo_with_prompt "Verifying installed tools"
   verify_installation

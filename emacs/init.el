@@ -1863,15 +1863,38 @@ mark:
   (lsp-modeline-workspace-status-enable nil)
   ;; Keymap
   (lsp-keymap-prefix nil)
+  ;; client settings
+  (lsp-disabled-clients '(ccls))
   ;; Rust Analyzer
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-rust-analyzer-display-chaining-hints t)
   (lsp-rust-analyzer-display-closure-return-type-hints t)
-  ;; Ruff
-  (lsp-ruff-lsp-server-command '("ruff" "server"))
   :init
   (setq lsp-use-plists t)
   :config
+  ;; terraform setup
+  (add-to-list
+   'lsp-language-id-configuration
+   '(terraform-mode . "opentofu"))
+
+  ;; Variable files use a separate language ID.
+  (add-to-list
+   'lsp-language-id-configuration
+   '("\\.tfvars\\'" . "opentofu-vars"))
+
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection
+    (lsp-stdio-connection
+     '("tofu-ls" "serve"))
+
+    :activation-fn
+    (lsp-activate-on
+     "opentofu"
+     "opentofu-vars")
+    ;; Prefer tofu-ls if another Terraform client also matches.
+    :priority 1
+    :server-id 'tofu-ls))
   ;; Install the JSON-parser advice after the JSON implementation is known.
   (require 'json)
   (let ((json-parser
@@ -4277,15 +4300,9 @@ if one already exists."
   )
 
 ;; C++ / C
-;; lsp-mode + ccls for debugging
+;; lsp-mode + clangd for debugging
 ;; configuration: use set(CMAKE_EXPORT_COMPILE_COMMANDS ON) in cmake file
 ;; cmake-mode + cmake-font-lock for editing cmake files
-(use-package ccls
-  :custom
-  (ccls-args nil)
-  (ccls-executable "ccls")
-  :hook ((c-mode c++-mode objc-mode) .
-         (lambda () (require 'ccls) (lsp))))
 (use-package cmake-mode
   :mode (("CMakeLists\\.txt\\'" . cmake-mode)
          ("\\.cmake\\'" . cmake-mode))
@@ -4376,28 +4393,674 @@ if one already exists."
 
 ;;; SQL Mode
 (use-package sqlformat
-  :vc (:url "https://github.com/purcell/sqlformat"
-        :branch "master")
+  :straight (:type git :host github :repo "purcell/sqlformat" :branch "master")
   :hook (sql-mode . sqlformat-on-save-mode)
   :custom
   (sqlformat-command 'pgformatter))
-
 ;;; terraform
 (use-package terraform-mode
-  :ensure t
-  :mode (("\\.tofu\\'" . terraform-mode)
-          ("\\.tf\\'" . terraform-mode)))
+  :mode (("\\.tf\\'" . terraform-mode)
+         ("\\.tfvars\\'" . terraform-mode)
+         ("\\.tofu\\'" . terraform-mode))
+
+  :bind (:map terraform-mode-map
+              ("s-h" . tofu-hydra/body)
+              ("C-c C-d C-w" . aaronzinhoo-opentofu-browse-documentation)
+              ("C-c C-d C-c" . aaronzinhoo-opentofu-copy-documentation-url)
+              ("C-c C-d C-l" . aaronzinhoo-opentofu-browse-language-documentation)
+              ("C-c C-d C-s" . aaronzinhoo-opentofu-browse-registry))
+  :hook ((terraform-mode . aaronzinhoo--terraform-enable-treesit)
+         (terraform-mode . lsp-deferred))
+  :custom
+  (terraform-indent-level 2)
+  :preface
+  ;; treesitter
+  (defun aaronzinhoo--terraform-enable-treesit ()
+    "Attach an HCL Tree-sitter parser to the current buffer."
+    (when
+        (treesit-ready-p 'hcl)
+      (treesit-parser-create 'hcl)))
+  ;; documentation setup
+  (defvar aaronzinhoo--opentofu-schema-cache (make-hash-table :test #'equal)
+    "Cached OpenTofu provider schemas by working directory.")
+  (defun aaronzinhoo--opentofu-block-header (node)
+  "Return NODE's block header as a list of strings.
+
+For example:
+  (\"resource\" \"aws_s3_bucket\" \"this\")"
+  (let ((index 0)
+        (count (treesit-node-child-count node t))
+        header
+        done)
+    (while
+      (and (< index count)
+           (not done))
+      (let* ((child
+               (treesit-node-child node index t))
+             (type
+               (treesit-node-type child)))
+        (pcase type
+          ("block_start"
+            (setq done t))
+
+          ("identifier"
+            (push
+              (treesit-node-text child t)
+              header))
+
+          ("string_lit"
+            ;; Block labels have surrounding double quotes.
+            (push
+              (substring
+                (treesit-node-text child t)
+                1
+                -1)
+              header))))
+      (setq index (1+ index)))
+    (nreverse header)))
+  (defun aaronzinhoo--opentofu-block-information ()
+    "Return (KIND NAME) for the nearest supported block at point.
+
+Use the HCL Tree-sitter parser.  Return nil outside supported
+blocks.  Skip nested blocks such as lifecycle and default_tags."
+    (unless
+        (treesit-ready-p 'hcl t)
+      (user-error
+       "Install the HCL grammar with M-x treesit-install-language-grammar"))
+
+    ;; Reuses an existing HCL parser when one is already attached.
+    (let* ((parser
+            (treesit-parser-create 'hcl))
+           (position
+            (point))
+           (node
+            (treesit-node-at position parser))
+           result)
+
+      (while
+          (and node
+               (not result))
+        (when
+            (and
+             (equal
+              (treesit-node-type node)
+              "block")
+             ;; A nearby node is not necessarily an enclosing node.
+             (<= (treesit-node-start node) position)
+             (< position (treesit-node-end node)))
+
+          (let* ((header
+                  (aaronzinhoo--opentofu-block-header node))
+                 (kind
+                  (car header))
+                 (name
+                  (cadr header)))
+
+            (setq result
+                  (pcase kind
+                    ((or "resource" "data" "backend" "provider")
+                     (when name
+                       (list
+                        (intern kind)
+                        name)))
+
+                    ("required_providers"
+                     '(required-providers nil))
+
+                    ("terraform"
+                     '(terraform nil))))))
+
+        (setq node
+              (treesit-node-parent node)))
+
+      result))
+  (defun aaronzinhoo--opentofu-schema-signature (directory)
+    "Return a provider-cache signature for DIRECTORY."
+    (mapcar
+     (lambda (path)
+       (when-let* ((attributes
+                   (file-attributes path)))
+         (file-attribute-modification-time
+          attributes)))
+     (list
+      (expand-file-name
+       ".terraform.lock.hcl"
+       directory)
+      (expand-file-name
+       ".terraform"
+       directory))))
+  (defun aaronzinhoo--opentofu-read-provider-schemas
+      (directory)
+    "Read OpenTofu provider schemas from DIRECTORY."
+    (let ((executable
+           (or
+            (executable-find "tofu")
+            (user-error
+             "The tofu executable is unavailable")))
+          (default-directory directory)
+          (error-file
+           (make-temp-file
+            "tofu-schema-errors-")))
+      (unwind-protect
+          (with-temp-buffer
+            (let ((status
+                   (process-file
+                    executable
+                    nil
+                    (list t error-file)
+                    nil
+                    "providers"
+                    "schema"
+                    "-json")))
+              (unless
+                  (zerop status)
+                (let ((error-message
+                       (with-temp-buffer
+                         (insert-file-contents
+                          error-file)
+                         (string-trim
+                          (buffer-string)))))
+                  (user-error
+                   "Could not read OpenTofu schemas: %s"
+                   (if
+                       (string-empty-p error-message)
+                       "run tofu init in the selected root module"
+                     error-message))))
+
+              (goto-char
+               (point-min))
+
+              (let* ((document
+                      (json-parse-buffer
+                       :object-type 'hash-table
+                       :array-type 'list
+                       :null-object nil
+                       :false-object nil))
+                     (provider-schemas
+                      (gethash
+                       "provider_schemas"
+                       document)))
+
+                (unless
+                    (hash-table-p provider-schemas)
+                  (user-error
+                   "OpenTofu returned no provider schemas"))
+                provider-schemas)))
+        (delete-file error-file))))
+  (defun aaronzinhoo--opentofu-provider-schemas ()
+    "Return provider schemas for the selected OpenTofu root module."
+    (let* ((directory
+            (file-name-as-directory
+             (aaronzinhoo--opentofu-working-directory)))
+           (signature
+            (aaronzinhoo--opentofu-schema-signature
+             directory))
+           (cached
+            (gethash
+             directory
+             aaronzinhoo--opentofu-schema-cache)))
+      (if
+          (and
+           cached
+           (equal
+            signature
+            (car cached)))
+          (cdr cached)
+        (let ((schemas
+               (aaronzinhoo--opentofu-read-provider-schemas
+                directory)))
+          (puthash
+           directory
+           (cons signature schemas)
+           aaronzinhoo--opentofu-schema-cache)
+          schemas))))
+  (defun aaronzinhoo--opentofu-provider-address
+      (kind type)
+    "Return the provider registry address owning TYPE of KIND."
+    (let* ((provider-schemas
+            (aaronzinhoo--opentofu-provider-schemas))
+           (schema-key
+            (pcase kind
+              ('resource
+               "resource_schemas")
+              ('data
+               "data_source_schemas")))
+           address)
+      (maphash
+       (lambda (provider-address provider-schema)
+         (when-let* ((schemas
+                     (gethash
+                      schema-key
+                      provider-schema)))
+           (when
+               (gethash type schemas)
+             (setq address
+                   provider-address))))
+       provider-schemas)
+      (or
+       address
+       (user-error
+        "No initialized provider owns `%s'"
+        type))))
+  (defun aaronzinhoo--opentofu-documentation-name
+      (type)
+    "Return the registry documentation name for TYPE."
+    (if-let ((separator
+              (string-match "_" type)))
+        (substring
+         type
+         (1+ separator))
+      type))
+  (defun aaronzinhoo--opentofu-documentation-url ()
+    "Return the documentation URL for the OpenTofu construct at point."
+    (pcase
+        (aaronzinhoo--opentofu-block-information)
+
+      (`(backend ,name)
+       (format
+        "https://opentofu.org/docs/language/settings/backends/%s/"
+        name))
+
+      (`(provider ,_)
+       "https://opentofu.org/docs/language/providers/configuration/")
+
+      (`(required-providers nil)
+       "https://opentofu.org/docs/language/providers/requirements/")
+
+      (`(terraform nil)
+       "https://opentofu.org/docs/language/settings/")
+
+      (`(,kind ,type)
+       (unless
+           (memq kind '(resource data))
+         (user-error
+          "No documentation mapping for `%s'"
+          kind))
+       (let* ((provider-address
+               (aaronzinhoo--opentofu-provider-address
+                kind
+                type))
+              (source-parts
+               (split-string provider-address "/" t)))
+         ;; Accept namespace/provider or hostname/namespace/provider.
+         (unless
+             (memq (length source-parts) '(2 3))
+           (user-error
+            "Invalid provider address: %s"
+            provider-address))
+         (let* ((provider-parts
+                 (last source-parts 2))
+                (namespace
+                 (car provider-parts))
+                (provider
+                 (cadr provider-parts))
+                (section
+                 (if
+                     (eq kind 'resource)
+                     "resources"
+                   "datasources"))
+                (documentation-name
+                 (aaronzinhoo--opentofu-documentation-name
+                  type)))
+           (format
+            (concat
+             "https://search.opentofu.org/provider/"
+             "%s/%s/latest/docs/%s/%s")
+            namespace
+            provider
+            section
+            documentation-name))))
+
+      (_
+       (user-error
+        "No documented OpenTofu construct surrounds point"))))
+  (defun aaronzinhoo-opentofu-browse-documentation ()
+    "Open OpenTofu documentation for the block at point."
+    (interactive)
+    (browse-url
+     (aaronzinhoo--opentofu-documentation-url)))
+
+  (defun aaronzinhoo-opentofu-copy-documentation-url ()
+    "Copy the OpenTofu documentation URL for the block at point."
+    (interactive)
+    (let ((url
+           (aaronzinhoo--opentofu-documentation-url)))
+      (kill-new url)
+      (message
+       "Copied OpenTofu documentation URL: %s"
+       url)))
+
+  (defun aaronzinhoo-opentofu-refresh-documentation-cache ()
+    "Clear cached OpenTofu provider schemas."
+    (interactive)
+    (clrhash
+     aaronzinhoo--opentofu-schema-cache)
+    (message
+     "Cleared OpenTofu provider-schema cache"))
+
+  (defun aaronzinhoo-opentofu-browse-language-documentation ()
+    "Open the OpenTofu language documentation."
+    (interactive)
+    (browse-url
+     "https://opentofu.org/docs/language/"))
+
+  (defun aaronzinhoo-opentofu-browse-registry ()
+    "Open the OpenTofu Registry."
+    (interactive)
+    (browse-url
+     "https://search.opentofu.org/"))
+  ;; tofu commands for hydra
+  (defvar aaronzinhoo--opentofu-lock-filename ".terraform.lock.hcl"
+  "Name of lock file generated by tofu and terraform.")
+  (defvar aaronzinhoo--opentofu-schema-cache (make-hash-table :test #'equal)
+  "Cached OpenTofu provider schemas by working directory.")
+  (defvar-local aaronzinhoo--opentofu-working-directory-override nil
+    "OpenTofu working directory for the current buffer.")
+  (defun aaronzinhoo--opentofu-working-directory ()
+    "Return the OpenTofu working directory for the current buffer."
+    (let ((starting-directory
+           (or
+            (and buffer-file-name
+                 (file-name-directory buffer-file-name))
+            default-directory)))
+      (file-name-as-directory
+       (or
+        ;; An explicit buffer-local selection takes precedence.
+        aaronzinhoo--opentofu-working-directory-override
+
+        ;; Find the nearest initialized OpenTofu directory.
+        (locate-dominating-file
+         starting-directory
+         aaronzinhoo--opentofu-lock-filename)
+
+        ;; Support an explicit project-root marker.
+        (locate-dominating-file
+         starting-directory
+         ".tofu-root")
+
+        ;; Fall back to the current Emacs project.
+        (when-let ((project
+                    (project-current nil starting-directory)))
+          (project-root project))
+
+        starting-directory))))
+  (defun aaronzinhoo--opentofu-project-directory ()
+    "Return the current project root."
+    (if-let* ((project
+               (project-current nil)))
+      (project-root project)
+      default-directory))
+  (defun aaronzinhoo--opentofu-select-working-directory ()
+    "Select a root module for subsequent OpenTofu commands."
+    (interactive)
+    (setq-local
+      aaronzinhoo--opentofu-working-directory-override
+      (file-name-as-directory
+        (read-directory-name
+          "OpenTofu root module: "
+          (or
+            (and
+              buffer-file-name
+              (file-name-directory buffer-file-name))
+            (aaronzinhoo--opentofu-project-directory))
+          nil
+          t)))
+    (message
+      "OpenTofu working directory: %s"
+      (abbreviate-file-name
+        aaronzinhoo--opentofu-working-directory-override)))
+  (defun aaronzinhoo--opentofu-use-project-root-directory ()
+    "Use the project root for subsequent OpenTofu commands."
+    (interactive)
+    (setq-local
+      aaronzinhoo--opentofu-working-directory-override
+      nil)
+    (message
+      "OpenTofu working directory: %s"
+      (abbreviate-file-name
+        (aaronzinhoo--opentofu-project-directory))))
+  (defun aaronzinhoo--opentofu-show-working-directory ()
+    "Display the current OpenTofu working directory."
+    (interactive)
+    (message
+      "OpenTofu working directory: %s"
+      (abbreviate-file-name
+        (aaronzinhoo--opentofu-working-directory))))
+  (defun aaronzinhoo--tofu-command (arguments)
+    "Build an OpenTofu command using ARGUMENTS."
+    (let ((executable
+            (or
+              (executable-find "tofu")
+              (user-error
+                "The tofu executable is unavailable"))))
+      (string-join
+        (cons
+          (shell-quote-argument executable)
+          arguments)
+        " ")))
+  (defun aaronzinhoo--opentofu-run
+    (arguments &optional edit interactive)
+    "Run OpenTofu with ARGUMENTS.
+
+When EDIT is non-nil, allow the command to be edited first.
+When INTERACTIVE is non-nil, use a Comint buffer so the command
+can accept input."
+    (let* ((default-directory
+             (aaronzinhoo--opentofu-working-directory))
+           (initial-command
+             (aaronzinhoo--opentofu-command arguments))
+           (command
+             (if edit
+               (read-shell-command
+                 "OpenTofu command: "
+                 initial-command)
+               initial-command))
+           (buffer-name
+             (lambda (_mode)
+               (format
+                 "*tofu:%s*"
+                 (file-name-nondirectory
+                   (directory-file-name
+                     default-directory))))))
+      (compilation-start
+        command
+        (if interactive
+          'comint-mode
+          'compilation-mode)
+        buffer-name)))
+  (defun aaronzinhoo--opentofu-apply ()
+    "Run `tofu apply' after confirmation."
+    (interactive)
+    (when
+      (yes-or-no-p
+        (format
+          "Run tofu apply in %s? "
+          (abbreviate-file-name
+            (aaronzinhoo--opentofu-working-directory))))
+      (aaronzinhoo--opentofu-run
+        '("apply")
+        t
+        t)))
+  (defun aaronzinhoo--opentofu-destroy ()
+    "Run `tofu destroy' after confirmation."
+    (interactive)
+    (when
+      (yes-or-no-p
+        (format
+          "Destroy resources managed from %s? "
+          (abbreviate-file-name
+            (aaronzinhoo--opentofu-working-directory))))
+      (aaronzinhoo--opentofu-run
+        '("destroy")
+        t
+        t)))
+  (defun aaronzinhoo--opentofu-format-project ()
+    "Recursively format the complete OpenTofu project."
+    (interactive)
+    (let ((aaronzinhoo--opentofu-working-directory
+            (aaronzinhoo--opentofu-project-directory)))
+      (aaronzinhoo--opentofu-run
+        '("fmt" "-recursive"))))
+  :pretty-hydra
+  (tofu-hydra
+   (:title "OpenTofu"
+           :hint nil
+           :quit-key "q"
+           :color amaranth)
+
+   ("Lifecycle"
+    (("i"
+      (aaronzinhoo--opentofu-run
+       '("init")
+       t)
+      "init")
+     ("v"
+      (aaronzinhoo--opentofu-run
+       '("validate"))
+      "validate")
+     ("p"
+      (aaronzinhoo--opentofu-run
+       '("plan")
+       t)
+      "plan")
+     ("a"
+      aaronzinhoo--opentofu-apply
+      "apply"
+      :color blue)
+     ("t"
+      (aaronzinhoo--opentofu-run
+       '("test")
+       t)
+      "test"))
+    "Documentation"
+    (("b"
+      aaronzinhoo-opentofu-browse-documentation
+      "block docs"
+      :color blue)
+     ("y"
+      aaronzinhoo-opentofu-copy-documentation-url
+      "copy URL")
+
+     ("l"
+      aaronzinhoo-opentofu-browse-language-documentation
+      "language docs"
+      :color blue)
+     ("S"
+      aaronzinhoo-opentofu-browse-registry
+      "registry"
+      :color blue)
+     ("U"
+      aaronzinhoo-opentofu-refresh-documentation-cache
+      "refresh schemas"))
+    "Formatting"
+    (("f"
+      lsp-format-buffer
+      "buffer via LSP")
+     ("F"
+      (aaronzinhoo--opentofu-run
+       '("fmt"))
+      "root module")
+     ("R"
+      aaronzinhoo--opentofu-format-project
+      "recursive project"))
+
+    "Inspect"
+    (("o"
+      (aaronzinhoo--opentofu-run
+       '("output")
+       t)
+      "outputs")
+     ("s"
+      (aaronzinhoo--opentofu-run
+       '("state" "list"))
+      "state list")
+     ("w"
+      (aaronzinhoo--opentofu-run
+       '("workspace" "list"))
+      "workspaces")
+     ("P"
+      (aaronzinhoo--opentofu-run
+       '("providers"))
+      "providers")
+     ("g"
+      (aaronzinhoo--opentofu-run
+       '("graph"))
+      "graph")
+     ("c"
+      (aaronzinhoo--opentofu-run
+       '("console")
+       nil
+       t)
+      "console"
+      :color blue))
+
+    "Module"
+    (("m"
+      aaronzinhoo--opentofu-select-working-directory
+      "select module")
+     ("M"
+      aaronzinhoo--opentofu-use-project-root-directory
+      "project root")
+     ("?"
+      aaronzinhoo--opentofu-show-working-directory
+      "show directory"))
+
+    "LSP"
+    (("d"
+      lsp-find-definition
+      "definition")
+     ("r"
+      lsp-find-references
+      "references")
+     ("n"
+      lsp-rename
+      "rename")
+     ("e"
+      flycheck-list-errors
+      "errors")
+     ("l"
+      lsp-workspace-restart
+      "restart server"))
+
+    "Danger"
+    (("D"
+      aaronzinhoo--opentofu-destroy
+      "destroy"
+      :color blue)))))
 ;;; Emacs Lisp Mode
-(use-package emacs-lisp-mode
+(use-package elisp-mode
   :straight nil
-  :hook (emacs-lisp-mode . aaronzinhoo--setup-elisp-mode)
+  :hook ((emacs-lisp-mode . aaronzinhoo--setup-elisp-mode)
+          (lisp-interaction-mode . aaronzinhoo--setup-elisp-mode))
   :preface
   (defun aaronzinhoo--setup-elisp-mode ()
-    (setq-local lisp-indent-offset 2)
-    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'elisp-completion-at-point #'cape-dabbrev) #'cape-dict))))
+    "Configure editing and completion for Emacs Lisp."
+    ;; Preserve Emacs Lisp's semantic indentation rules.
+    (setq-local
+      lisp-indent-offset nil
+      tab-width 2)
+
+    ;; `elisp-completion-at-point' is installed by Emacs Lisp mode.
+    ;; Append fallback CAPFs without replacing it.
+    (add-hook
+      'completion-at-point-functions
+      #'cape-file
+      t
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'cape-dabbrev
+      t
+      t)))
 (use-package elisp-autofmt
   :commands (elisp-autofmt-mode elisp-autofmt-buffer)
   :hook (emacs-lisp-mode . elisp-autofmt-mode))
+
+;;;; Customize
+(when
+  (file-readable-p custom-file)
+  (load custom-file nil 'nomessage))
 
 (message "Done loading packages")
 
