@@ -2471,7 +2471,10 @@ mark:
   ;; expensive on large projects.
   (lsp-pyright-diagnostic-mode "workspace")
   ;; Resolve this after your project environment has been activated.
-  (lsp-pyright-python-executable-cmd "python"))
+  (lsp-pyright-python-executable-cmd "python")
+  ;; Register Pyright as a separate server per project.
+  (lsp-pyright-multi-root nil)
+  (lsp-pyright-diagnostic-mode "openFilesOnly"))
 (use-package lsp-ruff
   :straight nil
   :after lsp-mode
