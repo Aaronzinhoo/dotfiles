@@ -3899,13 +3899,42 @@ replacement boundaries."
 (use-package sh-script
   :straight nil
   :mode (("\\.sh\\'" . bash-ts-mode)
-          ("\\.bash\\'" . bash-ts-mode))
+          ("\\.bash\\'" . bash-ts-mode)
+          ("\\.alias\\'" . bash-ts-mode)
+          ("\\.zsh\\'" . bash-ts-mode)
+          ("/\\.zshenv\\'" . bash-ts-mode)
+          ("/\\.zprofile\\'" . bash-ts-mode)
+          ("/\\.zshrc\\'" . bash-ts-mode))
   :hook ((bash-ts-mode . aaronzinhoo--setup-bash-ts-mode)
           (bash-ts-mode . lsp-deferred)
           (sh-mode . lsp-deferred))
+  :custom
+  (sh-basic-offset 2)
+  (sh-indentation 2)
+  :interpreter
+  (("bash" . bash-ts-mode))
   :preface
   (defun aaronzinhoo--setup-bash-ts-mode ()
-    (setq-local completion-at-point-functions (list #'cape-file (cape-capf-super #'lsp-completion-at-point #'sh-completion-at-point-function #'comint-completion-at-point #'cape-dabbrev) #'cape-dict))))
+    "Configure Bash Tree-sitter buffers."
+    (setq-local tab-width 2)
+
+    (add-hook
+      'completion-at-point-functions
+      #'sh-completion-at-point-function
+      t
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'cape-file
+      t
+      t)
+
+    (add-hook
+      'completion-at-point-functions
+      #'cape-dabbrev
+      t
+      t)))
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
@@ -4504,28 +4533,230 @@ replacement boundaries."
   (css-indent-offset 2))
 (use-package html-ts-mode
   :straight nil
-  :mode (("\\.html\\'" . html-ts-mode))
-  :hook ((html-ts-mode . aaronzinhoo--html-setup-hook)
+  :mode (("\\.html?\\'" . html-ts-mode))
+  :hook ((html-ts-mode . aaronzinhoo--html-setup)
           (html-ts-mode . aaronzinhoo--html-completion-setup))
   :preface
+  (defconst aaronzinhoo--html-ts-element-node-types
+    '("element"
+       "script_element"
+       "style_element")
+    "Tree-sitter node types representing complete HTML elements.")
   (defun aaronzinhoo--html-completion-setup ()
     "Add HTML-specific completion sources."
     (aaronzinhoo--append-capfs
       #'cape-keyword
       #'cape-dabbrev))
-  (defun aaronzinhoo--html-setup-hook ()
-    (setq-local lsp-lens-mode nil))
-  ;; TODO: update hydra with custom tree-sitter based functions
+  (defun aaronzinhoo--html-setup ()
+    "Configure the current HTML Tree-sitter buffer."
+    ;; Disable LSP lenses without directly changing the minor-mode
+    ;; state variable.
+    (setq-local lsp-lens-enable nil))
+  (defun aaronzinhoo--html-ts-element-node (&optional position)
+    "Return the smallest HTML element containing POSITION."
+    (let ((node
+            (treesit-node-at
+              (or position
+                (point))
+              'html
+              t)))
+      (while
+        (and node
+          (not
+            (member
+              (treesit-node-type node)
+              aaronzinhoo--html-ts-element-node-types)))
+        (setq node
+          (treesit-node-parent node)))
+      node))
+
+  (defun aaronzinhoo--html-ts-parent-element ()
+    "Move to the parent HTML element."
+    (interactive)
+    (if-let* ((node
+                (aaronzinhoo--html-ts-element-node))
+               (parent
+                 (treesit-node-parent node)))
+      (progn
+        (while
+          (and parent
+            (not
+              (member
+                (treesit-node-type parent)
+                aaronzinhoo--html-ts-element-node-types)))
+          (setq parent
+            (treesit-node-parent parent)))
+
+        (if parent
+          (goto-char
+            (treesit-node-start parent))
+          (user-error
+            "No parent HTML element")))
+      (user-error
+        "Point is not inside an HTML element")))
+  (defun aaronzinhoo--html-ts-child-element ()
+    "Move to the first direct child HTML element."
+    (interactive)
+    (if-let ((node
+               (aaronzinhoo--html-ts-element-node)))
+      (let ((index 0)
+             (count
+               (treesit-node-child-count node t))
+             child)
+        (while
+          (and (< index count)
+            (not child))
+          (let ((candidate
+                  (treesit-node-child node index t)))
+            (when
+              (member
+                (treesit-node-type candidate)
+                aaronzinhoo--html-ts-element-node-types)
+              (setq child candidate)))
+
+          (setq index
+            (1+ index)))
+
+        (if child
+          (goto-char
+            (treesit-node-start child))
+          (user-error
+            "No child HTML element")))
+      (user-error
+        "Point is not inside an HTML element")))
+  (defun aaronzinhoo--html-ts-sibling-element (direction)
+    "Move to an HTML sibling in DIRECTION.
+
+DIRECTION must be either `next' or `previous'."
+    (if-let ((node
+               (aaronzinhoo--html-ts-element-node)))
+      (let ((sibling
+              (if
+                (eq direction 'next)
+                (treesit-node-next-sibling node t)
+                (treesit-node-prev-sibling node t))))
+        ;; Skip text, comments, and other non-element siblings.
+        (while
+          (and sibling
+            (not
+              (member
+                (treesit-node-type sibling)
+                aaronzinhoo--html-ts-element-node-types)))
+          (setq sibling
+            (if
+              (eq direction 'next)
+              (treesit-node-next-sibling sibling t)
+              (treesit-node-prev-sibling sibling t))))
+
+        (if sibling
+          (goto-char
+            (treesit-node-start sibling))
+          (user-error
+            "No %s HTML sibling"
+            direction)))
+      (user-error
+        "Point is not inside an HTML element")))
+  (defun aaronzinhoo--html-ts-next-sibling ()
+    "Move to the next sibling HTML element."
+    (interactive)
+    (aaronzinhoo--html-ts-sibling-element
+      'next))
+  (defun aaronzinhoo--html-ts-previous-sibling ()
+    "Move to the previous sibling HTML element."
+    (interactive)
+    (aaronzinhoo--html-ts-sibling-element
+      'previous))
+  (defun aaronzinhoo--html-ts-element-beginning ()
+    "Move to the beginning of the surrounding HTML element."
+    (interactive)
+    (if-let ((node
+               (aaronzinhoo--html-ts-element-node)))
+      (goto-char
+        (treesit-node-start node))
+      (user-error
+        "Point is not inside an HTML element")))
+  (defun aaronzinhoo--html-ts-element-end ()
+    "Move to the end of the surrounding HTML element."
+    (interactive)
+    (if-let ((node
+               (aaronzinhoo--html-ts-element-node)))
+      (goto-char
+        (treesit-node-end node))
+      (user-error
+        "Point is not inside an HTML element")))
+  (defun aaronzinhoo--html-ts-mark-element ()
+    "Mark the complete surrounding HTML element."
+    (interactive)
+    (if-let ((node
+               (aaronzinhoo--html-ts-element-node)))
+      (progn
+        (goto-char
+          (treesit-node-start node))
+        (set-mark
+          (treesit-node-end node))
+        (activate-mark))
+      (user-error
+        "Point is not inside an HTML element")))
   :pretty-hydra
-  ((:hint nil :title (with-faicon "nf-fa-html5" "Html Mode" 1 -0.05) :quit-key "SPC" :color pink)
+  ((:hint nil
+     :title
+     (with-faicon
+       "nf-fa-html5"
+       "HTML Tree-sitter"
+       1
+       -0.05)
+     :quit-key "SPC"
+     :color pink)
     ("Navigation"
-      (("a" sgml-skip-tag-backward "tag beginning | prev tag")
-        ("e" sgml-skip-tag-forward "tag end | next tag"))
+      (("n" aaronzinhoo--html-ts-next-sibling
+         "next sibling")
+        ("p" aaronzinhoo--html-ts-previous-sibling
+          "previous sibling")
+        ("u" aaronzinhoo--html-ts-parent-element
+          "parent element")
+        ("d" aaronzinhoo--html-ts-child-element
+          "child element")
+        ("a" aaronzinhoo--html-ts-element-beginning
+          "element beginning")
+        ("e" aaronzinhoo--html-ts-element-end
+          "element end")
+        ("m" aaronzinhoo--html-ts-mark-element
+          "mark element"))
       "Fold"
-      (("f" treesit-fold-toggle "fold/unfold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle element")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
+      "Tags"
+      (("t" sgml-tag
+         "insert tag")
+        ("/" sgml-close-tag
+          "close tag")
+        ("D" sgml-delete-tag
+          "delete tag")
+        ("A" sgml-attributes
+          "attributes")
+        ("E" sgml-electric-tag-pair-mode
+          "electric pairs"))
       "Other"
-      (("RET" nil "Quit" :color blue))))
-  )
+      (("r" indent-region
+         "indent region")
+        ("v" sgml-validate
+          "validate"
+          :color blue)
+        ("b" browse-url-of-buffer
+          "open browser"
+          :color blue)
+        ("i" imenu
+          "index"
+          :color blue)
+        ("RET" nil
+          "quit"
+          :color blue)))))
 
 ;;; Markdown Support
 (use-package markdown-mode
@@ -4638,21 +4869,12 @@ replacement boundaries."
 ;; syntax on-the-fly: flycheck
 ;; style: flake8
 ;; install black, flake8 ipython, jedi, rope, autopep8, sphinx-doc
-(use-package pyvenv
-  :straight t
-  :commands (pyvenv-workon pyvenv-activate)
-  :init
-  (setenv "WORKON_HOME"
-          (expand-file-name "versions" pyenv-root-folder)))
 (use-package python
   :straight nil
   :delight " Py"
   :bind (:map python-ts-mode-map
-          ("<backtab>" . combobulate-python-indent-for-tab-command)
           ("s-h" . python-hydra/body))
-  :hook ((python-ts-mode . pyvenv-mode)
-          (python-ts-mode . aaronzinhoo--python-lsp-setup)
-          (python-ts-mode . aaronzinhoo--python-setup)
+  :hook ((python-ts-mode . aaronzinhoo--python-setup)
           (inferior-python-mode . corfu-mode))
   :pretty-hydra
   (python-hydra
@@ -4660,60 +4882,146 @@ replacement boundaries."
     ("Run"
       (("sh" run-python "Python Shell")
         ("d" pdb "PDB" :color blue)
-        ("ss" python-shell-switch-to-shell "Switch to sh" :color blue)
-        ("v" projectile-run-vterm "run vterm"))
+        ("ss" python-shell-switch-to-shell "Switch to sh" :color blue))
       "Run in Python Shell"
       (("rb" python-shell-send-buffer "Run Buffer")
         ("rf" python-shell-send-file "Run File")
         ("rc" aaronzinhoo--python-shell-send-current-file "Run Current File")
         ("rr" python-shell-send-region "Run Region"))
       "Imports"
-      (("if" python-fix-imports "Fix Imports")
-        ("ia" python-add-import "Add Import"))
+      (("if" lsp-organize-imports "Fix Imports")
+        ("ia" lsp-auto-execute-action "Add Import"))
       "Formatting"
-      (("F" py-autopep8-mode "Autopep8 Mode" :toggle t))
+      (("f" lsp-format-buffer "Format"))
       "Fold"
-      (("f" treesit-fold-toggle "fold/unfold"))
+      (("f" aaronzinhoo--hs-toggle-block
+         "toggle block")
+        ("c" aaronzinhoo--hs-hide-block
+          "close block")
+        ("o" aaronzinhoo--hs-show-block
+          "open block")
+        ("C" hs-hide-all
+          "close all")
+        ("O" hs-show-all
+          "open all")
+        ("L" hs-hide-level
+          "close level"))
       "Navigation/Editing"
       (("j" combobulate-avy "Jump")
         ("ei" combobulate-python-indent-for-tab-command "Indent"))))
   :preface
-  (defun aaronzinhoo--python-activate-environment ()
-    "Activate the pyenv environment specified by .python-version."
-    (when-let* ((file buffer-file-name)
-                 (root (locate-dominating-file file ".python-version"))
+  (defun aaronzinhoo--python-version ()
+    "Return the primary Python version from the nearest .python-version."
+    (when-let* ((file
+                  buffer-file-name)
+                 (root
+                   (locate-dominating-file
+                     file
+                     ".python-version"))
                  (version-file
-                   (expand-file-name ".python-version" root))
-                 ((file-readable-p version-file))
-                 (environment
-                   (string-trim
-                     (with-temp-buffer
-                       (insert-file-contents version-file)
-                       (buffer-string))))
-                 ((not (string-empty-p environment))))
-      (pyvenv-workon environment)))
+                   (expand-file-name
+                     ".python-version"
+                     root))
+                 ((file-readable-p
+                    version-file)))
+      (with-temp-buffer
+        (insert-file-contents
+          version-file)
+
+        ;; Return the first nonempty, non-comment line.
+        (goto-char
+          (point-min))
+        (when
+          (re-search-forward
+            "^[[:blank:]]*\\([^#[:blank:]\n]+\\)"
+            nil
+            t)
+          (match-string-no-properties
+            1)))))
+  (defun aaronzinhoo--python-activate-environment ()
+    "Configure the current buffer for its pyenv Python version."
+    (when-let* ((environment
+                 (aaronzinhoo--python-version)))
+      ;; Environment variables and executable lookup become local to this
+      ;; buffer. New subprocesses inherit these values.
+      (setq-local
+        process-environment
+        (copy-sequence
+          process-environment))
+
+      (setq-local
+        exec-path
+        (copy-sequence
+          exec-path))
+
+      ;; Ask pyenv to resolve the selected version.
+      (setenv
+        "PYENV_VERSION"
+        environment)
+
+      (let* ((prefix
+               (car
+                 (process-lines
+                   "pyenv"
+                   "prefix")))
+              (binary-directory
+                (expand-file-name
+                  "bin"
+                  prefix))
+              (python
+                (expand-file-name
+                  "python"
+                  binary-directory)))
+
+        (unless
+          (file-executable-p python)
+          (user-error
+            "Python is unavailable for pyenv environment `%s'"
+            environment))
+
+        ;; Put this environment ahead of every other Python installation.
+        (setq-local
+          exec-path
+          (cons
+            binary-directory
+            (delete
+              binary-directory
+              exec-path)))
+
+        (setenv
+          "PATH"
+          (mapconcat
+            #'identity
+            exec-path
+            path-separator))
+
+        ;; Ensure the inferior Python process uses this exact interpreter.
+        (setq-local
+          python-shell-interpreter
+          python))))
   (defun aaronzinhoo--python-lsp-setup ()
-    "Activate the Python environment, then start LSP."
-    (aaronzinhoo--python-activate-environment)
+    "Start BasedPyright and Ruff in the current Python buffer."
+    ;; Your project Python/pyenv activation must happen before this
+    ;; function runs.
+    (require 'lsp-pyright)
+    (require 'lsp-ruff)
     (lsp-deferred))
   (defun aaronzinhoo--python-shell-send-current-file ()
     (interactive)
     (python-shell-send-file (buffer-file-name)))
   (defun aaronzinhoo--python-setup ()
-    (setq python-indent-offset 4)
-    (setq-local highlight-indentation-offset 4))
+    (setq-local python-indent-offset 4
+      tab-width 4
+      highlight-indentation-offset 4)
+    (aaronzinhoo--python-activate-environment)
+    (aaronzinhoo--python-lsp-setup))
   :custom
   (python-shell-interpreter "ipython3")
   (python-shell-interpreter-args "--no-color-info --matplotlib=inline --automagic --simple-prompt --pprint")
   (python-shell-completion-native-enable t)
   (python-shell-completion-native-output-timeout 2)
-  (python-check-command "flake8")
   :init
   (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8))))
-(use-package py-autopep8
-  :commands (py-autopep8-mode)
-  :custom
-  (py-autopep8-options '("--max-line-length=140" "--aggressive")))
 (use-package sphinx-doc
   :hook (python-ts-mode . sphinx-doc-mode)
   :custom
