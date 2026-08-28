@@ -424,6 +424,9 @@ current buffer."
 (use-package tree-sitter
   :straight nil
   :init
+  ;; Put our directory first so grammar installation and discovery
+  ;; prefer ~/.config/emacs/tree-sitter.
+  (add-to-list 'treesit-extra-load-path aaronzinhoo-emacs-treesit-directory)
   (setq treesit-language-source-alist
     '((angular "https://github.com/dlvandenberg/tree-sitter-angular" "main" "src")
        (bash "https://github.com/tree-sitter/tree-sitter-bash")
@@ -436,6 +439,7 @@ current buffer."
        (go "https://github.com/tree-sitter/tree-sitter-go" "master" "src")
        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "main" "src")
        (gosum "https://github.com/tree-sitter-grammars/tree-sitter-go-sum")
+       (hcl "https://github.com/tree-sitter-grammars/tree-sitter-hcl")
        (helm "https://github.com/ngalaiko/tree-sitter-go-template" "master" "dialects/helm/src")
        (html "https://github.com/tree-sitter/tree-sitter-html" "master" "src")
        (java "https://github.com/tree-sitter/tree-sitter-java")
