@@ -1287,7 +1287,7 @@ current buffer."
   ;; macOS BSD ls does not support all the listing options above.
   (when
     (eq system-type 'darwin)
-    (if-let ((gls
+    (if-let* ((gls
                (executable-find "gls")))
       (setq
         insert-directory-program gls
@@ -2049,14 +2049,31 @@ mark:
       #'aaronzinhoo--add-treesit-mode-expansions))
   )
 (use-package yasnippet
-  :defer t
-  :diminish yas-minor-mode
-  :commands yas-minor-mode
+  :straight t
   :hook (prog-mode . yas-minor-mode)
-  :config
-  (use-package yasnippet-snippets)
-  (yas-reload-all))
-
+  :bind (;; Ordinary Yasnippet mode.
+         :map yas-minor-mode-map
+         ;; Do not let Yasnippet capture Tab during normal editing.
+         ("TAB" . nil)
+         ("<tab>" . nil)
+         ;; Choose a snippet through minibuffer completion.
+         ("C-c C-y" . yas-insert-snippet)
+         ;; Active snippet fields.
+         :map yas-keymap
+         ("TAB" . yas-next-field)
+         ("<tab>" . yas-next-field)
+         ("S-TAB" . yas-prev-field)
+         ("<backtab>" . yas-prev-field)
+         ;; Finish snippet editing and keep the expanded text.
+         ("C-c C-e" . yas-exit-all-snippets)
+         ;; Stop the active snippet session.
+         ("C-g" . yas-abort-snippet))
+  :custom
+  (yas-choose-keys-first nil)
+  (yas-prompt-functions '(yas-completing-prompt)))
+(use-package yasnippet-snippets
+  :straight t
+  :after yasnippet)
 ;;; LSP
 (use-package dap-mode
   :after (lsp-mode)
@@ -2067,22 +2084,6 @@ mark:
   :custom
   (dap-python-debugger 'debugpy)
   :config
-  (dap-register-debug-template "My Runner"
-                             (list :type "java"
-                                   :request "launch"
-                                   :args ""
-                                   :vmArgs "-ea -Dtileaccessservice.instance.name=tileaccessservice_1"
-                                   :projectName "tileaccessservice"
-                                   :mainClass "com.linquest.tileaccessservice.TileAccessServiceApplication"
-                                   :env '(("DEV" . "1"))))
-  (dap-register-debug-template "Python :: Test TileAccessService"
-  (list :type "python"
-        :args "-i"
-        :cwd nil
-        :env '(("DEBUG" . "1"))
-        :target-module (expand-file-name "~/development/work/kahless/backend/user-management-service/main.py")
-        :request "launch"
-        :name "My App"))
   (dap-ui-controls-mode nil)
   (dap-ui-mode nil)
   (dap-tooltip-mode nil)
@@ -2257,6 +2258,7 @@ mark:
   ;; Completion
   (lsp-completion-enable t)
   (lsp-completion-provider :none) ; Corfu consumes the CAPFs
+  (lsp-enable-snippet t)
   ;; Diagnostics
   (lsp-diagnostics-provider :flycheck)
   (lsp-modeline-diagnostics-enable nil)
@@ -2426,8 +2428,7 @@ mark:
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-ts-mode . lsp-deferred)
           (java-ts-mode . lsp-java-boot-lens-mode)
-          (java-ts-mode . aaronzinhoo--lsp-java-setup)
-          (lsp-mode . aaronzinhoo--disable-yas-in-java))
+          (java-ts-mode . aaronzinhoo--lsp-java-setup))
   :preface
   (defun aaronzinhoo--lsp-java-setup ()
     "Configure LSP and enable lenses in Java buffers."
@@ -2449,10 +2450,6 @@ mark:
          "-Xms100m")
        (when (file-readable-p lombok-file)
          (list (concat "-javaagent:" lombok-file))))))
-  (defun aaronzinhoo--disable-yas-in-java ()
-    "Disable Yasnippet in Java LSP buffers."
-    (when (derived-mode-p 'java-ts-mode)
-      (yas-minor-mode -1)))
   :init
   (setq lsp-java-vmargs (aaronzinhoo--lsp-java-vmargs))
   :config
@@ -4573,7 +4570,6 @@ replacement boundaries."
         (setq node
           (treesit-node-parent node)))
       node))
-
   (defun aaronzinhoo--html-ts-parent-element ()
     "Move to the parent HTML element."
     (interactive)
@@ -4601,7 +4597,7 @@ replacement boundaries."
   (defun aaronzinhoo--html-ts-child-element ()
     "Move to the first direct child HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (let ((index 0)
              (count
@@ -4632,7 +4628,7 @@ replacement boundaries."
     "Move to an HTML sibling in DIRECTION.
 
 DIRECTION must be either `next' or `previous'."
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (let ((sibling
               (if
@@ -4673,7 +4669,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-element-beginning ()
     "Move to the beginning of the surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (goto-char
         (treesit-node-start node))
@@ -4682,7 +4678,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-element-end ()
     "Move to the end of the surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (goto-char
         (treesit-node-end node))
@@ -4691,7 +4687,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-mark-element ()
     "Mark the complete surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (progn
         (goto-char
@@ -5444,7 +5440,7 @@ blocks.  Skip nested blocks such as lifecycle and default_tags."
   (defun aaronzinhoo--opentofu-documentation-name
       (type)
     "Return the registry documentation name for TYPE."
-    (if-let ((separator
+    (if-let* ((separator
               (string-match "_" type)))
         (substring
          type
