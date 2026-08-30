@@ -42,12 +42,7 @@
       (goto-char
         (point-max))
       (eval-print-last-sexp)))
-
   (load bootstrap-file nil 'nomessage))
-
-;; Explicitly install use-package before using it.
-(straight-use-package 'use-package)
-(require 'use-package)
 
 (setq use-package-always-defer t
       use-package-compute-statistics t)
