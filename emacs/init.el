@@ -4518,7 +4518,9 @@ replacement boundaries."
   :straight nil
   :mode (("\\.html?\\'" . html-ts-mode))
   :hook ((html-ts-mode . aaronzinhoo--html-setup)
-          (html-ts-mode . aaronzinhoo--html-completion-setup))
+         (html-ts-mode . aaronzinhoo--html-completion-setup))
+  :bind (:map html-ts-mode-map
+              ("s-h" . html-ts-mode-hydra/body))
   :preface
   (defconst aaronzinhoo--html-ts-element-node-types
     '("element"
