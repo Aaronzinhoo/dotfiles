@@ -597,10 +597,22 @@ current buffer."
   (global-visual-line-mode t))
 (use-package tramp
   :straight nil
+
   :custom
-  (tramp-verbose 10)
-  (tramp-debug-buffer t)
-  (tramp-default-method "ssh"))
+  (tramp-default-method "ssh")
+
+  ;; Level 3 reports connection errors. Level 10 produces expensive,
+  ;; trace-level diagnostic logging.
+  (tramp-verbose 3)
+  (tramp-debug-buffer nil)
+
+  :preface
+  (defun aaronzinhoo-tramp-disconnect ()
+    "Close the TRAMP connection associated with the current buffer."
+    (interactive)
+    (if (file-remote-p default-directory)
+        (tramp-cleanup-this-connection)
+      (user-error "The current buffer is not visiting a remote host"))))
 (use-package tree-sitter
   :straight nil
   :init
@@ -1274,12 +1286,15 @@ current buffer."
   ;; Automatically refresh directory contents.
   (dired-auto-revert-buffer t)
   ;; File operations.
+  (dired-vc-rename-file t)
   (delete-by-moving-to-trash t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
+  (dired-clean-confirm-killing-deleted-buffers nil)
+  ;; movement
+  (dired-movement-style 'bound-files)
   ;; GNU ls formatting.
-  (dired-listing-switches
-    "-lAXGh --group-directories-first")
+  (dired-listing-switches "-lAXGh --group-directories-first")
   :init
   ;; macOS BSD ls does not support all the listing options above.
   (when
