@@ -100,10 +100,10 @@ options=(
     --with-xwidgets
 )
 echo_with_prompt "Checking ${formula}"
-executable="$(brew --prefix "${formula}" 2>/dev/null)/bin/emacs"
+emacs_executable="$(brew --prefix "${formula}" 2>/dev/null)/bin/emacs"
 
-if [[ -x "${executable}" ]]; then
-    emacs_installed_version="$(emacs_major_version "${executable}")"
+if [[ -x "${emacs_executable}" ]]; then
+    emacs_installed_version="$(emacs_major_version "${emacs_executable}")"
 fi
 
 if [[ -n "${emacs_installed_version}" ]]  && [[ "${emacs_installed_version}" == "${EMACS_VERSION}" ]]; then
@@ -116,8 +116,14 @@ else
     brew install "${formula}" "${options[@]}"
 fi
 
-executable="$(brew --prefix "${formula}")/bin/emacs"
-emacs_installed_version="$(emacs_major_version "${executable}")"
+emacs_executable="$(brew --prefix "${formula}")/bin/emacs"
+emacsclient_executable="$(brew --prefix "${formula}")/bin/emacsclient"
+emacs_installed_version="$(emacs_major_version "${emacs_executable}")"
+
+# link emacs and emacsclient
+ln -s "/Applications/Emacs.app/Contents/MacOS/Emacs" "${emacs_executable}"
+ln -s "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient" "${emacsclient_executable}"
+
 echo_with_green_prompt "Installed Emacs ${emacs_installed_version}"
 
 

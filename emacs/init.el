@@ -42,12 +42,7 @@
       (goto-char
         (point-max))
       (eval-print-last-sexp)))
-
   (load bootstrap-file nil 'nomessage))
-
-;; Explicitly install use-package before using it.
-(straight-use-package 'use-package)
-(require 'use-package)
 
 (setq use-package-always-defer t
       use-package-compute-statistics t)
@@ -80,8 +75,6 @@
           ("M-," . previous-window-any-frame)
           ("C-x k" . kill-current-buffer)
           ("C-x C-k" . kill-buffer-and-window)
-          ("C-x 2" . aaronzinhoo--split-window-below)
-          ("C-x 3" . aaronzinhoo--split-window-right)
           ("C-<" . previous-buffer)
           ("C->" . next-buffer)
           ("s-<tab>" . iflipb-next-buffer)
@@ -145,18 +138,6 @@
           "microsoft"
           nil
           t))))))
-  (defun aaronzinhoo--split-window-below ()
-    "Split below, select the new window, and show its previous buffer."
-    (interactive)
-    (select-window
-     (split-window-below))
-    (switch-to-prev-buffer))
-  (defun aaronzinhoo--split-window-right ()
-    "Split right, select the new window, and show its previous buffer."
-    (interactive)
-    (select-window
-     (split-window-right))
-    (switch-to-prev-buffer))
   (defun aaronzinhoo-create-uuid ()
     "Return a newly generated UUID."
     (require 'subr-x)
@@ -181,14 +162,14 @@
     (insert
      (aaronzinhoo-create-uuid)))
   (defun aaronzinhoo--append-capfs (&rest capfs)
-    "Append CAPFS to the current buffer without duplicates."
-    (setq-local
-     completion-at-point-functions
-     (delete-dups
-      (append
-       (copy-sequence
-        completion-at-point-functions)
-       capfs))))
+    "Append CAPFS to the buffer-local completion functions.
+
+Preserve existing CAPFs and remove duplicate entries."
+    (setq-local completion-at-point-functions
+                (delete-dups
+                 (append
+                  (copy-sequence completion-at-point-functions)
+                  capfs))))
   :init
   ;; Settings and modes needed during initialization.
   (setq-default
@@ -238,12 +219,26 @@
    (text-mode . display-line-numbers-mode)))
 (use-package window
   :straight nil
+  :bind* (("C-x 2" . aaronzinhoo--split-window-below)
+          ("C-x 3" . aaronzinhoo--split-window-right))
   :custom
   ;; Use pixel measurements when resizing graphical windows.
   (window-resize-pixelwise t)
   ;; Avoid rearranging dedicated windows such as Treemacs.
   (transpose-dedicated-windows nil)
   :preface
+  (defun aaronzinhoo--split-window-below ()
+    "Split below, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-below))
+    (switch-to-prev-buffer))
+  (defun aaronzinhoo--split-window-right ()
+    "Split right, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-right))
+    (switch-to-prev-buffer))
   (defun aaronzinhoo--window-layout-rotate-180 ()
     "Rotate the current frame's window layout by 180 degrees."
     (interactive)
@@ -602,10 +597,22 @@ current buffer."
   (global-visual-line-mode t))
 (use-package tramp
   :straight nil
+
   :custom
-  (tramp-verbose 10)
-  (tramp-debug-buffer t)
-  (tramp-default-method "ssh"))
+  (tramp-default-method "ssh")
+
+  ;; Level 3 reports connection errors. Level 10 produces expensive,
+  ;; trace-level diagnostic logging.
+  (tramp-verbose 3)
+  (tramp-debug-buffer nil)
+
+  :preface
+  (defun aaronzinhoo-tramp-disconnect ()
+    "Close the TRAMP connection associated with the current buffer."
+    (interactive)
+    (if (file-remote-p default-directory)
+        (tramp-cleanup-this-connection)
+      (user-error "The current buffer is not visiting a remote host"))))
 (use-package tree-sitter
   :straight nil
   :init
@@ -754,8 +761,11 @@ current buffer."
   :bind (("<backtab>" . indent-for-tab-command))
   :preface
   (defun aaronzinhoo--ssh-config-mode-hook ()
-    (setq-local completion-at-point-functions
-      (list #'cape-file #'ssh-config-completion-at-point #'cape-dabbrev))))
+    "Configure completion in SSH configuration buffers."
+    (aaronzinhoo--append-capfs
+     #'ssh-config-completion-at-point
+     #'cape-file
+     #'cape-dabbrev)))
 (use-package x509-mode
   :straight t
   :commands (x509-mode)
@@ -932,9 +942,9 @@ current buffer."
       ("+" fit-window-to-buffer
        "fit to buffer"))
      "Create/Delete"
-     (("v" split-window-right
+     (("v" aaronzinhoo--split-window-right
        "split right")
-      ("s" split-window-below
+      ("s" aaronzinhoo--split-window-below
        "split below")
       ("d" delete-window
        "delete")
@@ -1155,13 +1165,6 @@ current buffer."
          ("M-t" . magit-todos-mode))
   :hook (git-commit-setup . aaronzinhoo--git-commit-setup)
   :preface
-  ;; https://github.com/magit/magit/issues/2258 fix for commit messages not cancelling when commit header exists
-  (defun fixed-with-editor-return (with-editor-return &rest arguments)
-    (unwind-protect
-        (progn
-          (advice-add 'delete-file :around 'ignore)
-          (apply with-editor-return arguments))
-      (advice-remove 'delete-file 'ignore)))
   (defun aaronzinhoo--delete-merged-branches ()
     "Delete local branches merged into a selected target branch."
     (interactive)
@@ -1206,12 +1209,18 @@ current buffer."
           (magit-branch-delete branches-to-delete)))))
   (defun aaronzinhoo--git-commit-setup ()
     (setq-local fill-column 72)
-    (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev #'cape-dict)))
+    (aaronzinhoo--append-capfs
+     #'cape-file
+     #'cape-dabbrev
+     #'cape-dict))
   :custom
   (magit-commit-show-diff t)
   (magit-bind-magit-project-status nil)
+  ;; Do not scan every open buffer after Magit operations. This is the
+  ;; important setting for preventing local Magit operations from
+  ;; reconnecting unrelated TRAMP buffers.
+  (auto-revert-buffer-list-filter #'magit-auto-revert-repository-buffer-p)
   :config
-  (advice-add 'with-editor-return :around 'fixed-with-editor-return)
   (transient-append-suffix 'magit-branch "C"
     '("K" "delete all merged" aaronzinhoo--delete-merged-branches)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1277,17 +1286,20 @@ current buffer."
   ;; Automatically refresh directory contents.
   (dired-auto-revert-buffer t)
   ;; File operations.
+  (dired-vc-rename-file t)
   (delete-by-moving-to-trash t)
   (dired-recursive-deletes 'always)
   (dired-recursive-copies 'always)
+  (dired-clean-confirm-killing-deleted-buffers nil)
+  ;; movement
+  (dired-movement-style 'bound-files)
   ;; GNU ls formatting.
-  (dired-listing-switches
-    "-lAXGh --group-directories-first")
+  (dired-listing-switches "-lAXGh --group-directories-first")
   :init
   ;; macOS BSD ls does not support all the listing options above.
   (when
     (eq system-type 'darwin)
-    (if-let ((gls
+    (if-let* ((gls
                (executable-find "gls")))
       (setq
         insert-directory-program gls
@@ -2049,14 +2061,31 @@ mark:
       #'aaronzinhoo--add-treesit-mode-expansions))
   )
 (use-package yasnippet
-  :defer t
-  :diminish yas-minor-mode
-  :commands yas-minor-mode
+  :straight t
   :hook (prog-mode . yas-minor-mode)
-  :config
-  (use-package yasnippet-snippets)
-  (yas-reload-all))
-
+  :bind (;; Ordinary Yasnippet mode.
+         :map yas-minor-mode-map
+         ;; Do not let Yasnippet capture Tab during normal editing.
+         ("TAB" . nil)
+         ("<tab>" . nil)
+         ;; Choose a snippet through minibuffer completion.
+         ("C-c C-y" . yas-insert-snippet)
+         ;; Active snippet fields.
+         :map yas-keymap
+         ("TAB" . yas-next-field)
+         ("<tab>" . yas-next-field)
+         ("S-TAB" . yas-prev-field)
+         ("<backtab>" . yas-prev-field)
+         ;; Finish snippet editing and keep the expanded text.
+         ("C-c C-e" . yas-exit-all-snippets)
+         ;; Stop the active snippet session.
+         ("C-g" . yas-abort-snippet))
+  :custom
+  (yas-choose-keys-first nil)
+  (yas-prompt-functions '(yas-completing-prompt)))
+(use-package yasnippet-snippets
+  :straight t
+  :after yasnippet)
 ;;; LSP
 (use-package dap-mode
   :after (lsp-mode)
@@ -2067,22 +2096,6 @@ mark:
   :custom
   (dap-python-debugger 'debugpy)
   :config
-  (dap-register-debug-template "My Runner"
-                             (list :type "java"
-                                   :request "launch"
-                                   :args ""
-                                   :vmArgs "-ea -Dtileaccessservice.instance.name=tileaccessservice_1"
-                                   :projectName "tileaccessservice"
-                                   :mainClass "com.linquest.tileaccessservice.TileAccessServiceApplication"
-                                   :env '(("DEV" . "1"))))
-  (dap-register-debug-template "Python :: Test TileAccessService"
-  (list :type "python"
-        :args "-i"
-        :cwd nil
-        :env '(("DEBUG" . "1"))
-        :target-module (expand-file-name "~/development/work/kahless/backend/user-management-service/main.py")
-        :request "launch"
-        :name "My App"))
   (dap-ui-controls-mode nil)
   (dap-ui-mode nil)
   (dap-tooltip-mode nil)
@@ -2257,6 +2270,7 @@ mark:
   ;; Completion
   (lsp-completion-enable t)
   (lsp-completion-provider :none) ; Corfu consumes the CAPFs
+  (lsp-enable-snippet t)
   ;; Diagnostics
   (lsp-diagnostics-provider :flycheck)
   (lsp-modeline-diagnostics-enable nil)
@@ -2426,8 +2440,7 @@ mark:
   :straight (:type git :host github :repo "emacs-lsp/lsp-java" :branch "master")
   :hook ((java-ts-mode . lsp-deferred)
           (java-ts-mode . lsp-java-boot-lens-mode)
-          (java-ts-mode . aaronzinhoo--lsp-java-setup)
-          (lsp-mode . aaronzinhoo--disable-yas-in-java))
+          (java-ts-mode . aaronzinhoo--lsp-java-setup))
   :preface
   (defun aaronzinhoo--lsp-java-setup ()
     "Configure LSP and enable lenses in Java buffers."
@@ -2449,10 +2462,6 @@ mark:
          "-Xms100m")
        (when (file-readable-p lombok-file)
          (list (concat "-javaagent:" lombok-file))))))
-  (defun aaronzinhoo--disable-yas-in-java ()
-    "Disable Yasnippet in Java LSP buffers."
-    (when (derived-mode-p 'java-ts-mode)
-      (yas-minor-mode -1)))
   :init
   (setq lsp-java-vmargs (aaronzinhoo--lsp-java-vmargs))
   :config
@@ -3391,8 +3400,10 @@ replacement boundaries."
   :hook (plantuml-mode . aaronzinhoo--plantuml-setup-hook)
   :preface
   (defun aaronzinhoo-plantuml-setup-hook ()
-    (setq-local completion-at-point-functions
-                (list #'plantuml-completion-at-point #'cape-abbrev #'cape-dabbrev)))
+    (aaronzinhoo--append-capfs
+     #'plantuml-completion-at-point
+     #'cape-abbrev
+     #'cape-dabbrev))
   :custom
   (plantuml-executable-path "plantuml")
   (plantuml-default-exec-mode 'executable))
@@ -3438,14 +3449,11 @@ replacement boundaries."
     "Configure the current Org buffer."
     (variable-pitch-mode 1)
     (org-indent-mode 1)
-    (setq-local
-      completion-at-point-functions
-      (list
-        #'corg-completion-at-point
-        #'cape-file
-        (cape-capf-super
-          #'cape-dict
-          #'cape-dabbrev))))
+    (aaronzinhoo--append-capfs
+     #'corg-completion-at-point
+     #'cape-file
+     #'cape-dict
+     #'cape-dabbrev))
   (defun aaronzinhoo--org-font-setup ()
     ;; Set faces for heading levels
     (dolist (face '((org-level-1 . 1.75)
@@ -3903,15 +3911,15 @@ replacement boundaries."
 (use-package sh-script
   :straight nil
   :mode (("\\.sh\\'" . bash-ts-mode)
-          ("\\.bash\\'" . bash-ts-mode)
-          ("\\.alias\\'" . bash-ts-mode)
-          ("\\.zsh\\'" . bash-ts-mode)
-          ("/\\.zshenv\\'" . bash-ts-mode)
-          ("/\\.zprofile\\'" . bash-ts-mode)
-          ("/\\.zshrc\\'" . bash-ts-mode))
+         ("\\.bash\\'" . bash-ts-mode)
+         ("\\.alias\\'" . bash-ts-mode)
+         ("\\.zsh\\'" . bash-ts-mode)
+         ("/\\.zshenv\\'" . bash-ts-mode)
+         ("/\\.zprofile\\'" . bash-ts-mode)
+         ("/\\.zshrc\\'" . bash-ts-mode))
   :hook ((bash-ts-mode . aaronzinhoo--setup-bash-ts-mode)
-          (bash-ts-mode . lsp-deferred)
-          (sh-mode . lsp-deferred))
+         (bash-ts-mode . lsp-deferred)
+         (sh-mode . lsp-deferred))
   :custom
   (sh-basic-offset 2)
   (sh-indentation 2)
@@ -3921,24 +3929,13 @@ replacement boundaries."
   (defun aaronzinhoo--setup-bash-ts-mode ()
     "Configure Bash Tree-sitter buffers."
     (setq-local tab-width 2)
-
-    (add-hook
-      'completion-at-point-functions
-      #'sh-completion-at-point-function
-      t
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'cape-file
-      t
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'cape-dabbrev
-      t
-      t)))
+    (defun aaronzinhoo--ssh-config-mode-hook ()
+      "Configure completion in SSH configuration buffers."
+      (aaronzinhoo--append-capfs
+       #'sh-completion-at-point-function
+       #'cape-file
+       #'cape-dabbrev)))
+  )
 ;; Yaml editing support and JSON
 ;; json-mode => json-snatcher json-refactor
 ;; select yaml regex (^-[\s]*[A-Za-z0-9-_]*)|(^[A-Za-z_-]*:)
@@ -4215,257 +4212,239 @@ replacement boundaries."
 ;; apache
 (use-package apache-mode
   :mode (("\\(?:apache2\\|httpd\\)\\.conf\\'" . apache-mode)
-          ("\\.htaccess\\'" . apache-mode)
-          ("/ports\\.conf\\'" . apache-mode)
-          ("/sites-\\(?:available\\|enabled\\)/[^/]+\\'" . apache-mode)
-          ("/conf-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode)
-          ("/mods-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode))
+         ("\\.htaccess\\'" . apache-mode)
+         ("/ports\\.conf\\'" . apache-mode)
+         ("/sites-\\(?:available\\|enabled\\)/[^/]+\\'" . apache-mode)
+         ("/conf-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode)
+         ("/mods-\\(?:available\\|enabled\\)/[^/]+\\.conf\\'" . apache-mode))
   :hook ((apache-mode . aaronzinhoo--apache-completion-setup))
   :preface
   (defconst aaronzinhoo--apache-value-completions
     '(("AllowOverride"
-        "None" "All"
-        "AuthConfig" "FileInfo" "Indexes" "Limit" "Nonfatal")
-       ("AuthType"
-         "Basic" "Digest")
-       ("LogLevel"
-         "emerg" "alert" "crit" "error"
-         "warn" "notice" "info" "debug" "trace1" "trace2"
-         "trace3" "trace4" "trace5" "trace6" "trace7" "trace8")
-       ("Options"
-         "None" "All" "ExecCGI" "FollowSymLinks" "Includes"
-         "Indexes" "MultiViews" "SymLinksIfOwnerMatch")
-       ("Require"
-         "all" "env" "group" "host" "ip" "local"
-         "method" "not" "user" "valid-user")
-       ("RewriteEngine"
-         "On" "Off")
-       ("SSLEngine"
-         "On" "Off" "optional")
-       ("SSLHonorCipherOrder"
-         "On" "Off")
-       ("ServerSignature"
-         "On" "Off" "EMail")
-       ("ServerTokens"
-         "Full" "OS" "Minimal" "Minor" "Major" "Prod")
-       ("TraceEnable"
-         "On" "Off" "extended")
-       ("UseCanonicalName"
-         "On" "Off" "DNS"))
+       "None" "All"
+       "AuthConfig" "FileInfo" "Indexes" "Limit" "Nonfatal")
+      ("AuthType"
+       "Basic" "Digest")
+      ("LogLevel"
+       "emerg" "alert" "crit" "error"
+       "warn" "notice" "info" "debug" "trace1" "trace2"
+       "trace3" "trace4" "trace5" "trace6" "trace7" "trace8")
+      ("Options"
+       "None" "All" "ExecCGI" "FollowSymLinks" "Includes"
+       "Indexes" "MultiViews" "SymLinksIfOwnerMatch")
+      ("Require"
+       "all" "env" "group" "host" "ip" "local"
+       "method" "not" "user" "valid-user")
+      ("RewriteEngine"
+       "On" "Off")
+      ("SSLEngine"
+       "On" "Off" "optional")
+      ("SSLHonorCipherOrder"
+       "On" "Off")
+      ("ServerSignature"
+       "On" "Off" "EMail")
+      ("ServerTokens"
+       "Full" "OS" "Minimal" "Minor" "Major" "Prod")
+      ("TraceEnable"
+       "On" "Off" "extended")
+      ("UseCanonicalName"
+       "On" "Off" "DNS"))
     "Common values associated with Apache directives.")
   (defconst aaronzinhoo--apache-fallback-directives
     '("AcceptFilter"
-       "AccessFileName"
-       "AddDefaultCharset"
-       "Alias"
-       "AliasMatch"
-       "AllowOverride"
-       "AllowOverrideList"
-       "AuthName"
-       "AuthType"
-       "CustomLog"
-       "DeflateCompressionLevel"
-       "DirectoryIndex"
-       "DocumentRoot"
-       "EnableSendfile"
-       "ErrorDocument"
-       "ErrorLog"
-       "ExpiresActive"
-       "ExpiresByType"
-       "Header"
-       "Include"
-       "IncludeOptional"
-       "KeepAlive"
-       "KeepAliveTimeout"
-       "LimitRequestBody"
-       "Listen"
-       "LoadModule"
-       "LogFormat"
-       "LogLevel"
-       "MaxKeepAliveRequests"
-       "Options"
-       "ProxyPass"
-       "ProxyPassMatch"
-       "ProxyPassReverse"
-       "Redirect"
-       "RedirectMatch"
-       "Require"
-       "RewriteBase"
-       "RewriteCond"
-       "RewriteEngine"
-       "RewriteRule"
-       "ServerAdmin"
-       "ServerAlias"
-       "ServerName"
-       "ServerRoot"
-       "ServerSignature"
-       "ServerTokens"
-       "SetEnv"
-       "SetEnvIf"
-       "SSLCertificateFile"
-       "SSLCertificateKeyFile"
-       "SSLCipherSuite"
-       "SSLEngine"
-       "SSLHonorCipherOrder"
-       "SSLProtocol"
-       "Timeout"
-       "TraceEnable"
-       "UseCanonicalName"
+      "AccessFileName"
+      "AddDefaultCharset"
+      "Alias"
+      "AliasMatch"
+      "AllowOverride"
+      "AllowOverrideList"
+      "AuthName"
+      "AuthType"
+      "CustomLog"
+      "DeflateCompressionLevel"
+      "DirectoryIndex"
+      "DocumentRoot"
+      "EnableSendfile"
+      "ErrorDocument"
+      "ErrorLog"
+      "ExpiresActive"
+      "ExpiresByType"
+      "Header"
+      "Include"
+      "IncludeOptional"
+      "KeepAlive"
+      "KeepAliveTimeout"
+      "LimitRequestBody"
+      "Listen"
+      "LoadModule"
+      "LogFormat"
+      "LogLevel"
+      "MaxKeepAliveRequests"
+      "Options"
+      "ProxyPass"
+      "ProxyPassMatch"
+      "ProxyPassReverse"
+      "Redirect"
+      "RedirectMatch"
+      "Require"
+      "RewriteBase"
+      "RewriteCond"
+      "RewriteEngine"
+      "RewriteRule"
+      "ServerAdmin"
+      "ServerAlias"
+      "ServerName"
+      "ServerRoot"
+      "ServerSignature"
+      "ServerTokens"
+      "SetEnv"
+      "SetEnvIf"
+      "SSLCertificateFile"
+      "SSLCertificateKeyFile"
+      "SSLCipherSuite"
+      "SSLEngine"
+      "SSLHonorCipherOrder"
+      "SSLProtocol"
+      "Timeout"
+      "TraceEnable"
+      "UseCanonicalName"
 
-       ;; Section directives
-       "<Directory"
-       "<DirectoryMatch"
-       "<Files"
-       "<FilesMatch"
-       "<If"
-       "<IfModule"
-       "<IfVersion"
-       "<Limit"
-       "<LimitExcept"
-       "<Location"
-       "<LocationMatch"
-       "<Proxy"
-       "<VirtualHost")
+      ;; Section directives
+      "<Directory"
+      "<DirectoryMatch"
+      "<Files"
+      "<FilesMatch"
+      "<If"
+      "<IfModule"
+      "<IfVersion"
+      "<Limit"
+      "<LimitExcept"
+      "<Location"
+      "<LocationMatch"
+      "<Proxy"
+      "<VirtualHost")
     "Fallback Apache directives used when Apache is unavailable.")
   (defvar aaronzinhoo--apache-directive-cache nil
-  "Cached directives reported by the local Apache installation.")
+    "Cached directives reported by the local Apache installation.")
   (defvar aaronzinhoo--apache-directive-cache-initialized-p nil
     "Whether Apache directive discovery has been attempted.")
   (defun aaronzinhoo--apache-executable ()
     "Return an available Apache control executable."
     (seq-find
-      #'executable-find
-      '("apachectl"
-         "apache2ctl"
-         "httpd")))
+     #'executable-find
+     '("apachectl"
+       "apache2ctl"
+       "httpd")))
   (defun aaronzinhoo--apache-installed-directives ()
     "Return directives supported by the installed Apache server."
     (unless aaronzinhoo--apache-directive-cache-initialized-p
       (setq aaronzinhoo--apache-directive-cache-initialized-p
-        t)
+            t)
 
       (setq aaronzinhoo--apache-directive-cache
-        (when-let* ((executable
-                     (aaronzinhoo--apache-executable)))
-          (with-temp-buffer
-            (when
-              (zerop
-                (call-process
-                  executable
-                  nil
-                  t
-                  nil
-                  "-L"))
-              (goto-char
-                (point-min))
-              (let (directives)
-                (while
-                  (re-search-forward
-                    "^[[:blank:]]*\\([^[:blank:]\n]+\\)[[:blank:]]+("
-                    nil
-                    t)
-                  (push
-                    (match-string-no-properties 1)
-                    directives))
-                (delete-dups directives)))))))
+            (when-let* ((executable
+                         (aaronzinhoo--apache-executable)))
+              (with-temp-buffer
+                (when
+                    (zerop
+                     (call-process
+                      executable
+                      nil
+                      t
+                      nil
+                      "-L"))
+                  (goto-char
+                   (point-min))
+                  (let (directives)
+                    (while
+                        (re-search-forward
+                         "^[[:blank:]]*\\([^[:blank:]\n]+\\)[[:blank:]]+("
+                         nil
+                         t)
+                      (push
+                       (match-string-no-properties 1)
+                       directives))
+                    (delete-dups directives)))))))
 
     aaronzinhoo--apache-directive-cache)
   (defun aaronzinhoo--apache-directives ()
     "Return available Apache completion candidates."
     (delete-dups
-      (append
-        (aaronzinhoo--apache-installed-directives)
-        aaronzinhoo--apache-fallback-directives)))
+     (append
+      (aaronzinhoo--apache-installed-directives)
+      aaronzinhoo--apache-fallback-directives)))
   (defun aaronzinhoo--apache-refresh-directives ()
     "Clear and rebuild the installed Apache directive cache."
     (interactive)
     (setq aaronzinhoo--apache-directive-cache nil
-      aaronzinhoo--apache-directive-cache-initialized-p nil)
+          aaronzinhoo--apache-directive-cache-initialized-p nil)
     (aaronzinhoo--apache-installed-directives)
     (message "Apache directive completion refreshed"))
   (defun aaronzinhoo--apache-completion-at-point ()
     "Complete an Apache directive at the beginning of a line."
     (let ((end
-            (point))
-           beginning)
+           (point))
+          beginning)
       (save-excursion
         (skip-chars-backward
-          "[:alnum:]_<")
+         "[:alnum:]_<")
         (setq beginning
-          (point)))
+              (point)))
 
       (when
-        (string-match-p
-          "\\`[[:blank:]]*\\'"
-          (buffer-substring-no-properties
+          (string-match-p
+           "\\`[[:blank:]]*\\'"
+           (buffer-substring-no-properties
             (line-beginning-position)
             beginning))
         (list
-          beginning
-          end
-          (aaronzinhoo--apache-directives)
-          :exclusive 'no
-          :company-kind
-          (lambda (_)
-            'keyword)))))
+         beginning
+         end
+         (aaronzinhoo--apache-directives)
+         :exclusive 'no
+         :company-kind
+         (lambda (_)
+           'keyword)))))
   (defun aaronzinhoo--apache-value-completion-at-point ()
     "Complete common values for the directive on the current line."
     (save-excursion
       (let ((end
-              (point))
-             beginning
-             directive)
+             (point))
+            beginning
+            directive)
         (skip-chars-backward
-          "^ \t\n")
+         "^ \t\n")
         (setq beginning
-          (point))
+              (point))
 
         (goto-char
-          (line-beginning-position))
+         (line-beginning-position))
         (when
-          (looking-at
-            "[[:blank:]]*\\([[:alnum:]]+\\)[[:blank:]]+")
+            (looking-at
+             "[[:blank:]]*\\([[:alnum:]]+\\)[[:blank:]]+")
           (setq directive
-            (match-string-no-properties 1)))
+                (match-string-no-properties 1)))
 
         (when-let* ((values
                      (cdr
-                       (assoc-string
-                         directive
-                         aaronzinhoo--apache-value-completions
-                         t))))
+                      (assoc-string
+                       directive
+                       aaronzinhoo--apache-value-completions
+                       t))))
           (list
-            beginning
-            end
-            values
-            :exclusive 'no)))))
+           beginning
+           end
+           values
+           :exclusive 'no)))))
   (defun aaronzinhoo--apache-completion-setup ()
     "Configure Apache completion in the current buffer."
     (setq-local completion-ignore-case t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'aaronzinhoo--apache-completion-at-point
-      nil
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'aaronzinhoo--apache-value-completion-at-point
-      t
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'cape-file
-      t
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'cape-dabbrev
-      t
-      t)))
+    (aaronzinhoo--append-capfs
+     #'aaronzinhoo--apache-completion-at-point
+     #'aaronzinhoo--apache-value-completion-at-point
+     #'cape-file
+     #'cape-dabbrev))
+  )
 (use-package add-node-modules-path
   :hook ((rjsx-mode . add-node-modules-path)
           (typescript-mode . add-node-modules-path)
@@ -4539,7 +4518,9 @@ replacement boundaries."
   :straight nil
   :mode (("\\.html?\\'" . html-ts-mode))
   :hook ((html-ts-mode . aaronzinhoo--html-setup)
-          (html-ts-mode . aaronzinhoo--html-completion-setup))
+         (html-ts-mode . aaronzinhoo--html-completion-setup))
+  :bind (:map html-ts-mode-map
+              ("s-h" . html-ts-mode-hydra/body))
   :preface
   (defconst aaronzinhoo--html-ts-element-node-types
     '("element"
@@ -4573,7 +4554,6 @@ replacement boundaries."
         (setq node
           (treesit-node-parent node)))
       node))
-
   (defun aaronzinhoo--html-ts-parent-element ()
     "Move to the parent HTML element."
     (interactive)
@@ -4601,7 +4581,7 @@ replacement boundaries."
   (defun aaronzinhoo--html-ts-child-element ()
     "Move to the first direct child HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (let ((index 0)
              (count
@@ -4632,7 +4612,7 @@ replacement boundaries."
     "Move to an HTML sibling in DIRECTION.
 
 DIRECTION must be either `next' or `previous'."
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (let ((sibling
               (if
@@ -4673,7 +4653,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-element-beginning ()
     "Move to the beginning of the surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (goto-char
         (treesit-node-start node))
@@ -4682,7 +4662,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-element-end ()
     "Move to the end of the surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (goto-char
         (treesit-node-end node))
@@ -4691,7 +4671,7 @@ DIRECTION must be either `next' or `previous'."
   (defun aaronzinhoo--html-ts-mark-element ()
     "Mark the complete surrounding HTML element."
     (interactive)
-    (if-let ((node
+    (if-let* ((node
                (aaronzinhoo--html-ts-element-node)))
       (progn
         (goto-char
@@ -5444,7 +5424,7 @@ blocks.  Skip nested blocks such as lifecycle and default_tags."
   (defun aaronzinhoo--opentofu-documentation-name
       (type)
     "Return the registry documentation name for TYPE."
-    (if-let ((separator
+    (if-let* ((separator
               (string-match "_" type)))
         (substring
          type
@@ -5841,17 +5821,9 @@ can accept input."
 
     ;; `elisp-completion-at-point' is installed by Emacs Lisp mode.
     ;; Append fallback CAPFs without replacing it.
-    (add-hook
-      'completion-at-point-functions
-      #'cape-file
-      t
-      t)
-
-    (add-hook
-      'completion-at-point-functions
-      #'cape-dabbrev
-      t
-      t)))
+    (aaronzinhoo--append-capfs
+     #'cape-file
+     #'cape-dabbrev)))
 (use-package elisp-autofmt
   :commands (elisp-autofmt-mode elisp-autofmt-buffer)
   :hook (emacs-lisp-mode . elisp-autofmt-mode))
