@@ -405,13 +405,19 @@ current buffer."
 (use-package paren
   :straight nil
   :custom
-  (show-paren-style 'paren)
+  (show-paren-style 'parenthesis)
   (show-paren-delay 0.03)
   (show-paren-highlight-openparen t)
-  (show-paren-when-point-inside-paren nil)
-  (show-paren-when-point-in-periphery t)
+  ;; Highlight a delimiter when point is inside it.
+  (show-paren-when-point-inside-paren t)
+  ;; Also detect delimiters at the beginning or end of a line.
+  (show-paren-when-point-in-periphery nil)
+  ;; Display the opening line when its delimiter is off-screen.
+  (show-paren-context-when-offscreen 'overlay)
+  ;; Highlight mismatches without ringing the bell.
+  (show-paren-ring-bell-on-mismatch nil)
   :config
-  (show-paren-mode t))
+  (show-paren-mode 1))
 (use-package gcmh
   :demand t
   :custom
@@ -1225,9 +1231,6 @@ current buffer."
     '("K" "delete all merged" aaronzinhoo--delete-merged-branches)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package matching-paren-overlay
-  :straight (:type git :host codeberg :repo "acdw/matching-paren-overlay.el" :branch "main")
-  :hook (prog-mode . matching-paren-overlay-mode))
 (use-package better-defaults
   :defer t)
 (use-package grep
