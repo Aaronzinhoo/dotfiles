@@ -113,6 +113,19 @@
      (:family "Cantarell"
 							:weight regular))))
   :preface
+  (defun aaronzinhoo-push-mark ()
+    "Save point on the local mark ring without activating the region."
+    (interactive)
+    (push-mark (point) t nil)
+    (message "Position saved"))
+  (defun aaronzinhoo-treesit-cycle-sexp-thing ()
+    "Cycle Tree-sitter structural movement between lists and sexps."
+    (interactive)
+    (if (and
+         (fboundp #'treesit-cycle-sexp-thing)
+         (treesit-parser-list))
+        (call-interactively #'treesit-cycle-sexp-thing)
+      (user-error "Tree-sitter is not active in this buffer")))
   (defun aaronzinhoo--enable-trailing-whitespace-cleanup ()
     "Delete trailing whitespace when saving the current buffer."
     (add-hook
@@ -888,26 +901,67 @@ current buffer."
      "Other"
      (("RET" nil :color blue))))
   (pretty-hydra-define hydra-nav
-    (:hint nil :color amaranth :quit-key "SPC" :title (with-mdicon "nf-md-navigation_variant_outline" "Navigation" 1 -0.05))
-    ("Buffer"
-     (("a" crux-move-beginning-of-line "Begin Line")
-      ("z" end-of-visual-line "End Line"))
-     "Block"
-     (("d" block-nav-previous-block "Block Up")
-      ("c" block-nav-next-block "Block Down")
-      ("C" block-nav-next-indentation-level "Indent Up")
-      ("D" block-nav-previous-indentation-level "Indent Down"))
-     "Avy"
-     (("j" avy-goto-char-timer "Jump Char(s)")
-      ("g" avy-goto-line "Jump Line"))
-     "Text"
-     (("f" forward-word "Forward Word")
-      ("v" backward-word "Backward Word"))
-     "Copy/Paste"
-     (("r" er/contract-region "Contract Region")
-      ("e" er/expand-region "Expand Region")
-      ("w" easy-kill "Copy")
-      ("q" yank "Paste"))))
+    (:hint nil
+           :color amaranth
+           :quit-key "SPC"
+           :title
+           (with-mdicon
+            "nf-md-navigation_variant_outline"
+            "Navigation"
+            1
+            -0.05))
+
+    ("Line / Word"
+     (("a" crux-move-beginning-of-line "Line beginning")
+      ("z" end-of-visual-line           "Line end")
+      ("v" backward-word                "Previous word")
+      ("f" forward-word                 "Next word"))
+
+     "Tree Structure"
+     (("u" combobulate-navigate-up       "Parent node")
+      ("d" combobulate-navigate-down     "Child node")
+      ("p" combobulate-navigate-previous "Previous sibling")
+      ("n" combobulate-navigate-next     "Next sibling")
+      ("A" combobulate-navigate-beginning-of-defun
+       "Defun beginning")
+      ("Z" combobulate-navigate-end-of-defun
+       "Defun end")
+      ("P" backward-sexp                 "Previous sexp")
+      ("N" forward-sexp                  "Next sexp")
+      ("k" combobulate-mark-node-dwim    "Mark node"))
+
+     "Jump"
+     (("j" avy-goto-char-timer "Avy characters")
+      ("g" avy-goto-line       "Avy line")
+      ("l" consult-line        "Search line")
+      ("m" consult-imenu       "Symbol")
+      ("M" consult-mark        "Local mark")
+      ("G" consult-global-mark "Global mark"))
+
+     "Buffer / View"
+     (("<" beginning-of-buffer "Buffer beginning")
+      (">" end-of-buffer       "Buffer end")
+      ("[" scroll-down-command "Page up")
+      ("]" scroll-up-command   "Page down")
+      ("." recenter-top-bottom "Recenter"))
+
+     "History / Region"
+     (("s" aaronzinhoo-push-mark   "Save position")
+      ("," xref-go-back            "Jump back")
+      ("/" xref-go-forward         "Jump forward")
+      ("b" pop-to-mark-command     "Previous mark")
+      ("B" pop-global-mark         "Previous global mark")
+      ("e" er/expand-region        "Expand region")
+      ("r" er/contract-region      "Contract region")
+      ("x" exchange-point-and-mark "Exchange point/mark"))
+
+     "Editing"
+     (("K" combobulate-kill-node-dwim
+       "Kill node"
+       :color blue))
+
+     "Hydra"
+     (("RET" nil "Exit" :color blue))))
   (pretty-hydra-define hydra-bookmark
     (:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-bookmark" "Bookmark" 1 -0.05))
     ("Burly"
