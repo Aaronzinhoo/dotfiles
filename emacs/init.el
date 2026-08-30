@@ -75,8 +75,6 @@
           ("M-," . previous-window-any-frame)
           ("C-x k" . kill-current-buffer)
           ("C-x C-k" . kill-buffer-and-window)
-          ("C-x 2" . aaronzinhoo--split-window-below)
-          ("C-x 3" . aaronzinhoo--split-window-right)
           ("C-<" . previous-buffer)
           ("C->" . next-buffer)
           ("s-<tab>" . iflipb-next-buffer)
@@ -140,18 +138,6 @@
           "microsoft"
           nil
           t))))))
-  (defun aaronzinhoo--split-window-below ()
-    "Split below, select the new window, and show its previous buffer."
-    (interactive)
-    (select-window
-     (split-window-below))
-    (switch-to-prev-buffer))
-  (defun aaronzinhoo--split-window-right ()
-    "Split right, select the new window, and show its previous buffer."
-    (interactive)
-    (select-window
-     (split-window-right))
-    (switch-to-prev-buffer))
   (defun aaronzinhoo-create-uuid ()
     "Return a newly generated UUID."
     (require 'subr-x)
@@ -233,12 +219,26 @@ Preserve existing CAPFs and remove duplicate entries."
    (text-mode . display-line-numbers-mode)))
 (use-package window
   :straight nil
+  :bind* (("C-x 2" . aaronzinhoo--split-window-below)
+          ("C-x 3" . aaronzinhoo--split-window-right))
   :custom
   ;; Use pixel measurements when resizing graphical windows.
   (window-resize-pixelwise t)
   ;; Avoid rearranging dedicated windows such as Treemacs.
   (transpose-dedicated-windows nil)
   :preface
+  (defun aaronzinhoo--split-window-below ()
+    "Split below, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-below))
+    (switch-to-prev-buffer))
+  (defun aaronzinhoo--split-window-right ()
+    "Split right, select the new window, and show its previous buffer."
+    (interactive)
+    (select-window
+     (split-window-right))
+    (switch-to-prev-buffer))
   (defun aaronzinhoo--window-layout-rotate-180 ()
     "Rotate the current frame's window layout by 180 degrees."
     (interactive)
@@ -930,9 +930,9 @@ current buffer."
       ("+" fit-window-to-buffer
        "fit to buffer"))
      "Create/Delete"
-     (("v" split-window-right
+     (("v" aaronzinhoo--split-window-right
        "split right")
-      ("s" split-window-below
+      ("s" aaronzinhoo--split-window-below
        "split below")
       ("d" delete-window
        "delete")
