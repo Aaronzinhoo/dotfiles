@@ -220,6 +220,18 @@ Preserve existing CAPFs and remove duplicate entries."
   (put 'erase-buffer 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
   (put 'downcase-region 'disabled nil))
+(use-package completion-preview
+  :straight nil
+
+  :preface
+  (defun aaronzinhoo--completion-preview-inhibit-ghostel-p ()
+    "Return non-nil when completion preview should avoid Ghostel."
+    (derived-mode-p 'ghostel-mode))
+
+  :config
+  (add-to-list
+   'completion-preview-inhibit-functions
+   #'aaronzinhoo--completion-preview-inhibit-ghostel-p))
 (use-package delsel
   :straight nil
   :init
@@ -1482,7 +1494,12 @@ current buffer."
          :color blue)))))
 (use-package dired-x
   :straight nil
-  :after dired)
+  :demand t
+  :custom
+  ;; Kill buffers visiting files deleted through Dired.
+  (dired-clean-up-buffers-too t)
+  ;; Kill them automatically instead of asking separately.
+  (dired-clean-confirm-killing-deleted-buffers nil))
 (use-package dired-subtree
   :after dired
   :demand t
@@ -1594,6 +1611,14 @@ current buffer."
   :hook ((prog-mode . flycheck-mode)
           (flycheck-mode . flycheck-annotate-mode))
   :bind ("s-f" . flycheck-hydra/body)
+  :preface
+  (defun aaronzinhoo--flycheck-select-error-list (&rest _)
+    "Select the window displaying the Flycheck error list."
+    (when-let ((window
+                (get-buffer-window
+                 flycheck-error-list-buffer
+                 (selected-frame))))
+      (select-window window)))
   :pretty-hydra
   ((:hint nil :color teal :quit-key "SPC" :title (with-codicon "nf-cod-debug" "Flycheck" 1 -0.05))
     ("Checker"
@@ -1629,6 +1654,14 @@ current buffer."
   (flycheck-css-stylelint-executable "stylelint")
   (flycheck-rust-cargo-executable "cargo")
   :config
+  (unless
+      (advice-member-p
+       #'aaronzinhoo--flycheck-select-error-list
+       #'flycheck-list-errors)
+    (advice-add
+     #'flycheck-list-errors
+     :after
+     #'aaronzinhoo--flycheck-select-error-list))
   (setq-default flycheck-disabled-checkers
     (append flycheck-disabled-checkers
       '(javascript-jshint
@@ -1658,7 +1691,13 @@ current buffer."
   :bind (([remap open-line] . aaronzinhoo-open-line)
           ([remap kill-ring-save] . easy-kill)))
 (use-package combobulate
-  :commands (combobulate-avy-jump combobulate-python-indent-for-tab-command)
+  :commands (combobulate-avy-jump
+             combobulate-python-indent-for-tab-command
+             combobulate-navigate-up
+             combobulate-navigate-down
+             combobulate-navigate-previous
+             combobulate-navigate-next
+             combobulate-navigate-beginning-of-defun)
   :straight (:type git :host github :repo "mickeynp/combobulate" :branch "master")
   :config
   ;; You can customize Combobulate's key prefix here.
@@ -3024,6 +3063,11 @@ mark:
   ;; is inserted.
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match t)
+  (global-corfu-modes
+   '((not
+      ghostel-mode
+      vterm-mode)
+     t))
   :preface
   (defun aaronzinhoo--corfu-complete-common-or-next ()
     "Complete the common prefix or preview the next candidate."
@@ -3706,6 +3750,27 @@ replacement boundaries."
   :hook (org-mode . org-modern-mode))
 (use-package org-contrib
   :after org)
+(use-package org-download
+  :ensure t
+  :after org
+  :config
+  (setq-default
+   org-download-image-dir "assets"
+   ;; Basename setting seems to be simply ignored.
+   org-download-screenshot-basename ".org.png"
+   org-download-timestamp "org_%Y%m%d-%H%M%S_"
+   org-download-heading-lvl nil)
+  :custom
+  (org-download-screenshot-method
+   (cond
+    ((eq system-type 'gnu/linux)
+     "xclip -selection clipboard -t image/png -o > '%s'")
+    ((eq system-type 'darwin)
+     "pngpaste %s")))
+  :bind
+  (:map org-mode-map
+        (("C-M-y" . org-download-screenshot)
+         ("s-y" . org-download-yank))))
 (use-package org-ref
   :after org
   :custom
@@ -3822,17 +3887,40 @@ replacement boundaries."
   :commands (list-environment))
 (use-package ghostel
   :straight t
-  :commands (ghostel ghostel-project ghostel-project-list-buffers consult-ghostel-history consult-ghostel consult-ghostel-project)
-  :bind (:map ghostel-semi-char-mode-map
-              ("C-c t" . consult-ghostel-history))
-  :hook ((ghostel-mode . aaronzinhoo--setup-ghostel-expansions))
+
+  :commands
+  (ghostel
+   ghostel-project
+   ghostel-project-list-buffers)
+
+  :bind
+  (:map ghostel-semi-char-mode-map
+        ("C-c t" . consult-ghostel-history))
+
+  :hook
+  ((ghostel-mode
+    . aaronzinhoo--setup-ghostel-expansions)
+   (ghostel-mode
+    . aaronzinhoo--ghostel-terminal-completion-setup))
+
   :custom
   (ghostel-kill-buffer-on-exit t)
+
   ;; Prefer live navigation over frozen copy mode.
   (ghostel-readonly-default-mode 'emacs)
+
   ;; Typing returns from read-only navigation to terminal input.
   (ghostel-readonly-fast-exit t)
+
   :preface
+  (defun aaronzinhoo--ghostel-terminal-completion-setup ()
+    "Prevent host-side CAPF completion in Ghostel."
+    (setq-local completion-at-point-functions nil))
+
+  (defun aaronzinhoo--completion-preview-inhibit-ghostel-p ()
+    "Return non-nil when completion preview should avoid Ghostel."
+    (derived-mode-p 'ghostel-mode))
+
   (defun aaronzinhoo--setup-ghostel-expansions ()
     "Configure Expand Region for Ghostel buffers."
     (setq-local
@@ -3848,7 +3936,33 @@ replacement boundaries."
        er/mark-outside-quotes
        er/mark-inside-pairs
        er/mark-outside-pairs
-       er/mark-paragraph))))
+       er/mark-paragraph)))
+
+  :config
+  (with-eval-after-load 'completion-preview
+    (add-to-list
+     'completion-preview-inhibit-functions
+     #'aaronzinhoo--completion-preview-inhibit-ghostel-p)))
+(use-package consult-ghostel
+  :straight
+  (:type git
+   :host github
+   :repo "dakra/ghostel"
+   :branch "main"
+   :local-repo "consult-ghostel"
+   :files
+   ("extensions/consult-ghostel/*.el"))
+
+  :after
+  (ghostel consult)
+
+  :commands
+  (consult-ghostel
+   consult-ghostel-project
+   consult-ghostel-history)
+
+  :config
+  (consult-ghostel-mode 1))
 (use-package ghostel-compile
   :straight nil
   :after ghostel
@@ -3913,25 +4027,31 @@ replacement boundaries."
   (project-hydra
     (:hint nil :color teal :quit-key "SPC" :title (with-octicon "nf-oct-rocket" "Project Menu" 1 -0.05))
     ("Buffers"
-      (("b" consult-project-buffer "list")
-        ("k" project-kill-buffers "kill all")
-        ("S" aaronzinhoo--project-save-project-buffers "save all"))
-      "Find"
-      (("d" project-find-dir "directory")
-        ("D" project-dired "Open proj. root")
-        ("f" project-find-file "file")
-        ("p" project-switch-project "project")
-        ("F" project-or-external-find-file "find file ext. + proj"))
-      "Other"
-      (("C" project-forget-zombie-projects "Clear out old projects")
-        ("c" project-compile "Compile")
-        ("v" ghostel-project "Run ghostel")
-        ("V" consult-ghostel-project "Run ghostel")
-        ("R" project-remember-projects-under "Register Proj(s). under Dir"))
-      "Search & Replace"
-      (("r" project-query-replace-regexp "regexp replace")
-        ("s" aaronzinhoo--project-consult-ripgrep-dwim "search"))))
+     (("b" consult-project-buffer "list")
+      ("k" project-kill-buffers "kill all")
+      ("S" aaronzinhoo--project-save-project-buffers "save all"))
+     "Find"
+     (("d" project-find-dir "directory")
+      ("D" project-dired "Open proj. root")
+      ("f" project-find-file "file")
+      ("p" project-switch-project "project")
+      ("F" project-or-external-find-file "find file ext. + proj"))
+     "Other"
+     (("C" project-forget-zombie-projects "Clear out old projects")
+      ("c" project-compile "Compile")
+      ("l" ghostel-project-list-buffers "List Ghostel Buffers")
+      ("v" ghostel-project "Run ghostel")
+      ("V" aaronzinhoo-consult-ghostel-project-new "Create new ghostel Proj.")
+      ("R" project-remember-projects-under "Register Proj(s). under Dir"))
+     "Search & Replace"
+     (("r" project-query-replace-regexp "regexp replace")
+      ("s" aaronzinhoo--project-consult-ripgrep-dwim "search"))))
   :preface
+  (defun aaronzinhoo-consult-ghostel-project-new ()
+    "Create a new Ghostel terminal in the current project."
+    (interactive)
+    (let ((current-prefix-arg '(4)))
+      (call-interactively #'consult-ghostel-project)))
   (defun aaronzinhoo--project-consult-ripgrep-dwim (&optional given-initial)
     (interactive)
     (let ((initial
@@ -4023,9 +4143,12 @@ replacement boundaries."
            ("<tab>" . indent-for-tab-command)
            ("<backtab>" . yaml-indent-line)))
   :hook ((yaml-ts-mode . aaronzinhoo--yaml-mode-hook)
-          (yaml-ts-mode . aaronzinhoo--yaml-completion-setup)
-          (yaml-ts-mode . lsp-deferred)
-          (yaml-ts-mode . hungry-delete-mode))
+         (yaml-ts-mode . aaronzinhoo--yaml-completion-setup)
+         (yaml-ts-mode . lsp-deferred)
+         (yaml-ts-mode . hungry-delete-mode)
+         (openapi-yaml-mode . yas-minor-mode)
+         (openapi-yaml-mode . subword-mode)
+         (openapi-yaml-mode . delete-trailing-whitespace-mode))
   :custom
   ;; Fallback when dtrt-indent cannot detect the indentation width.
   (yaml-indent-offset 2)
@@ -4171,47 +4294,182 @@ replacement boundaries."
   :straight nil
   :demand t
   :load-path "~/.emacs.d/elisp"
-  :hook ((openapi-yaml-mode . lsp-deferred))
+  :hook ((openapi-yaml-mode . lsp-deferred)
+         (openapi-yaml-mode . aaronzinhoo--openapi-yaml-setup))
   :bind (:map openapi-yaml-mode-map
-          ("s-h" . openapi-yaml-hydra/body))
+              ("s-h" . openapi-yaml-hydra/body))
+  :preface
+  (defvar-local aaronzinhoo--openapi-schema-cache nil
+    "Cached OpenAPI schema reference candidates.")
+  (defvar-local aaronzinhoo--openapi-schema-cache-tick nil
+    "Buffer modification tick associated with the schema cache.")
+  (defun aaronzinhoo--openapi-schema-names ()
+    "Return schema names defined under `components.schemas'."
+    (if
+        (and
+         aaronzinhoo--openapi-schema-cache-tick
+         (= aaronzinhoo--openapi-schema-cache-tick
+            (buffer-chars-modified-tick)))
+        aaronzinhoo--openapi-schema-cache
+
+      (let (schemas)
+        (save-excursion
+          (goto-char (point-min))
+
+          (when
+              (re-search-forward
+               "^[[:blank:]]*components:[[:blank:]]*\\(?:#.*\\)?$"
+               nil
+               t)
+            (let ((components-indent
+                   (current-indentation)))
+
+              (forward-line 1)
+
+              ;; Find `schemas:' inside `components:'.
+              (while
+                  (and
+                   (not (eobp))
+                   (or
+                    (looking-at-p "^[[:blank:]]*\\(?:#.*\\)?$")
+                    (> (current-indentation)
+                       components-indent))
+                   (not
+                    (looking-at
+                     "^[[:blank:]]*schemas:[[:blank:]]*\\(?:#.*\\)?$")))
+                (forward-line 1))
+
+              (when
+                  (and
+                   (not (eobp))
+                   (looking-at
+                    "^[[:blank:]]*schemas:[[:blank:]]*\\(?:#.*\\)?$"))
+                (let ((schemas-indent
+                       (current-indentation))
+                      schema-entry-indent)
+
+                  (forward-line 1)
+
+                  ;; Collect direct children of `schemas:'.
+                  (while
+                      (and
+                       (not (eobp))
+                       (or
+                        (looking-at-p "^[[:blank:]]*\\(?:#.*\\)?$")
+                        (> (current-indentation)
+                           schemas-indent)))
+
+                    (unless
+                        (looking-at-p
+                         "^[[:blank:]]*\\(?:#.*\\)?$")
+                      (unless schema-entry-indent
+                        (setq schema-entry-indent
+                              (current-indentation)))
+
+                      (when
+                          (and
+                           (= (current-indentation)
+                              schema-entry-indent)
+                           (looking-at
+                            "^[[:blank:]]*\\([[:alnum:]_.-]+\\):"))
+                        (push
+                         (match-string-no-properties 1)
+                         schemas)))
+
+                    (forward-line 1)))))))
+
+        (setq aaronzinhoo--openapi-schema-cache
+              (delete-dups (nreverse schemas)))
+        (setq aaronzinhoo--openapi-schema-cache-tick
+              (buffer-chars-modified-tick))
+
+        aaronzinhoo--openapi-schema-cache)))
+
+  (defun aaronzinhoo--openapi-schema-reference-capf ()
+    "Complete local OpenAPI schema references after `#/'."
+    (when (derived-mode-p 'openapi-yaml-mode)
+      (let ((end (point))
+            beginning)
+        (save-excursion
+          (save-restriction
+            ;; Only inspect text between the beginning of the line
+            ;; and point.
+            (narrow-to-region
+             (line-beginning-position)
+             end)
+
+            (goto-char (point-min))
+
+            (when
+                (re-search-forward
+                 "\\$ref:[[:blank:]]*['\"]?\\(#/[^[:blank:]'\"}]*\\)\\'"
+                 nil
+                 t)
+              (setq beginning
+                    (match-beginning 1)))))
+
+        (when beginning
+          (list
+           beginning
+           end
+           (mapcar
+            (lambda (schema)
+              (concat
+               "#/components/schemas/"
+               schema))
+            (aaronzinhoo--openapi-schema-names))
+
+           :exclusive 'no
+
+           :annotation-function
+           (lambda (_candidate)
+             "  Schema"))))))
+  (defun aaronzinhoo--openapi-yaml-setup ()
+    (setq-local cape-dabbrev-check-other-buffers nil)
+    (aaronzinhoo--append-capfs
+     #'cape-dict
+     #'cape-dabbrev)
+    ;; Put the specialized CAPF before the broad LSP, file, and
+    ;; dabbrev completion functions.
+    (add-hook 'completion-at-point-functions #'aaronzinhoo--openapi-schema-reference-capf nil t))
   :pretty-hydra
   (openapi-yaml-hydra
-    (:hint nil
-      :title (with-faicon
-               "nf-fa-yen"
-               "YAML Commands"
-               1
-               -0.05)
-      :quit-key "q"
-      :color red)
-    ("Indent"
-      (("i" indent-rigidly "Indent Region"))
-      "Navigation"
-      (("N" block-nav-next-indentation-level
-         "Next Child Node")
-        ("P" block-nav-previous-indentation-level
-          "Prev Parent Node") )
-      "Fold"
-      (("f" aaronzinhoo--hs-toggle-block
-         "toggle block")
-        ("c" aaronzinhoo--hs-hide-block
-          "close block")
-        ("o" aaronzinhoo--hs-show-block
-          "open block")
-        ("C" hs-hide-all
-          "close all")
-        ("O" hs-show-all
-          "open all")
-        ("L" hs-hide-level
-          "close level"))
-      "Openapi"
-      (("v" openapi-preview "View in Browser")
-        ("s" lsp-yaml-select-buffer-schema
-          "Buffer Schema"))))
+   (:hint nil
+          :title (with-faicon
+                  "nf-fa-yen"
+                  "YAML Commands"
+                  1
+                  -0.05)
+          :quit-key "q"
+          :color red)
+   ("Indent"
+    (("i" indent-rigidly "Indent Region"))
+    "Navigation"
+    (("N" block-nav-next-indentation-level
+      "Next Child Node")
+     ("P" block-nav-previous-indentation-level
+      "Prev Parent Node") )
+    "Fold"
+    (("f" aaronzinhoo--hs-toggle-block
+      "toggle block")
+     ("c" aaronzinhoo--hs-hide-block
+      "close block")
+     ("o" aaronzinhoo--hs-show-block
+      "open block")
+     ("C" hs-hide-all
+      "close all")
+     ("O" hs-show-all
+      "open all")
+     ("L" hs-hide-level
+      "close level"))
+    "Openapi"
+    (("v" openapi-preview "View in Browser")
+     ("s" lsp-yaml-select-buffer-schema
+      "Buffer Schema"))))
   :config
   (add-to-list
-    'lsp-language-id-configuration
-    '(openapi-yaml-mode . "yaml")))
+   'lsp-language-id-configuration
+   '(openapi-yaml-mode . "yaml")))
 (use-package json-ts-mode
   :straight nil
   :mode (("\\.json$" . json-ts-mode))
@@ -4231,9 +4489,13 @@ replacement boundaries."
 
 ;; DEVOPS CONFIG
 (use-package docker
-  :straight t
+  :straight (:type git :host github :repo "Silex/docker.el" :branch "main")
   :commands (docker)
-  :bind ("s-d" . docker))
+  :bind ("s-d" . docker)
+  :custom
+  ;; Use Ghostel for interactive Docker commands.
+  (docker-terminal-backend 'ghostel)
+  (docker-container-shell-file-name "/bin/sh"))
 (use-package dockerfile-mode
   :commands (dockerfile-build-buffer dockerfile-build-no-cache-buffer)
   :straight (:type git :host github :repo "spotify/dockerfile-mode" :branch "master")
