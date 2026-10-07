@@ -414,7 +414,7 @@ current buffer."
           #'aaronzinhoo--org-electric-pair-inhibit))
 
       ;; other mode setups
-      ((derived-mode-p 'go-mode 'go-ts-mode 'markdown-mode)
+      ((derived-mode-p 'go-mode 'go-ts-mode 'markdown-mode 'yaml-ts-mode)
         (aaronzinhoo--add-electric-pairs
           '(?` . ?`)))))
   :init
@@ -2259,8 +2259,11 @@ mark:
             (flycheck-valid-checker-p 'lsp)
             (not (get 'lsp 'aaronzinhoo-chains-added)))
       (flycheck-add-next-checker
-        'lsp
-        '(t . yaml-yamllint))
+       'lsp
+       '(t . yaml-yamllint))
+      (flycheck-add-next-checker
+       'lsp
+       '(t . dockerfile-hadolint))
       (put 'lsp 'aaronzinhoo-chains-added t)))
   (defun aaronzinhoo--lsp-booster-json-parse (old-function &rest args)
     "Parse LSP Booster bytecode, or call OLD-FUNCTION with ARGS."
